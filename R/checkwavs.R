@@ -5,18 +5,28 @@
 #' @return If all .wav files are ok, returns message "All files are ok!".
 #'   Otherwise returns "These file(s) cannot be read" message with names of the
 #'   corrupted .wav files.
-#' @details This function has no associated arguments, although the user must
+#' @details This function has no associated arguments, although users must
 #'   set the working directory where they wish to check .wav files beforehand.
 #' @export
 #' @name checkwavs
 #' @examples
 #' \dontrun{
+#' # First create empty folder
+#' dir.create(file.path(getwd(),"temp"))
+#' setwd(file.path(getwd(),"temp"))
+#' 
+#' # save wav file examples
 #' data(list = c("Phae.long1", "Phae.long2", "Phae.long3"))
 #' writeWave(Phae.long1,"Phae.long1.wav")
 #' writeWave(Phae.long2,"Phae.long2.wav")
 #' writeWave(Phae.long3,"Phae.long3.wav")
+#' 
 #' checkwavs()
+#' 
+#' #remove example directory
+#' unlink(getwd(),recursive = TRUE)
 #' }
+#' @author Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/})
 
 
 checkwavs <- function() { 
