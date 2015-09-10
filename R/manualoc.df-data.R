@@ -1,8 +1,8 @@
 #' Data frame of manualoc() selections.
 #' 
-#' A data frame containing information for calls selected using manualoc().
+#' A data frame containing information for calls selected using \code{\link{manualoc}}.
 #' 
-#' @format A data frame with 34 rows and 6 variables: \describe{ 
+#' @format A data frame with 11 rows and 6 variables: \describe{ 
 #'  \item{sound.files}{recording names}
 #'  \item{selec}{selection numbers within recording}
 #'  \item{start}{start times of selected call or element}

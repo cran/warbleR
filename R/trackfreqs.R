@@ -4,11 +4,10 @@
 #' of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
 #' @usage trackfreqs(X, wl = 512, flim = c(0, 22), wn = "hanning", pal =
 #'   reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = 
-#'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, trel =
-#'   FALSE, propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE, sc = FALSE,
-#'   fmax = 12, bp = c(0, 22), cex = c(0.8, 1), threshold = 15, col =
-#'   c("dodgerblue", "chartreuse3"), pch = c(16, 17),  mar = 0.05, lpos =
-#'   "topright", it = "jpeg")
+#'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
+#'   xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = c(0.8, 1), 
+#'   threshold = 15, col = c("dodgerblue", "chartreuse3"), pch = c(16, 17),  mar = 0.05, 
+#'   lpos = "topright", it = "jpeg")
 #' @param  X Data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
@@ -37,8 +36,6 @@
 #'   labels. See \code{\link[seewave]{spectro}}.
 #' @param title Logical argument to add a title to individual spectrograms. 
 #'   Default is \code{TRUE}.
-#' @param trel Logical argument to add a time axis scale relative to the wave. 
-#'   Default is \code{FALSE}.
 #' @param propwidth Logical argument to scale the width of spectrogram 
 #'   proportionally to duration of the selected call. Default is \code{FALSE}.
 #' @param xl Numeric vector of length 1. A constant by which to scale 
@@ -48,8 +45,6 @@
 #' @param gr Logical argument to add grid to spectrogram. Default is \code{FALSE}.
 #' @param sc Logical argument to add amplitude scale to spectrogram, default is 
 #'   \code{FALSE}.
-#' @param fmax Numeric vector of length 1, specifying the maximum for 
-#'   frequency measurements. Default is 12 Hz.
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
 #'   frequency bandpass filter (in kHz). Default is c(0, 22).
 #' @param cex Numeric vector of length 1, specifies relative size of points 
@@ -93,22 +88,22 @@
 #' setwd(file.path(getwd(),"temp"))
 #' 
 #' #load data
-#' data(list = c("Arre.aura", "Phae.cuvi"))
+#' data(list = c("Phae.long1", "Phae.long2"))
 #' data(manualoc.df)
-#' writeWave(Arre.aura, "Arre.aura.wav") #save sound files 
-#' writeWave(Phae.cuvi, "Phae.cuvi.wav")
+#' writeWave(Phae.long2, "Phae.long2.wav") #save sound files 
+#' writeWave(Phae.long1, "Phae.long1.wav")
 #' 
-#' # make Arre.aura and Phae.cuvi spectrograms  
+#' # make  spectrograms  
 #' 
 #' trackfreqs(manualoc.df, flim = c(0, 14), inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), 
-#' picsize = 2, res = 300, cexlab = 2, fmax = 14, bp = c(0, 14), cex = c(1.5, 2), 
+#' picsize = 2, res = 300, cexlab = 2, bp = c(0, 14), cex = c(1.5, 2), 
 #' col = c("blue", "red"),  mar = 0.09, lpos = "bottomright", it = "jpeg")
 #'                  
-#' # make only Arre.aura spectrograms
+#' # make only Phae.long1 spectrograms
 #' 
-#' trackfreqs(manualoc.df[grepl(c("Arre"), manualoc.df$sound.files), ], flim = c(3, 14),
+#' trackfreqs(manualoc.df[manualoc.df$sound.files == "Phae.long1.wav", ], flim = c(3, 14),
 #' inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), picsize = 2, res = 300, cexlab = 2, 
-#' fmax = 14, bp = c(3, 14), cex = c(1.5, 2), col = c("blue", "red"),  mar = 0.09, 
+#' bp = c(3, 14), cex = c(1.5, 2), col = c("blue", "red"),  mar = 0.09, 
 #' lpos = "bottomright", it = "tiff")
 #' 
 #' # remove example directory
@@ -119,8 +114,8 @@
 
 trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
                        inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100, cexlab = 1,
-                       title = TRUE, trel = FALSE, propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, 
-                       fmax = 12, bp = c(0, 22), cex = c(0.8, 1), threshold = 15, col = c("dodgerblue", "chartreuse3"),
+                       title = TRUE, propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, 
+                       bp = c(0, 22), cex = c(0.8, 1), threshold = 15, col = c("dodgerblue", "chartreuse3"),
                        pch = c(16, 17), mar = 0.05, lpos = "topright", it = "jpeg"){     
 
   if(class(X) == "data.frame") {if(all(c("sound.files", "selec", 
@@ -184,6 +179,10 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     t <- c(start[i] - mar, end[i] + mar)
     cex <- cex
     
+    fl<- flim #in case flim its higher than can be due to sampling rate
+    if(fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
+    
+    
     # Spectrogram width can be proportional to signal duration
     if(propwidth == TRUE){
       if(it == "tiff") tiff(filename = paste(sound.files[i],"-", selec[i], "-", "trackfreqs", ".tiff", sep = ""), 
@@ -205,8 +204,8 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     # Change relative widths of columns for spectrogram when sc = TRUE
     if(sc == TRUE) wts <- c(3, 1) else wts <- NULL
     
-    old.par <- par(no.readonly = TRUE) # par settings which could be changed.
-    on.exit(par(old.par)) 
+#     old.par <- par(no.readonly = TRUE) # par settings which could be changed.
+#     on.exit(par(old.par)) 
     
     # Change inner and outer plot margins
     par(mar = inner.mar)
@@ -215,8 +214,8 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     # Generate spectrogram using seewave
     seewave::spectro(r, f = f, wl = wl, ovlp = 70, collevels = seq(-40, 0, 0.5), heights = hts,
             wn = "hanning", widths = wts, palette = pal, osc = osci, grid = gr, scale = sc, collab = "black", 
-            cexlab = cexlab, cex.axis = 0.5*picsize, tlim = t, flim = flim, tlab = "Time (s)", 
-            flab = "Frequency (kHz)", alab = "", trel = trel)
+            cexlab = cexlab, cex.axis = 0.5*picsize, tlim = t, flim = fl, tlab = "Time (s)", 
+            flab = "Frequency (kHz)", alab = "")
     
     if(title){
       
@@ -225,20 +224,19 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     }
     
     # Plot fundamental frequencies at each time point
-    ffreq <- seewave::fund(r, f = f, ovlp = 70, threshold = threshold,, fmax = fmax * 1000, from=start[i],
-                  to = end[i], plot = FALSE) 
-    if(trel)
-    points(c(ffreq[,1])+start[i], c(ffreq[,2]), col = col[1], cex = cex[1], pch = pch[1]) else 
-        points(c(ffreq[,1])+mar, c(ffreq[,2]), col = col[1], cex = cex[1], pch = pch[1])  
+    ffreq <- seewave::fund(r, from=start[i], to = end[i],  
+              fmax= b[2]*1000, f = f, ovlp = 70, threshold = threshold, plot = FALSE) 
+    ffreq <- ffreq[ffreq[,2] > b[1],]
     
+    points(c(ffreq[,1])+start[i], c(ffreq[,2]), col = col[1], cex = cex[1], pch = pch[1]) 
+
     # Plot dominant frequency at each time point     
     dfreq <- seewave::dfreq(r, f = f, wl = wl, ovlp = 70, plot = FALSE, bandpass = b * 1000, fftw = TRUE, 
                    threshold = threshold, tlim = c(start[i], end[i]))
-    if(trel)
-      points(c(dfreq[,1])+start[i], c(dfreq[,2]), col = col[2], cex = cex[1], pch = pch[1]) else
-        points(c(dfreq[,1])+mar, c(dfreq[,2]), col = col[2], cex = cex[1], pch = pch[1])
+
+    points(c(dfreq[,1])+start[i], c(dfreq[,2]), col = col[2], cex = cex[1], pch = pch[2]) 
     
-    abline(v = c(mar, end[i] - start[i] + mar), col= "red", lty = "dashed")
+    abline(v = c(end[i],start[i]), col= "red", lty = "dashed")
     
     # Legend coordinates can be uniquely adjusted 
     legend(lpos, legend = c("Ffreq", "Dfreq"),

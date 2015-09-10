@@ -51,10 +51,9 @@
 #' setwd(file.path(getwd(),"temp"))
 #' 
 #' # save sound file examples
-#' data(list = c("Arre.aura", "Phae.cuvi"))
-#' data(manualoc.df)
-#' writeWave(Arre.aura,"Arre.aura.wav") 
-#' writeWave(Phae.cuvi,"Phae.cuvi.wav")
+#' data(list = c("Phae.long1", "Phae.long2","manualoc.df"))
+#' writeWave(Phae.long1,"Phae.long1.wav") 
+#' writeWave(Phae.long2,"Phae.long2.wav")
 #'
 #' lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors)
 #' lspec(sxrow = 2, rows = 8, X = manualoc.df, pal = reverse.heat.colors) #including selections
@@ -76,12 +75,9 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
   
   #stop if files are not in working directory
   if(length(files) == 0) stop("no .wav files in working directory")
-  if (!is.null(flist)) 
-  
   #subet based on file list provided (flist)
-  files <- files[files %in% flist]
-  if (length(files) == 0) 
-  stop("selected .wav files are not in working directory")
+  if (!is.null(flist)) files <- files[files %in% flist]
+  if (length(files) == 0)  stop("selected .wav files are not in working directory")
   
   #read X files
   if(!is.null(X)) {manloc <- X

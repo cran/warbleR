@@ -94,14 +94,13 @@ this may take some optimization by the user.
 dir.create(file.path(getwd(),"temp"))
 setwd(file.path(getwd(),"temp"))
 
-data(list = c("Arre.aura", "Phae.cuvi"))
-data(manualoc.df)
-writeWave(Arre.aura, "Arre.aura.wav") #save sound files
-writeWave(Phae.cuvi, "Phae.cuvi.wav")
+data(list = c("Phae.long1", "Phae.long2","manualoc.df"))
+writeWave(Phae.long1, "Phae.long1.wav") #save sound files
+writeWave(Phae.long2, "Phae.long2.wav")
 
-# make Arre.aura and Phae.cuvi spectrograms
+# make spectrograms
 
-specreator(manualoc.df, flim = c(0, 14), inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1),
+specreator(manualoc.df, flim = c(0, 11), inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1),
           picsize = 2, res = 300, cexlab = 2, mar = 0.05)
 #check this folder!!
 getwd()
@@ -115,8 +114,8 @@ Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/}) and Grace Smith
 }
 \seealso{
 \code{\link{trackfreqs}} for creating spectrograms to visualize
-  frequency measurements by\code{\link{specan}}, \code{\link{snrspecs}} for
-  creating spectrograms to optimize noise margins used in\code{\link{sig2noise}}
+  frequency measurements by \code{\link{specan}}, \code{\link{snrspecs}} for
+  creating spectrograms to optimize noise margins used in \code{\link{sig2noise}}
 
 Other spectrogram.creators: \code{\link{snrspecs}};
   \code{\link{trackfreqs}}
