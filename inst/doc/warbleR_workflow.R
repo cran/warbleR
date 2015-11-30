@@ -216,7 +216,7 @@ xcmaps(Phae.lon.LS, img = FALSE)
 #  
 #  # Run autodetec() on subset of recordings
 #  autodetec(flist = sub, bp = c(1, 10), threshold = 10, mindur = 0.05, maxdur = 0.5, envt="abs",
-#            msmooth = c(300, 90), ls = TRUE, res = 100,
+#            ssmooth = 300, ls = TRUE, res = 100,
 #            flim = c(1, 12), wl = 300, set =TRUE, sxrow = 6, rows = 15,
 #            redo = FALSE, it = "tiff")
 #  
@@ -224,16 +224,16 @@ xcmaps(Phae.lon.LS, img = FALSE)
 ## ---- eval=FALSE---------------------------------------------------------
 #  
 #  autodetec(flist = sub, bp = c(2, 9), threshold = 20, mindur = 0.09, maxdur = 0.22,
-#            envt = "abs", msmooth = c(900,90), ls = TRUE, res = 100, flim = c(1, 12),
-#            wl = 300, set =TRUE, sxrow = 6, rows = 15,  redo = TRUE, it = "tiff")
-#  
+#                       envt = "abs", ssmooth = 900, ls = TRUE, res = 100,
+#                       flim= c(1, 12), wl = 300, set =TRUE, sxrow = 6, rows = 15,
+#                       redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
 
 ## ---- eval=FALSE---------------------------------------------------------
 #  
 #  Phae.ad <- autodetec(bp = c(2, 9), threshold = 20, mindur = 0.09, maxdur = 0.22,
-#                       envt = "abs", msmooth = c(900, 90), ls = TRUE, res = 100,
+#                       envt = "abs", ssmooth = 900, ls = TRUE, res = 100,
 #                       flim= c(1, 12), wl = 300, set =TRUE, sxrow = 6, rows = 15,
-#                       redo = TRUE, it = "tiff")
+#                       redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
 #  
 #  str(Phae.ad)
 
@@ -244,12 +244,8 @@ xcmaps(Phae.lon.LS, img = FALSE)
 
 ## ---- eval=TRUE, echo=FALSE----------------------------------------------
 
-Phae.snr <- Phae.ad <- read.csv("Phae.ad.csv")
+Phae.snr <- Phae.ad <- read.csv("Phae.snr.csv")
 
-# GSV added
-# Phae.snr <- Phae.ad <- read.csv("~/warbleR/vignettes/Phae.ad.csv")
-
-str(Phae.ad[, -6])
 
 # Look at the number of selections per sound file 
 table(Phae.ad$sound.files)
@@ -337,7 +333,6 @@ table(Phae.hisnr$sound.files)
 #  # Run function for all recordings, with final argument settings
 #  specreator(Phae.hisnr, flim = c(1, 11), osci = TRUE, line = TRUE, wl = 300,
 #             ovlp = 90, it = "tiff", res = 300)
-#  
 
 ## ---- eval=FALSE---------------------------------------------------------
 #  
@@ -367,10 +362,7 @@ table(Phae.hisnr$sound.files)
 #  # As always, it's a good idea to write .csv files to your working directory
 
 ## ---- eval=TRUE, echo=FALSE----------------------------------------------
-# GSV silenced
 params <- read.csv("acoustic_parameters.csv")
-
-# params <- read.csv("~/warbleR/vignettes/acoustic_parameters.csv")
 
 str(params)
 

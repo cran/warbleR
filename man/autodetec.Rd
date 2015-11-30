@@ -4,10 +4,11 @@
 \alias{autodetec}
 \title{Automatically detect vocalizations in sound files}
 \usage{
-autodetec(X= NULL, threshold=15, envt="abs", msmooth=c(300,90),
-  power=1, bp=NULL, osci = FALSE, wl = 512, xl = 1, picsize = 1, res = 100,
+autodetec(X = NULL, threshold = 15, envt = "abs", ssmooth = NULL, msmooth = NULL,
+  power = 1, bp = NULL, osci = FALSE, wl = 512, xl = 1, picsize = 1, res = 100,
   flim = c(0,22), ls = FALSE, sxrow = 10, rows = 10, mindur = NULL, maxdur =
-  NULL, redo = FALSE, img = TRUE, it = "jpeg", set = FALSE, flist = NULL)
+  NULL, redo = FALSE, img = TRUE, it = "jpeg", set = FALSE, flist = NULL, smadj = NULL,
+  parallel = FALSE)
 }
 \arguments{
 \item{X}{Data frame with results from \code{\link{manualoc}} function or any data frame with columns
@@ -21,9 +22,13 @@ signals (in \%).}
 be used: "abs" for absolute amplitude envelope or "hil" for Hilbert
 amplitude envelope. Default is "abs".}
 
+\item{ssmooth}{A numeric vector of length 1 to smooth the amplitude envelope
+with a sum smooth function. Default is NULL.}
+
 \item{msmooth}{A numeric vector of length 2 to smooth the amplitude envelope
 with a mean sliding window. The first component is the window length and
-the second is the overlap between successive windows (in \%).}
+the second is the overlap between successive windows (in \%). Faster than ssmooth but time detection is
+much less accurate. Will be deprecated in future versions. Default is NULL.}
 
 \item{power}{A numeric vector of length 1 indicating a power factor applied
 to the amplitude envelope. Increasing power will reduce low amplitude
@@ -83,10 +88,19 @@ file in the working directory will be analyzed. Default is \code{FALSE}.}
 
 \item{set}{A logical argument indicating wheter the settings of the autodetection
 process should be included in the image file name. If \code{TRUE}, threshold (th), envelope (envt), bandpass (bp),
-power (pw), msmooth (msmo), maxdur (mxdu), and mindur (midu) are included.}
+power (pw), smooth (smo, either mmsooth[1] or ssmooth), maxdur (mxdu), and mindur (midu) are included.}
 
 \item{flist}{character vector or factor indicating the subset of files that will be analyzed. Ignored
 if X is provided.}
+
+\item{smadj}{adjustment for amplitude smoothing. Character vector of length one indicating whether start end
+values should be adjusted. "start", "end" or "both" are the inputs admitted by this argument. Amplitude
+smoothing through ssmooth generates a predictable deviation from the actual start and end positions of the signals,
+determined by the threshold and ssmooth values. This deviation is more obvious (and problematic) when the
+increase and decrease in amplitude at the start and end of the signal (respectively) is not gradual. Ignored if ssmooth is \code{NULL}.}
+
+\item{parallel}{Either logical or numeric. Controls wehther parallel computing is applied.
+If \code{TRUE} 2 cores are employed. If numeric, it specifies the number of cores to be used.}
 }
 \value{
 Image files with spectrograms showing the start and end of the detected signals. It
@@ -118,12 +132,12 @@ writeWave(Phae.long2,"Phae.long2.wav")
 writeWave(Phae.long3,"Phae.long3.wav")
 writeWave(Phae.long4,"Phae.long4.wav")
 
-ad <- autodetec(threshold=5, env="hil", msmooth=c(900,90), power=1,
+ad <- autodetec(threshold = 5, env = "hil", ssmooth = 300, power=1,
 bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE,
 wl = 300, ls = FALSE,  sxrow = 2, rows = 4, mindur=0.1, maxdur=1, set = TRUE)
 
 #run it with different settings
-ad <- autodetec(threshold=10, env="abs", msmooth=c(900,90), power=1,
+ad <- autodetec(threshold = 10, env = "abs", ssmooth = 300, power = 1,
 bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE,
 wl = 300, ls = FALSE,  sxrow = 2, rows = 4, mindur=0.1, maxdur=1, set = TRUE)
 
@@ -135,6 +149,7 @@ unlink(getwd(),recursive = TRUE)
 }
 }
 \author{
-Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/})
+Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/}). Implements a
+modified version of the timer function from seewave.
 }
 

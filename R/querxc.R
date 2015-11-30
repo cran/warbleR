@@ -1,21 +1,26 @@
 #' Access Xeno-Canto recordings and metadata
 #' 
 #' \code{querxc} downloads recordings and metadata from Xeno-Canto (\url{http://www.xeno-canto.org/}).
-#' @usage querxc(qword, download = FALSE, X = NULL)  
+#' @usage querxc(qword, download = FALSE, X = NULL, parallel = FALSE)  
 #' @param qword Character vector of length one indicating the genus, or genus and
 #'   species, to query Xeno-Canto database. For example, \emph{Phaethornis} or \emph{Phaethornis longirostris}. 
 #'   (\url{http://www.xeno-canto.org/}).
 #' @param download Logical argument. Downloads recording file names and
 #'   associated metadata if \code{FALSE}. If \code{TRUE}, recordings are also downloaded to working
 #'   directory as .mp3 files. Default is \code{FALSE}.
-#' @param X data frame with the same columns as the output of the function, or at least the following
+#' @param X Data frame with the same columns as the output of the function, or at least the following
 #' columns: Genus, Specific_epithet and Recording_ID. Only the recordings listed in the data frame 
-#' will be download (\code{download} argument isautomatically set to \code{TRUE}). This can be used to select
+#' will be download (\code{download} argument is automatically set to \code{TRUE}). This can be used to select
 #' the recordings to be downloaded based on their attributes.  
-#' @return A data frame with recording information is returned if X is not provided. Sound files in .mp3 format 
-#' (if download = \code{TRUE} or if X is provided).
+#' @param parallel Either logical or numeric. Controls wehther parallel computing is applied.
+#'  If \code{TRUE} 2 cores are employed. If numeric, it specifies the number of cores to be used. 
+#'  Not available for windows OS. Only used for downloading files.
+#' @return If X is not provided the function returns a data frame with the following recording information: recording ID, Genus, Specific epithet, Subspecies, English name, Recordist, Country, Locality, Latitude, Longitude, Vocalization type, Audio file, License, URL, Quality,Time, Date. Sound files in .mp3 format are downloaded into the working directory if download = \code{TRUE} or if X is provided.
 #' @export
 #' @name querxc
+#' @details This function queries for avian vocalization recordings in the open-access
+#' online repository Xeno-Canto (\url{http://www.xeno-canto.org/}). It can return recordings metadata
+#' or can also download the associated sound files.  
 #' @examples
 #' \dontrun{
 #' # First create empty folder
@@ -36,7 +41,14 @@
 #' }
 #' @author Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/}) and Hua Zhong
 
-querxc <- function(qword, download=FALSE, X = NULL) {
+querxc <- function(qword, download=FALSE, X = NULL, parallel = FALSE) {
+  
+  #if parallel was called
+  if (parallel) {lapp <- function(X, FUN) parallel::mclapply(X, 
+      FUN, mc.cores = 2)} else    
+      if(is.numeric(parallel)) lapp <- function(X, FUN) parallel::mclapply(X, 
+            FUN, mc.cores = parallel) else lapp <- pbapply::pblapply
+                                                                                                                                    
   
   if(is.null(X))
   {
@@ -92,13 +104,14 @@ querxc <- function(qword, download=FALSE, X = NULL) {
       rec$file,
       rec$lic,
       rec$url,
-      rec$q
+      rec$q,
+      rec$time,
+      rec$date
       ))
     ####
   })))
 
-  names(results) <- c("Recording_ID", "Genus", "Specific_epithet", "Subspecies", "English_name", "Recordist", "Country", 
-                      "Locality", "Latitude", "Longitude", "Vocalization_type", "Audio_file", "License", "URL", "Quality")
+  names(results) <- c("Recording_ID", "Genus", "Specific_epithet", "Subspecies", "English_name", "Recordist", "Country", "Locality", "Latitude", "Longitude", "Vocalization_type", "Audio_file", "License", "URL", "Quality","Time", "Date")
 
   #adjust ouput in case search has 2 words instead of 1
   if(sapply(strsplit(qword, " "), length) == 2) 
@@ -123,18 +136,17 @@ results <- X  }
 
   #download recordings
   if(download) {
-    pbapply::pbsapply(matrix(c(1:length(results$Genus)), ncol=1), function(x){
+    lapp(matrix(c(1:length(results$Genus)), ncol=1), function(x){
       gen <- results$Genus[x]
       se <- results$Specific_epithet[x]
       rid <- results$Recording_ID[x]
       if(!file.exists(file.path(getwd(), paste(gen, "-", se, "-", rid, ".mp3", sep = ""))))
         download.file(paste("http://xeno-canto.org/download.php?XC=", rid, sep=""), 
                       file.path(getwd(), paste(gen, "-", se, "-", rid, ".mp3", sep="")),
-                      quiet = FALSE,  mode = "wb", cacheOK = TRUE,
+                      quiet = TRUE,  mode = "wb", cacheOK = TRUE,
                       extra = getOption("download.file.extra"))
       return (NULL)
     })
-  message("all done!")
   }  
  if(is.null(X)) return(droplevels(results))
 }

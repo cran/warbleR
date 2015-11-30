@@ -4,8 +4,8 @@
 \name{warbleR}
 \alias{warbleR}
 \alias{warbleR-package}
-\title{warbleR: A package to streamline bioacoustic analysis
-PINEAPPLE
+\title{warbleR: A package to streamline bioacoustic analysis}
+\description{
 warbleR is a package designed to streamline analysis of (bio)acoustic signals in R. This
 package allows users to collect open-access avian vocalizations data or input their
 own data into a workflow that facilitates spectrographic visualization
@@ -13,12 +13,12 @@ and measurement of acoustic parameters in a batch process. The functions facilit
 avian vocalizations from Xeno-Canto \url{http://www.xeno-canto.org/}, creating maps of Xeno-Canto recordings,
 converting .mp3 files to .wav files, checking .wav files, automatically detecting acoustic signals, selecting
 them manually, printing spectrograms of whole recordings or individual signals, measuring signal
-to noise ratio and performing acoustic measurements.}
-\description{
-The warbleR package offers three overarching categories of
-  functions:
+to noise ratio, cross-correlation and performing acoustic measurements.
 }
 \details{
+The warbleR package offers three overarching categories of
+  functions:
+
 \itemize{
 
 \item Obtaining avian vocalization data \item Sound file management \item Streamlined
@@ -29,9 +29,13 @@ License: GPL (>= 2)
 \section{Obtaining avian vocalization data}{
 
 
- \code{\link{querxc}}: Download recordings and metadata from Xeno-Canto
+  \code{\link{querxc}}: Download recordings and metadata from Xeno-Canto
 
   \code{\link{xcmaps}}: Create maps to visualize the geographic spread of Xeno-Canto recordings
+
+  \code{\link{imp.syrinx}}: Importing Syrinx selections
+
+  \code{\link{imp.raven}}: Importing Raven selections
 }
 
 \section{Managing sound files}{
@@ -44,7 +48,7 @@ License: GPL (>= 2)
   functions
 }
 
-\section{Streamlining acoustic analysis in R}{
+\section{Streamlining analysis of acoustic signal structure in R}{
 
 
   \code{\link{autodetec}}: Automatically detect start and
@@ -70,6 +74,16 @@ License: GPL (>= 2)
 
   \code{\link{specan}}: Measure acoustic parameters on selected acoustic
   signals
+
+  \code{\link{xcorr}}: Pairwise cross-correlation of multiple signals
+
+  \code{\link{xcorr.graph}}: Pairwise cross-correlation of multiple signals
+
+  \code{\link{dfts}}: Extract the dominant frequency values as a time series
+
+  \code{\link{coor.graph}}: Creat graphs of coordinated singing
+
+  \code{\link{coor.test}}: Assess statistical significance of singing coordination
 }
 \author{
 Marcelo Araya-Salas, Grace Smith Vidaurre, Hua Zhong

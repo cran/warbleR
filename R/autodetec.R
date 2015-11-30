@@ -2,10 +2,11 @@
 #' 
 #' \code{autodetec} automatically detects the start and end of vocalizations in sound files  based
 #' on amplitude, duration, and frequency range attributes.
-#' @usage autodetec(X= NULL, threshold=15, envt="abs", msmooth=c(300,90), 
-#'   power=1, bp=NULL, osci = FALSE, wl = 512, xl = 1, picsize = 1, res = 100, 
+#' @usage autodetec(X = NULL, threshold = 15, envt = "abs", ssmooth = NULL, msmooth = NULL, 
+#'   power = 1, bp = NULL, osci = FALSE, wl = 512, xl = 1, picsize = 1, res = 100, 
 #'   flim = c(0,22), ls = FALSE, sxrow = 10, rows = 10, mindur = NULL, maxdur = 
-#'   NULL, redo = FALSE, img = TRUE, it = "jpeg", set = FALSE, flist = NULL)
+#'   NULL, redo = FALSE, img = TRUE, it = "jpeg", set = FALSE, flist = NULL, smadj = NULL,
+#'   parallel = FALSE)
 #' @param X Data frame with results from \code{\link{manualoc}} function or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). 
@@ -14,9 +15,12 @@
 #' @param envt Character vector of length 1 specifying the type of envelope to
 #'   be used: "abs" for absolute amplitude envelope or "hil" for Hilbert 
 #'   amplitude envelope. Default is "abs".
+#' @param ssmooth A numeric vector of length 1 to smooth the amplitude envelope 
+#'   with a sum smooth function. Default is NULL.
 #' @param msmooth A numeric vector of length 2 to smooth the amplitude envelope 
 #'   with a mean sliding window. The first component is the window length and 
-#'   the second is the overlap between successive windows (in \%).
+#'   the second is the overlap between successive windows (in \%). Faster than ssmooth but time detection is 
+#'   much less accurate. Will be deprecated in future versions. Default is NULL.
 #' @param power A numeric vector of length 1 indicating a power factor applied 
 #'   to the amplitude envelope. Increasing power will reduce low amplitude 
 #'   modulations and increase high amplide modulations, in order to reduce 
@@ -59,9 +63,16 @@
 #' "tiff" and "jpeg" are admitted. Default is "jpeg".
 #' @param set A logical argument indicating wheter the settings of the autodetection 
 #'  process should be included in the image file name. If \code{TRUE}, threshold (th), envelope (envt), bandpass (bp),
-#'  power (pw), msmooth (msmo), maxdur (mxdu), and mindur (midu) are included. 
+#'  power (pw), smooth (smo, either mmsooth[1] or ssmooth), maxdur (mxdu), and mindur (midu) are included. 
 #' @param flist character vector or factor indicating the subset of files that will be analyzed. Ignored
 #' if X is provided.
+#' @param smadj adjustment for amplitude smoothing. Character vector of length one indicating whether start end 
+#' values should be adjusted. "start", "end" or "both" are the inputs admitted by this argument. Amplitude 
+#' smoothing through ssmooth generates a predictable deviation from the actual start and end positions of the signals, 
+#' determined by the threshold and ssmooth values. This deviation is more obvious (and problematic) when the 
+#' increase and decrease in amplitude at the start and end of the signal (respectively) is not gradual. Ignored if ssmooth is \code{NULL}.
+#' @param parallel Either logical or numeric. Controls wehther parallel computing is applied.
+#'  If \code{TRUE} 2 cores are employed. If numeric, it specifies the number of cores to be used.  
 #' @return Image files with spectrograms showing the start and end of the detected signals. It 
 #'   also returns a data frame containing the start and end of each signal by 
 #'   sound file and selection number.
@@ -87,12 +98,12 @@
 #' writeWave(Phae.long3,"Phae.long3.wav")
 #' writeWave(Phae.long4,"Phae.long4.wav") 
 #' 
-#' ad <- autodetec(threshold=5, env="hil", msmooth=c(900,90), power=1, 
+#' ad <- autodetec(threshold = 5, env = "hil", ssmooth = 300, power=1, 
 #' bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE, 
 #' wl = 300, ls = FALSE,  sxrow = 2, rows = 4, mindur=0.1, maxdur=1, set = TRUE)
 #' 
 #' #run it with different settings
-#' ad <- autodetec(threshold=10, env="abs", msmooth=c(900,90), power=1, 
+#' ad <- autodetec(threshold = 10, env = "abs", ssmooth = 300, power = 1, 
 #' bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE, 
 #' wl = 300, ls = FALSE,  sxrow = 2, rows = 4, mindur=0.1, maxdur=1, set = TRUE)
 #' 
@@ -103,11 +114,13 @@
 #' unlink(getwd(),recursive = TRUE)
 #' }
 #' 
-#' @author Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/})
+#' @author Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/}). Implements a
+#' modified version of the timer function from seewave. 
 
-autodetec<-function(X= NULL, threshold=15, envt="abs", msmooth=c(300,90), power=1, bp=NULL, osci = FALSE, wl = 512,
-                    xl = 1, picsize = 1, res = 100, flim = c(0,22), ls = FALSE, sxrow = 10, rows = 10, mindur = NULL,
-                    maxdur = NULL, redo = FALSE, img = TRUE, it = "jpeg", set = FALSE, flist = NULL){
+autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth = NULL, power = 1, 
+                    bp = NULL, osci = FALSE, wl = 512, xl = 1, picsize = 1, res = 100, flim = c(0,22), 
+                    ls = FALSE, sxrow = 10, rows = 10, mindur = NULL, maxdur = NULL, redo = FALSE, 
+                    img = TRUE, it = "jpeg", set = FALSE, flist = NULL, smadj = NULL, parallel = FALSE){
 
   #if bp is not vector or length!=2 stop
   if(!is.null(bp))
@@ -120,9 +133,14 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", msmooth=c(300,90), power=
       if(!length(flim) == 2) stop("'flim' must be a numeric vector of length 2")}}   
   
   #if msmooth is not vector or length!=2 stop
-  if(is.null(msmooth)) stop("'msmooth' must be a numeric vector of length 2") else {
-    if(!is.vector(msmooth)) stop("'msmooth' must be a numeric vector of length 2") else{
+  if(!is.null(msmooth)) {
+    if(!is.vector(msmooth)) stop("'msmooth' must be a numeric vector of length 2") else {
       if(!length(msmooth) == 2) stop("'msmooth' must be a numeric vector of length 2")}}   
+
+  #if ssmooth is not vector or length!=1 stop
+  if(!is.null(ssmooth)) {
+    if(!is.vector(ssmooth)) stop("'ssmooth' must be a numeric vector of length 1") else {
+      if(!length(ssmooth) == 1) stop("'ssmooth' must be a numeric vector of length 1")}}   
   
   #if wl is not vector or length!=1 stop
   if(is.null(wl)) stop("'wl' must be a numeric vector of length 1") else {
@@ -173,6 +191,17 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", msmooth=c(300,90), power=
   if (power == 0) 
     stop("'power' cannot equal to 0")
   
+  if(!is.null(msmooth)) smo <- msmooth[1] else {if(!is.null(ssmooth)) smo <- ssmooth else smo <- 0}
+  
+  #if smadj argument is not "start" "end" or "both"
+  if(!is.null(smadj)) if(!any(smadj == "start", smadj == "end", smadj == "both")) 
+    stop(paste("smooth adjustment", smadj, "not allowed"))  
+  
+  #if parallel was called
+  if (parallel) {lapp <- function(X, FUN) parallel::mclapply(X, 
+     FUN, mc.cores = 2)} else    if(is.numeric(parallel)) lapp <- function(X, FUN) parallel::mclapply(X, 
+     FUN, mc.cores = parallel) else lapp <- pbapply::pblapply
+                                                                                                                                                              
   if(!is.null(X)){
     
     
@@ -208,16 +237,16 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", msmooth=c(300,90), power=
         tfs <- list.files(path = getwd(), pattern = ".jpeg$", ignore.case = TRUE)
       
       if(set) X <- X[!(paste(substring(X$sound.files, first = 1, last = nchar(as.character(X$sound.files))-4),
-              "-", X$selec, "-autodetec","-th" ,threshold ,"-bp", bp[1],".",bp[2], "-msmo", msmooth[1],".",msmooth[2], "-midu", mindur,
+              "-", X$selec, "-autodetec","-th" ,threshold ,"-bp", bp[1],".",bp[2], "-smo", smo, "-midu", mindur,
               "-mxdu", maxdur, "-pw", power, sep = "") %in% substring(tfs, 1, nchar(tfs)-15)),] else
       X <- X[!(paste(substring(X$sound.files, 1, nchar(as.character(X$sound.files))-4), X$selec, sep = "-") %in% substring(tfs, 1, nchar(tfs)-15)),]
       if(nrow(X) == 0) stop("All selections have been analyzed (redo = F)") 
     }    
     
-    if(!ls & img) message("Detecting signals in sound files and producing spectrogram:") else 
-      message("Detecting signals in sound files:")
-  
-    ad<-pbapply::pblapply(1:nrow(X),function(i)
+    if(!parallel) {if(!ls & img) message("Detecting signals in sound files and producing spectrogram:") else 
+      message("Detecting signals in sound files:")}
+    
+    ad<-lapp(1:nrow(X),function(i)
   {
     song<-tuneR::readWave(as.character(X$sound.files[i]),from=X$start[i],to=X$end[i],units="seconds")
     
@@ -237,7 +266,7 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", msmooth=c(300,90), power=
     rm(input)
     n <- length(wave)
     thres <- threshold/100
-    wave1 <- seewave::env(wave = wave, f = f, msmooth = msmooth,  
+    wave1 <- seewave::env(wave = wave, f = f, msmooth = msmooth, ssmooth = ssmooth,  
                  envt = envt, norm = TRUE, plot = FALSE)
     
     n1 <- length(wave1)
@@ -280,7 +309,7 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", msmooth=c(300,90), power=
     if(!ls & img) {
       if(set) 
         fna<-paste(substring(X$sound.files[i], first = 1, last = nchar(as.character(X$sound.files[i]))-4),
-                   "-", X$selec[i], "-autodetec","-th" ,threshold , "-env.", envt,"-bp", bp[1],".",bp[2], "-msmo", msmooth[1],".",msmooth[2], "-midu", mindur,
+                   "-", X$selec[i], "-autodetec","-th" ,threshold , "-env.", envt,"-bp", bp[1],".",bp[2], "-smo", smo, "-midu", mindur,
                    "-mxdu", maxdur, "-pw", power, sep = "") else
         fna<-paste(substring(X$sound.files[i], first = 1, last = nchar(as.character(X$sound.files[i]))-4),
                 "-", X$selec[i], "-autodetec", sep = "")                  
@@ -327,7 +356,8 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", msmooth=c(300,90), power=
     
     #subet based on file list provided (flist)
     if(!is.null(flist)) files <- files[files %in% flist]
-        
+    if(length(files) == 0) stop(".wav files are not in working directory")    
+
     #do the ones that have no images in folder
     if(!redo) {
       if(it == "tiff") {tfs <- list.files(path = getwd(), pattern = ".tiff$", ignore.case = TRUE)
@@ -341,8 +371,8 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", msmooth=c(300,90), power=
 if(length(tfs)>0) {if(set)
   { files <- files[grep(paste(tfs, collapse = "|"),
         sapply(gsub(".wav","", ignore.case = T, files), function(k) 
-    {paste(k, "-autodetec.ls","-th" ,threshold , "-env.", envt, "-bp", bp[1],".",bp[2], "-msmo",
-      msmooth[1],".",msmooth[2], "-midu", mindur, "-mxdu", maxdur, "-pw", power, "-p1", sep = "")}, 
+    {paste(k, "-autodetec.ls","-th" ,threshold , "-env.", envt, "-bp", bp[1],".",bp[2], "-smo",
+           smo, "-midu", mindur, "-mxdu", maxdur, "-pw", power, "-p1", sep = "")}, 
     USE.NAMES = F),invert = TRUE)]} else
 {  
 #   if(length(grep(paste(paste(gsub(".wav","", ignore.case = T, files),"-autodetec.ls-p",sep = ""),
@@ -354,9 +384,9 @@ if(length(files) == 0) stop("All files have been analyzed (redo = F)")
     }
     }  
     
-   message("Detecting signals in sound files:")
+    if(!parallel)  message("Detecting signals in sound files:")
     
-    ad<-pbapply::pblapply(1:length(files),function(i)
+    ad<-lapp(1:length(files),function(i)
     {
       song<-tuneR::readWave(as.character(files[i]))
       f <- song@samp.rate
@@ -375,7 +405,7 @@ if(length(files) == 0) stop("All files have been analyzed (redo = F)")
       rm(input)
       n <- length(wave)
       thres <- threshold/100
-      wave1 <- seewave::env(wave = wave, f = f, msmooth = msmooth,  
+  wave1 <- seewave::env(wave = wave, f = f, msmooth = msmooth, ssmooth = ssmooth,
                    envt = envt, norm = TRUE, plot = FALSE)
       
       n1 <- length(wave1)
@@ -441,7 +471,7 @@ results<-rbind(results,data.frame(sound.files =  files[v], selec = 1,start=ad[[v
   
   #long spectrograms
 if(any(ls,is.null(X)) & img) {
-  message("Producing long spectrogram:")
+  if(!parallel) message("Producing long spectrogram:")
   
   collev = seq(-40, 0, 1)  
   manualoc = data.frame(results,sel.comment=NA)
@@ -485,8 +515,8 @@ if(!redo) {
   if(length(tfs)>0) {if(set)
   { files <- files[grep(paste(tfs, collapse = "|"),
                         sapply(gsub(".wav","", ignore.case = T, files), function(k) 
-                        {paste(k, "-autodetec.ls","-th" ,threshold , "-env.", envt, "-bp", bp[1],".",bp[2], "-msmo",
-                               msmooth[1],".",msmooth[2], "-midu", mindur, "-mxdu", maxdur, "-pw", power, "-p1", sep = "")}, 
+                        {paste(k, "-autodetec.ls","-th" ,threshold , "-env.", envt, "-bp", bp[1],".",bp[2], "-smo",
+                               smo, "-midu", mindur, "-mxdu", maxdur, "-pw", power, "-p1", sep = "")}, 
                         USE.NAMES = F),invert = TRUE)]} else
                         {  
                           #   if(length(grep(paste(paste(gsub(".wav","", ignore.case = T, files),"-autodetec.ls-p",sep = ""),
@@ -509,7 +539,7 @@ if(!redo) {
     if(!is.null(manualoc)) manloc <- manualoc  else manloc <- NULL
     
     #apply over each sound file
-  pbapply::pblapply(files, function(z, fl = flim, sl = sxrow, li = rows, ml = manloc, malo = manualoc) {
+  lapp(files, function(z, fl = flim, sl = sxrow, li = rows, ml = manloc, malo = manualoc) {
       
       #loop to print spectros (modified from lspec function)
       rec <- tuneR::readWave(z) #read wave file 
@@ -526,7 +556,7 @@ if(!redo) {
       #loop over pages 
       for (j in 1:ceiling(dur/(li*sl))){
         if(set) fna<-paste(substring(z, first = 1, last = nchar(z)-4),
-                            "-autodetec.ls","-th" ,threshold , "-env.", envt, "-bp", bp[1],".",bp[2], "-msmo", msmooth[1],".",msmooth[2], "-midu", mindur,
+                            "-autodetec.ls","-th" ,threshold , "-env.", envt, "-bp", bp[1],".",bp[2], "-smo", smo, "-midu", mindur,
                            "-mxdu", maxdur, "-pw", power, sep = "") else
         fna<-paste(substring(z, first = 1, last = nchar(z)-4), "-autodetec.ls", sep = "")
           
@@ -586,7 +616,10 @@ if(!redo) {
     })  
 }  
  
-rownames(results)<-1:nrow(results)
-message("all done!")
+rownames(results) <- 1:nrow(results)
+if(!is.null(ssmooth) & !is.null(smadj))
+  {if(smadj == "start" | smadj == "both") results$start <- results$start-((threshold*2.376025e-07)-1.215234e-05)*ssmooth 
+  if(smadj == "end" | smadj == "both")  results$end <- results$end-((threshold*-2.369313e-07)+1.215129e-05)*ssmooth }
 return(results)
+if(img) on.exit(dev.off())
 }
