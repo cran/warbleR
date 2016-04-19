@@ -1,8 +1,8 @@
-#' Extract the dominant frequency values as a time series
+#' Acoustic dissimilarity using dynamic time warping on dominant frequency contours
 #' 
-#' \code{dfts} extract the dominant frequency values as a time series.
-#' of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
-#' @usage dfts(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal =
+#' \code{dfDTW} calculates acoustic dissimilarity of dominant frequency contours using dynamic
+#' time warping. Internally it applies the \code{\link[dtw]{dtwDist}} from the \code{dtw} package.
+#' @usage dfDTW(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal =
 #'   reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = 
 #'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
 #'   xl = 1, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = 1, 
@@ -67,10 +67,10 @@
 #' @param img Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #'  It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
-#'   windows OS users need to install \code{warbleR} from github to run parallel.
+#'   windows OS users need to install \code{warbleR} from github to run parallel. 
 #'   Note that creating images is not compatible with parallel computing 
-#'   (parallel > 1) in OSX (mac).   
-#' @return A data frame with the dominant frequency values measured across the signals. If img is 
+#'   (parallel > 1) in OSX (mac).  
+#' @return A matrix with the pairwise dissimilarity values. If img is 
 #' \code{FALSE} it also produces image files with the spectrograms of the signals listed in the 
 #' input data frame showing the location of the dominant frequencies.
 #' @family spectrogram creators
@@ -78,10 +78,14 @@
 #'  \code{\link{snrspecs}} for creating spectrograms to 
 #'   optimize noise margins used in \code{\link{sig2noise}}
 #' @export
-#' @name dfts
-#' @details This function extracts the dominant frequency values as a time series. 
-#' The function uses the `approx` function to interpolate values between dominant frequency 
-#' measures.
+#' @name dfDTW
+#' @details This function extracts the dominant frequency values as a time series and
+#'  then calculates the pairwise acoustic dissimilarity using dynamic time warping.
+#' The function uses the `approx` function to interpolate values between dominant
+#'  frequency  measures. If 'img' is  \code{TRUE} the function also produces image files
+#'  with the spectrograms of the signals listed in the input data frame showing the
+#'  location of the dominant frequencies.
+#' @seealso dfts, ffts, ffDTW
 #' @examples
 #' \dontrun{
 #' # set the temp directory
@@ -93,13 +97,13 @@
 #' writeWave(Phae.long1, "Phae.long1.wav")
 #' 
 #' # run function 
-#' dfts(manualoc.df, length.out = 30, flim = c(1, 12), picsize = 2, res = 100, bp = c(2, 9))
+#' dfDTW(manualoc.df, length.out = 30, flim = c(1, 12), picsize = 2, res = 100, bp = c(2, 9))
 #' 
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 
 
-dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
+dfDTW <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
                        inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100, cexlab = 1,
                        title = TRUE, propwidth = FALSE, xl = 1, gr = FALSE, sc = FALSE, 
                        bp = c(0, 22), cex = 1, threshold = 15, col = "dodgerblue",pch = 16,
@@ -157,13 +161,11 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
     sound.files <- sound.files[d]
   }
   
-  
-  
   #if parallel is not numeric
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
-  #if parallel
+  #if parallel T and img T
   if(all(parallel > 1, img, !Sys.info()[1] %in% c("Linux","Windows"))) {
     parallel <- 1
     cat("creating images is not compatible with parallel computing (parallel > 1) in OSX (mac)")
@@ -219,15 +221,15 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
     
     # Spectrogram width can be proportional to signal duration
     if(propwidth == TRUE){
-      if(it == "tiff") tiff(filename = paste(sound.files[i],"-", selec[i], "-", "dfts", ".tiff", sep = ""), 
+      if(it == "tiff") tiff(filename = paste(sound.files[i],"-", selec[i], "-", "dfDTW", ".tiff", sep = ""), 
                             width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-                              jpeg(filename = paste(sound.files[i],"-", selec[i], "-", "dfts", ".jpeg", sep = ""), 
+                              jpeg(filename = paste(sound.files[i],"-", selec[i], "-", "dfDTW", ".jpeg", sep = ""), 
                                    width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
       
     } else {
-      if(it == "tiff") tiff(filename = paste(sound.files[i],"-", selec[i], "-", "dfts", ".tiff", sep = ""), 
+      if(it == "tiff") tiff(filename = paste(sound.files[i],"-", selec[i], "-", "dfDTW", ".tiff", sep = ""), 
                             width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-                              jpeg(filename = paste(sound.files[i],"-", selec[i], "-", "dfts", ".jpeg", sep = ""), 
+                              jpeg(filename = paste(sound.files[i],"-", selec[i], "-", "dfDTW", ".jpeg", sep = ""), 
                                    width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
       
     }
@@ -243,7 +245,7 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
     
     if(title){
       
-      title(paste(sound.files[i], "-", selec[i], "-", "dfts", sep = ""), cex.main = cexlab)
+      title(paste(sound.files[i], "-", selec[i], "-", "dfDTW", sep = ""), cex.main = cexlab)
       
     }
     
@@ -271,8 +273,9 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
     return(apdom$y)  
   } )
 
-  df<-data.frame(sound.files, selec, (as.data.frame(matrix(unlist(lst),nrow = length(sound.files), byrow = T))))
-    colnames(df)[3:ncol(df)]<-paste("dfreq",1:(ncol(df)-2),sep = "-")
-                 return(df)
+  mat <- matrix(unlist(lst),nrow = length(sound.files), byrow = T)
+  dm <- dtwDist(mat,mat)       
+  rownames(dm) <- colnames(dm) <- paste(sound.files, selec, sep = "-")
+  return(dm)
 }
 

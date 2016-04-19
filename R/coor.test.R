@@ -1,15 +1,16 @@
 #' Randomization test for singing coordination 
 #' 
 #' \code{coor.test} Monte Carlo randomization test to assess the statistical significance of singing coordination
-#' @usage coor.test(X, iterations = 1000, less.than.chance = TRUE, parallel = FALSE)
+#' @usage coor.test(X, iterations = 1000, less.than.chance = TRUE, parallel = 1)
 #' @param  X Data frame containing columns for singing event (sing.event), 
 #' individual (indiv), and start and end time of signal (start and end).
 #' @param iterations number of iterations for shuffling and calculation of the expected number of overlaps. Default is 1000.
 #' @param less.than.chance Logical. If \code{TRUE} the test evaluates whether overlaps occur less often than expected by chance.
 #' If \code{FALSE} the opposite pattern is evaluted (whether overlaps occur more often than expected by chance). 
 #' Default is  \code{TRUE}.
-#' @param parallel Either logical or numeric. Controls wehther parallel computing is applied.
-#'  If \code{TRUE} 2 cores are employed. If numeric, it specifies the number of cores to be used. Not available for windows OS.
+#' @param parallel Numeric. Controls whether parallel computing is applied.
+#'  It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
+#'   windows OS users need to install \code{warbleR} from github to run parallel.   
 #' @return A data frame with the observed number of overlaps (obs.overlaps), mean number of overlaps expected by chance,
 #' and p value.  
 #' @export
@@ -33,15 +34,22 @@
 #' # testing if coordination happens more than expected by chance
 #' coor.test(coor.sing, iterations = 1000, less.than.chance = F)
 #' }
-#' @author Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/})
+#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 
-coor.test <- function(X = NULL, iterations = 1000, less.than.chance = TRUE, parallel = FALSE)
+coor.test <- function(X = NULL, iterations = 1000, less.than.chance = TRUE, parallel = 1)
 {
   if(!is.data.frame(X))  stop("X is not a data frame")
   
   #stop if some events have less than 10 observations
   if(any(table(X$sing.event) < 10)) warning("At least one singing event with less than 10 vocalizations")
   
+  #stop if some events do not have 2 individuals 
+      qw <- as.data.frame((tapply(X$sing.event, list(X$sing.event, X$indiv), length)))
+
+qw[qw > 0] <- 1
+
+if(any(apply(qw, 1, sum) != 2)) stop("Some singing events don't have 2 interating individuals ('indiv' colum)")
+
   #if iterations is not vector or length==1 stop
   if(any(!is.vector(iterations),!is.numeric(iterations))) stop("'interations' must be a numeric vector of length 1") else{
     if(!length(iterations) == 1) stop("'interations' must be a numeric vector of length 1")}
@@ -54,11 +62,22 @@ coor.test <- function(X = NULL, iterations = 1000, less.than.chance = TRUE, para
   #interations should be positive
   if(iterations < 1) stop("'iterations' must be a positive integer")
   
-  #if parallel was called
-  if (parallel) {lapp <- function(X, FUN) parallel::mclapply(X, 
-  FUN, mc.cores = 2)} else    
-    if(is.numeric(parallel)) lapp <- function(X, FUN) parallel::mclapply(X, 
-        FUN, mc.cores = parallel) else lapp <- pbapply::pblapply
+  #if parallel is not numeric
+  if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
+  if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
+  
+  #if on windows you need parallelsugar package
+  if(parallel > 1)
+  { 
+    #      options(warn = -1)
+    #      
+    #        
+    #        if(Sys.info()[1] == "Windows"){ 
+    #       cat 
+    #       lapp <- pbapply::pblapply} else 
+    lapp <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = parallel)} else lapp <- pbapply::pblapply
+  
+  options(warn = 0)
   
   tovlp<-lapp(unique(X$sing.event),function(h)
 {

@@ -1,13 +1,13 @@
 #' Spectrograms with frequency measurements
 #' 
-#' \code{trackfreqs} creates spectrograms to visualize dominant and fundametal frequency measurements
+#' \code{trackfreqs} creates spectrograms to visualize dominant and fundametal frequency measurements (contours)
 #' of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
 #' @usage trackfreqs(X, wl = 512, flim = c(0, 22), wn = "hanning", pal =
 #'   reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = 
 #'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
 #'   xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = c(0.8, 1), 
-#'   threshold = 15, col = c("chartreuse3", "dodgerblue"), pch = c(17, 16),  mar = 0.05, 
-#'   lpos = "topright", it = "jpeg", parallel = FALSE)
+#'   threshold = 15, contour = "both", col = c("chartreuse3", "dodgerblue"),
+#'    pch = c(17, 16),  mar = 0.05, lpos = "topright", it = "jpeg", parallel = 1)
 #' @param  X Data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
@@ -52,6 +52,8 @@
 #'   See \code{\link[seewave]{spectro}}.
 #' @param threshold amplitude threshold (\%) for fundamental frequency and 
 #'   dominant frequency detection. Default is 15.
+#' @param contour Character vector, one of "df", "ff" or "both", specifying whether the
+#'  dominant or fundamental frequencies or both should be plotted. Default is "both". 
 #' @param col Vector of length 2 specifying colors of points plotted to mark 
 #'   fundamental and dominant frequency measurements. Default is c("chartreuse3",
 #'   "dodgerblue").
@@ -66,9 +68,11 @@
 #'   Default is "topright".
 #' @param it A character vector of length 1 giving the image type to be used. Currently only
 #' "tiff" and "jpeg" are admitted. Default is "jpeg".
-#' @param parallel Either logical or numeric. Controls wehther parallel computing is applied.
-#'  If \code{TRUE} 2 cores are employed. If numeric, it specifies the number of cores to be used. 
-#'  Not available for windows OS. 
+#' @param parallel Numeric. Controls whether parallel computing is applied.
+#' It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
+#' For windows OS the \code{warbleR} from github to run parallel.
+#'   Note that creating images is not compatible with parallel computing 
+#'   (parallel > 1) in OSX (mac).    
 #' @return Spectrograms of the signals listed in the input data frame showing the location of 
 #' the dominant and fundamental frequencies.
 #' @family spectrogram creators
@@ -86,40 +90,37 @@
 #'   when osci or sc = TRUE, this may take some optimization by the user.
 #' @examples
 #' \dontrun{
-#' #First create empty folder
-#' dir.create(file.path(getwd(),"temp"))
-#' setwd(file.path(getwd(),"temp"))
+#' #Set temporal folder as working directory
+#' setwd(tempdir())
 #' 
 #' #load data
-#' data(list = c("Phae.long1", "Phae.long2"))
-#' data(manualoc.df)
-#' writeWave(Phae.long2, "Phae.long2.wav") #save sound files 
-#' writeWave(Phae.long1, "Phae.long1.wav")
+#' data("Cryp.soui")
+#' writeWave(Cryp.soui, "Cryp.soui.wav") #save sound files 
 #' 
-#' # make  spectrograms  
+#' #autodetec location of signals
+#' ad <- autodetec(threshold = 6, bp = c(1, 3), mindur = 1.2,
+#' maxdur = 3, img = FALSE, ssmooth = 600)
 #' 
-#' trackfreqs(manualoc.df, flim = c(0, 14), inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), 
-#' picsize = 2, res = 300, cexlab = 2, bp = c(0, 14), cex = c(1.5, 2), 
-#' col = c("blue", "red"),  mar = 0.09, lpos = "bottomright", it = "jpeg")
-#'                  
-#' # make only Phae.long1 spectrograms
+#' #track dominant frequency graphs
+#' trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
+#'  bp = c(1, 3), contour = "df")
+#'  
+#'# Check this folder
+#'getwd()
+#'
+#'#track both frequencies 
+#'trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
+#' bp = c(1, 3), contour = "both")
 #' 
-#' trackfreqs(manualoc.df[manualoc.df$sound.files == "Phae.long1.wav", ], flim = c(3, 14),
-#' inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), picsize = 2, res = 300, cexlab = 2, 
-#' bp = c(3, 14), cex = c(1.5, 2), col = c("blue", "red"),  mar = 0.09, 
-#' lpos = "bottomright", it = "tiff")
-#' 
-#' # remove example directory
-#' unlink(getwd(),recursive = TRUE)
 #' }
-#' @author Grace Smith Vidaurre and Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/})
-
+#' @author Grace Smith Vidaurre and Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 
 trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
                        inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100, cexlab = 1,
                        title = TRUE, propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, 
-                     bp = c(0, 22), cex = c(0.8, 1), threshold = 15, col = c("chartreuse3", "dodgerblue"),
-                       pch = c(17, 16), mar = 0.05, lpos = "topright", it = "jpeg", parallel = FALSE){     
+                     bp = c(0, 22), cex = c(0.8, 1), threshold = 15, contour = "both", 
+                     col = c("chartreuse3", "dodgerblue"),  pch = c(17, 16), 
+                     mar = 0.05, lpos = "topright", it = "jpeg", parallel = 1){     
 
   if(class(X) == "data.frame") {if(all(c("sound.files", "selec", 
                                          "start", "end") %in% colnames(X))) 
@@ -155,7 +156,7 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   #return warning if not all sound files were found
   recs.wd <- list.files(path = getwd(), pattern = ".wav$", ignore.case = T)
   if(length(unique(sound.files[(sound.files %in% recs.wd)])) != length(unique(sound.files))) 
-    message(paste(length(unique(sound.files))-length(unique(sound.files[(sound.files %in% recs.wd)])), 
+    (paste(length(unique(sound.files))-length(unique(sound.files[(sound.files %in% recs.wd)])), 
                   ".wav file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
@@ -169,24 +170,54 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     sound.files <- sound.files[d]
   }
   
-  #if parallel was called
-  if (parallel) {lapp <- function(X, FUN) parallel::mclapply(X, 
-    FUN, mc.cores = 2)} else    
-        if(is.numeric(parallel)) lapp <- function(X, FUN) parallel::mclapply(X, 
-              FUN, mc.cores = parallel) else lapp <- pbapply::pblapply
+  # If parallel is not numeric
+  if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
+  if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
-  if(!parallel) message("Creating spectrograms overlaid with acoustic measurements:")
+  #if parallel in OSX
+  if(all(parallel > 1, !Sys.info()[1] %in% c("Linux","Windows"))) {
+    parallel <- 1
+    ("creating images is not compatible with parallel computing (parallel > 1) in OSX (mac)")
+  }
+  
+  # If parallel was called
+  if(parallel > 1)
+  { options(warn = -1)
+     
+       
+        if(Sys.info()[1] == "Windows"){ 
+           
+          lapp <- pbapply::pblapply} else lapp <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = parallel)} else lapp <- pbapply::pblapply
+  
+  options(warn = 0)
+  
+  if(parallel == 1) ("Creating spectrograms overlaid with acoustic measurements:")
   invisible(lapp(1:length(sound.files), function(i){
     
-    r <- tuneR::readWave(file.path(getwd(), sound.files[i]))
+    # Read sound files, initialize frequency and time limits for spectrogram
+    r <- tuneR::readWave(file.path(getwd(), sound.files[i]), header = T)
+    f <- r$sample.rate
+    t <- c(start[i] - mar, end[i] + mar)
+    if(t[1]<0) t[1]<-0
+    if(t[2]>r$samples/f) t[2]<-r$samples/f
     
+    
+    mar1 <- mar
+    mar2 <- mar1 + end[i] - start[i]
+    
+    if (t[1] < 0) { 
+      mar1 <- mar1  + t[1]
+      mar2 <- mar2  + t[1]
+      t[1] <- 0
+    }
+    
+    if(t[2] > r$samples/f) t[2] <- r$samples/f
+    
+    # read rec segment
+    r <- tuneR::readWave(as.character(sound.files[i]), from = t[1], to = t[2], units = "seconds")
     #in case bp its higher than can be due to sampling rate
     b<- bp 
     if(b[2] > ceiling(r@samp.rate/2000) - 1) b[2] <- ceiling(r@samp.rate/2000) - 1 
-    
-    f <- r@samp.rate
-    t <- c(start[i] - mar, end[i] + mar)
-    cex <- cex
     
     fl<- flim #in case flim its higher than can be due to sampling rate
     if(fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
@@ -220,10 +251,11 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     par(mar = inner.mar)
     par(oma = outer.mar)
     
+    
     # Generate spectrogram using seewave
     seewave::spectro(r, f = f, wl = wl, ovlp = 70, collevels = seq(-40, 0, 0.5), heights = hts,
             wn = "hanning", widths = wts, palette = pal, osc = osci, grid = gr, scale = sc, collab = "black", 
-            cexlab = cexlab, cex.axis = 0.5*picsize, tlim = t, flim = fl, tlab = "Time (s)", 
+            cexlab = cexlab, cex.axis = 0.5*picsize, flim = fl, tlab = "Time (s)", 
             flab = "Frequency (kHz)", alab = "")
     
     if(title){
@@ -232,24 +264,49 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
       
     }
     
-    # Plot fundamental frequencies at each time point
-    ffreq <- seewave::fund(r, from=start[i], to = end[i],  
+    # Calculate fundamental frequencies at each time point
+if(contour %in% c("both", "ff"))
+{        ffreq <- seewave::fund(r, from=mar1, to = mar2,  
               fmax= b[2]*1000, f = f, ovlp = 70, threshold = threshold, plot = FALSE) 
     ffreq <- ffreq[ffreq[,2] > b[1],]
     
-    points(c(ffreq[,1])+start[i], c(ffreq[,2]), col = col[1], cex = cex[1], pch = pch[1]) 
-
-    # Plot dominant frequency at each time point     
-    dfreq <- seewave::dfreq(r, f = f, wl = wl, ovlp = 70, plot = FALSE, bandpass = b * 1000, fftw = TRUE, 
-                   threshold = threshold, tlim = c(start[i], end[i]))
-
-    points(dfreq[,1]+start[i], dfreq[,2], col = col[2], cex = cex[1], pch = pch[2]) 
+    # Plot all fundamental frequency values
+    points(c(ffreq[,1])+mar1, c(ffreq[,2]), col = col[1], cex = cex[1], pch = pch[1])
     
-    abline(v = c(end[i],start[i]), col= "red", lty = "dashed")
+    # Plot extreme values fundamental frequency
+    points(c(ffreq[c(which.max(ffreq[,2]),which.min(ffreq[,2])),1])+mar1, c(ffreq[c(which.max(ffreq[,2]),which.min(ffreq[,2])),2]), col = "yellow", cex = cex[1]+1, pch = pch[1]) 
+  
+    points(c(ffreq[c(which.max(ffreq[,2]),which.min(ffreq[,2])),1])+mar1, c(ffreq[c(which.max(ffreq[,2]),which.min(ffreq[,2])),2]), col = col[1], cex = cex[1], pch = pch[1]) 
+}    
+    
+    # Calculate dominant frequency at each time point     
+    if(contour %in% c("both", "df"))
+{       dfreq <- seewave::dfreq(r, f = f, wl = wl, ovlp = 70, plot = FALSE, bandpass = b * 1000, fftw = TRUE, 
+                   threshold = threshold, tlim = c(mar1, mar2))
+
+    # Plot all dominant frequency values
+    points(dfreq[,1] + mar1, dfreq[,2], col = col[2], cex = cex[1], pch = pch[2]) 
+    
+    # Plot extreme values dominant frequency
+    points(c(dfreq[c(which.max(dfreq[,2]),which.min(dfreq[,2])),1])+mar1, c(dfreq[c(which.max(dfreq[,2]),which.min(dfreq[,2])),2]), col = "yellow", cex = cex[1]+1, pch = pch[2]) 
+    
+    points(c(dfreq[c(which.max(dfreq[,2]),which.min(dfreq[,2])),1])+mar1, c(dfreq[c(which.max(dfreq[,2]),which.min(dfreq[,2])),2]), col = col[2], cex = cex[1], pch = pch[2]) 
+        }
+    
+    abline(v = c(mar1, mar2), col= "red", lty = "dashed")
     
     # Legend coordinates can be uniquely adjusted 
+    if(contour == "both")
     legend(lpos, legend = c("Ffreq", "Dfreq"),
            pch = pch, col = col[1:2], bty = "o", cex = cex[2])
+
+    if(contour == "ff")
+      legend(lpos, legend = "Ffreq",
+             pch = pch, col = col[1], bty = "o", cex = cex[2])
+
+    if(contour == "df")
+      legend(lpos, legend = "Dfreq",
+             pch = pch, col = col[2], bty = "o", cex = cex[2])
     
     invisible() # execute par(old.par)  
     dev.off()

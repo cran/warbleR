@@ -1,15 +1,15 @@
 #' Measure signal-to-noise ratio
 #' 
 #' \code{sig2noise} measures signal-to-noise ratio across multiple files.
-#' @usage sig2noise(X, mar, parallel = FALSE)
+#' @usage sig2noise(X, mar, parallel = 1)
 #' @param X Data frame with results from \code{\link{manualoc}} or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). 
 #' @param mar numeric vector of length 1. Specifies the margins adjacent to
 #'   the start and end points of selection over which to measure noise.
-#' @param parallel Either logical or numeric. Controls wehther parallel computing is applied.
-#'  If \code{TRUE} 2 cores are employed. If numeric, it specifies the number of cores to be used.
-#'  Not available for windows OS.
+#' @param parallel Numeric. Controls whether parallel computing is applied.
+#' It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
+#' For windows OS the \code{warbleR} from github to run parallel.   
 #' @return Data frame similar to \code{\link{autodetec}} output, but also includes a new variable 
 #' with the signal-to-noise values.
 #' @export
@@ -41,10 +41,10 @@
 #' sig2noise(manualoc.df[grep("Phae.long1", manualoc.df$sound.files), ], mar = 0.1)
 #' }
 #' 
-#' @author Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/}) and Grace Smith Vidaurre
+#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
 #' @source \url{https://en.wikipedia.org/wiki/Signal-to-noise_ratio}
 
-sig2noise <- function(X, mar, parallel = FALSE){
+sig2noise <- function(X, mar, parallel = 1){
   if(class(X) == "data.frame") {if(all(c("sound.files", "selec", 
                                          "start", "end") %in% colnames(X))) 
   {
@@ -72,7 +72,7 @@ sig2noise <- function(X, mar, parallel = FALSE){
   #return warning if not all sound files were found
   fs <- list.files(path = getwd(), pattern = ".wav$", ignore.case = T)
   if(length(unique(sound.files[(sound.files %in% fs)])) != length(unique(sound.files))) 
-    message(paste(length(unique(sound.files))-length(unique(sound.files[(sound.files %in% fs)])), 
+    cat(paste(length(unique(sound.files))-length(unique(sound.files[(sound.files %in% fs)])), 
                   ".wav file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
@@ -86,32 +86,53 @@ sig2noise <- function(X, mar, parallel = FALSE){
     sound.files <- sound.files[d]
   }
    
-  #if parallel was called
-  if (parallel) {lapp <- function(X, FUN) parallel::mclapply(X, 
-      FUN, mc.cores = 2)} else    
-          if(is.numeric(parallel)) lapp <- function(X, FUN) parallel::mclapply(X, 
-          FUN, mc.cores = parallel) else lapp <- pbapply::pblapply
+  # If parallel is not numeric
+  if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
+  if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
+  
+  #if on windows you need parallelsugar package
+  if(parallel > 1)
+  { 
+    #      options(warn = -1)
+    #      
+    #        
+    #        if(Sys.info()[1] == "Windows"){ 
+    #       cat 
+    #       lapp <- pbapply::pblapply} else 
+    lapp <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = parallel)} else lapp <- pbapply::pblapply
+  
+  options(warn = 0)
   
   SNR <- lapp(c(1:length(sound.files)), function(y){
       
-      # Read sound file
-      r <- tuneR::readWave(file.path(getwd(), sound.files[y]))
-
-      # Set the frequency or sampling rate of the signal 
-      f <- r@samp.rate 
-      
-      # Identify the signal
-      signal <- seewave::cutw(r, from = start[y], to = end[y], f = f)
+    # Read sound files to get sample rate and length
+      r <- tuneR::readWave(file.path(getwd(), sound.files[y]), header = TRUE)
+      f <- r$sample.rate
     
-      # Identify areas before and after signal over which to measure noise 
+      #reset coordinates of signals 
       stn <- start[y] - mar
       enn <- end[y] + mar
-      if (stn < 0) stn <- 0
-      if (enn > length(r@left)/r@samp.rate) enn <- length(r@left)/r@samp.rate
-      noise1 <- seewave::cutw(r, from =  stn, 
-                     to = start[y], f = f)
+      mar1 <- mar
+      mar2 <- mar1 + end[y] - start[y]
       
-      noise2 <- seewave::cutw(r, from = end[y], to = enn, f = f)
+      if (stn < 0) { 
+      mar1 <- mar1  + stn
+      mar2 <- mar2  + stn
+      stn <- 0
+      }
+      
+      if(enn > r$samples/f) enn <- r$samples/f
+      
+      r <- tuneR::readWave(file.path(getwd(), sound.files[y]), from = stn, to = enn, units = "seconds")
+      
+      # Identify the signal
+      signal <- seewave::cutw(r, from =  mar1, to = mar2, f = f)
+      
+      # Identify areas before and after signal over which to measure noise 
+      noise1 <- seewave::cutw(r, from =  0, 
+                     to = mar1, f = f)
+      
+      noise2 <- seewave::cutw(r, from = mar2, to = length(r@left)/r@samp.rate, f = f)
       
       # Calculate mean noise amplitude 
       noisamp <- mean(c(seewave::env(noise1, f = f, envt = "abs", plot = FALSE), 

@@ -3,9 +3,9 @@
 #' \code{specreator} creates spectrograms of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
 #' @usage specreator(X, wl = 512, flim = c(0, 22), wn = "hanning", pal
 #'   = reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar =
-#'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, trel = FALSE, 
+#'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE,
 #'   propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE,  sc = FALSE, line = TRUE,
-#'   mar = 0.05, it = "jpeg", parallel = FALSE)
+#'   mar = 0.05, it = "jpeg", parallel = 1)
 #' @param  X Data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signals (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
@@ -34,8 +34,6 @@
 #'   labels. See \code{\link[seewave]{spectro}}.
 #' @param title Logical argument to add a title to individual spectrograms. 
 #'   Default is \code{TRUE}.
-#' @param trel Logical argument to add a time axis scale relative to the wave. 
-#'   Default is \code{FALSE}.
 #' @param propwidth Logical argument to scale the width of spectrogram 
 #'   proportionally to duration of the selection. Default is \code{FALSE}.
 #' @param xl Numeric vector of length 1. A constant by which to scale 
@@ -50,9 +48,11 @@
 #' dealineating spectrogram limits. Default is 0.05.
 #' @param it A character vector of length 1 giving the image type to be used. Currently only
 #' "tiff" and "jpeg" are admitted. Default is "jpeg".
-#' @param parallel Either logical or numeric. Controls wehther parallel computing is applied.
-#'  If \code{TRUE} 2 cores are employed. If numeric, it specifies the number of cores to be used. 
-#'  Not available for windows OS. 
+#' @param parallel Numeric. Controls whether parallel computing is applied.
+#' It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
+#' For windows OS the \code{warbleR} from github to run parallel. 
+#'   Note that creating images is not compatible with parallel computing 
+#'   (parallel > 1) in OSX (mac).   
 #' @return Image files containing spectrograms of the signals listed in the input data frame.
 #' @family spectrogram creators
 #' @seealso \code{\link{trackfreqs}} for creating spectrograms to visualize 
@@ -66,10 +66,9 @@
 #' this may take some optimization by the user.
 #' @examples
 #' \dontrun{ 
-#' # First create empty folder
-#' dir.create(file.path(getwd(),"temp"))
-#' setwd(file.path(getwd(),"temp"))
-#' 
+#' # First set empty folder
+#' setwd(tempdir())
+
 #' data(list = c("Phae.long1", "Phae.long2","manualoc.df"))
 #' writeWave(Phae.long1, "Phae.long1.wav") #save sound files 
 #' writeWave(Phae.long2, "Phae.long2.wav")
@@ -81,18 +80,16 @@
 
 #' #check this folder!!
 #' getwd()
-#' 
-#' #remove example directory
-#' unlink(getwd(),recursive = TRUE)
 #' }
-#' @author Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/}) and Grace Smith Vidaurre
+#' 
+#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
 
 specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
-                       inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100, 
-                       cexlab = 1, title = TRUE, trel = FALSE, propwidth = FALSE, xl=1, osci = FALSE, 
-                       gr = FALSE, sc = FALSE, line = TRUE, mar = 0.05, it = "jpeg", parallel = FALSE){
-                  
-
+                        inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100, 
+                        cexlab = 1, title = TRUE, propwidth = FALSE, xl=1, osci = FALSE, 
+                        gr = FALSE, sc = FALSE, line = TRUE, mar = 0.05, it = "jpeg", parallel = 1){
+  
+  
   if(class(X) == "data.frame") {if(all(c("sound.files", "selec", 
                                          "start", "end") %in% colnames(X))) 
   {
@@ -102,8 +99,8 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     selec <- as.character(unlist(X$selec))
     selcom <- as.character(unlist(X$sel.comment))
     
-    } else stop(paste(paste(c("sound.files", "selec", "start", "end", "sel.comment")[!(c("sound.files", "selec", 
-                                                                       "start", "end", "sel.comment") %in% colnames(X))], collapse=", "), "column(s) not found in data frame"))
+  } else stop(paste(paste(c("sound.files", "selec", "start", "end", "sel.comment")[!(c("sound.files", "selec", 
+                                                                                       "start", "end", "sel.comment") %in% colnames(X))], collapse=", "), "column(s) not found in data frame"))
   } else stop("X is not a data frame")
   
   #if there are NAs in start or end stop
@@ -125,7 +122,7 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   #return warning if not all sound files were found
   recs.wd <- list.files(path = getwd(), pattern = ".wav$", ignore.case = T)
   if(length(unique(sound.files[(sound.files %in% recs.wd)])) != length(unique(sound.files))) 
-    message(paste(length(unique(sound.files))-length(unique(sound.files[(sound.files %in% recs.wd)])), 
+    (paste(length(unique(sound.files))-length(unique(sound.files[(sound.files %in% recs.wd)])), 
                   ".wav file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
@@ -140,77 +137,97 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   }
   
   if(propwidth) picsize <- 1
-    
-  #if parallel was called
-  if (parallel) {lapp <- function(X, FUN) parallel::mclapply(X, 
-      FUN, mc.cores = 2)} else    
-          if(is.numeric(parallel)) lapp <- function(X, FUN) parallel::mclapply(X, 
-                FUN, mc.cores = parallel) else lapp <- pbapply::pblapply
+  
+  # If parallel is not numeric
+  if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
+  if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
+  
+  #if parallel in OSX
+  if(all(parallel > 1, !Sys.info()[1] %in% c("Linux","Windows"))) {
+    parallel <- 1
+    ("creating images is not compatible with parallel computing (parallel > 1) in OSX (mac)")
+  }
+  
+  # If parallel was called
+  if(parallel > 1)
+  { options(warn = -1)
+     
+       
+        if(Sys.info()[1] == "Windows"){ 
+           
+          lapp <- pbapply::pblapply} else lapp <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = parallel)} else lapp <- pbapply::pblapply
+  
+  options(warn = 0)
   
   # Create spectrograms overlaid with start and end times from manualoc()
-  if(!parallel) message("Creating spectrograms from selections:")
-
+  if(parallel == 1) ("Creating spectrograms from selections:")
   
-    invisible(lapp(1:length(sound.files), function(i){
-      
-      # Read sound files, initialize frequency and time limits for spectrogram
-      r <- tuneR::readWave(file.path(getwd(), sound.files[i]))
-      f <- r@samp.rate
-      t <- c(start[i] - mar, end[i] + mar)
-      if(t[1]<0) t[1]<-0
-      if(t[2]>length(r@left)/r@samp.rate) t[2]<-length(r@left)/r@samp.rate
-      
-      fl<- flim #in case flim its higher than can be due to sampling rate
-      if(fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
-      
-      
-      # Spectrogram width can be proportional to signal duration
-      if(propwidth){
-        if(it == "tiff")  tiff(filename = paste(sound.files[i],"-", selec[i], "-", ".tiff", sep = ""), 
-             width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-               jpeg(filename = paste(sound.files[i],"-", selec[i], "-", ".jpeg", sep = ""), 
-                    width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, 
-                    units = "cm", res = res) 
-                                       
-      } else {
-        if(it == "tiff")  tiff(filename = paste(sound.files[i],"-", selec[i], "-", ".tiff", sep = ""), 
-             width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-               jpeg(filename = paste(sound.files[i],"-", selec[i], "-", ".jpeg", sep = ""), 
-             width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
-      }
-      
-      # Change relative heights of rows for spectrogram when osci = TRUE
-      if(osci) hts <- c(3, 2) else hts <- NULL
-      
-      # Change relative widths of columns for spectrogram when sc = TRUE
-      if(sc) wts <- c(3, 1) else wts <- NULL
-      
-      old.par <- par(no.readonly = TRUE) # par settings which could be changed.
-      on.exit(par(old.par)) 
-      
-      # Change inner and outer plot margins
-      par(mar = inner.mar)
-      par(oma = outer.mar)
-      
-      # Generate spectrogram using seewave 
-      seewave::spectro(r, f = f, wl = wl, ovlp = ovlp, collevels = seq(-40, 0, 0.5), heights = hts, wn = "hanning", 
-              widths = wts, palette = pal, osc = osci, grid = gr, scale = sc, collab = "black", 
-              cexlab = cexlab, cex.axis = 0.5*picsize, tlim = t, flim = fl, tlab = "Time (s)", 
-              flab = "Frequency (kHz)", alab = "", trel = trel)
-      
-      # Add title to spectrogram
-      if(title) if(!is.na(selcom[i]))
-        title(paste(sound.files[i], "-", selec[i], "-", selcom[i], sep = ""), cex.main = cexlab) else
-          title(paste(sound.files[i], "-", selec[i], sep = ""), cex.main = cexlab)
-      
-      # Plot lines to visualize selections (start and end of signal)
-      if(line) if(trel)
-        abline(v = c(start[i], end[i]), col = "red", lwd = 3, lty = "dashed") else
-          if(start[i] - mar < 0) abline(v = c(start[i], end[i]), col = "red", lwd = 3, lty = "dashed") else
-            abline(v = c(mar, end[i]- start[i] + mar), col = "red", lwd = 3, lty = "dashed")
-
-      invisible() # execute par(old.par) 
-        dev.off()
+  
+  invisible(lapp(1:length(sound.files), function(i){
+    
+    # Read sound files, initialize frequency and time limits for spectrogram
+    r <- tuneR::readWave(file.path(getwd(), sound.files[i]), header = T)
+    f <- r$sample.rate
+    t <- c(start[i] - mar, end[i] + mar)
+    
+    mar1 <- mar
+    mar2 <- mar1 + end[i] - start[i]
+    
+    if (t[1] < 0) { 
+      mar1 <- mar1  + t[1]
+      mar2 <- mar2  + t[1]
+      t[1] <- 0
     }
-    ))
+    
+    if(t[2] > r$samples/f) t[2] <- r$samples/f
+    
+    fl<- flim #in case flim its higher than can be due to sampling rate
+    if(fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
+    
+    
+    # Spectrogram width can be proportional to signal duration
+    if(propwidth){
+      if(it == "tiff")  tiff(filename = paste(sound.files[i],"-", selec[i], "-", ".tiff", sep = ""), 
+                             width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
+                               jpeg(filename = paste(sound.files[i],"-", selec[i], "-", ".jpeg", sep = ""), 
+                                    width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, 
+                                    units = "cm", res = res) 
+      
+    } else {
+      if(it == "tiff")  tiff(filename = paste(sound.files[i],"-", selec[i], "-", ".tiff", sep = ""), 
+                             width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
+                               jpeg(filename = paste(sound.files[i],"-", selec[i], "-", ".jpeg", sep = ""), 
+                                    width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
+    }
+    
+    # Change relative heights of rows for spectrogram when osci = TRUE
+    if(osci) hts <- c(3, 2) else hts <- NULL
+    
+    # Change relative widths of columns for spectrogram when sc = TRUE
+    if(sc) wts <- c(3, 1) else wts <- NULL
+    
+    old.par <- par(no.readonly = TRUE) # par settings which could be changed.
+    on.exit(par(old.par)) 
+    
+    # Change inner and outer plot margins
+    par(mar = inner.mar)
+    par(oma = outer.mar)
+    
+    # Generate spectrogram using seewave 
+    seewave::spectro(tuneR::readWave(as.character(sound.files[i]), from = t[1], to = t[2], units = "seconds") , f = f, wl = wl, ovlp = ovlp, collevels = seq(-40, 0, 0.5), heights = hts, wn = "hanning", 
+                     widths = wts, palette = pal, osc = osci, grid = gr, scale = sc, collab = "black", 
+                     cexlab = cexlab, cex.axis = 1, flim = fl, tlab = "Time (s)", 
+                     flab = "Frequency (kHz)", alab = "", trel = FALSE)
+    
+    # Add title to spectrogram
+    if(title) if(!is.na(selcom[i]))
+      title(paste(sound.files[i], "-", selec[i], "-", selcom[i], sep = ""), cex.main = cexlab) else
+        title(paste(sound.files[i], "-", selec[i], sep = ""), cex.main = cexlab)
+    
+    # Plot lines to visualize selections (start and end of signal)
+        abline(v = c(mar1, mar2), col = "red", lwd = 3, lty = "dashed")
+    invisible() # execute par(old.par) 
+    dev.off()
+  }
+  ))
 }

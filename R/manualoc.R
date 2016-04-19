@@ -87,8 +87,9 @@
 #'   reverse.gray.colors.1, reverse.gray.colors.2, reverse.heat.colors, reverse.terrain.colors,
 #'   reverse.topo.colors, reverse.cm.colors, heat.colors, terrain.colors, topo.colors,
 #'   cm.colors. The function is slow when working on files of length > 5min.
-#'   
-#' @author Marcelo Araya-Salas (\url{http://marceloarayasalas.weebly.com/}) and Hua Zhong
+#'  @seealso  \code{\link{seltailor}}
+#'    
+#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Hua Zhong
 
 manualoc <- function(wl = 512, flim = c(0,12), seltime = 1, tdisp = NULL, reccomm = FALSE, wn = "hanning", title = TRUE, 
                      selcomm = FALSE, osci = FALSE, player = NULL, pal = reverse.gray.colors.2)
@@ -301,7 +302,7 @@ manualoc <- function(wl = 512, flim = c(0,12), seltime = 1, tdisp = NULL, reccom
          && all(xy$y > (fl[2] - fl[1])/marg1 - (3*((fl[2] - fl[1])/marg2 - (fl[2] - fl[1])/marg1)) + fl[1]))
       {if(length(setdiff(files, unique(results$sound.files))) == 0)
       {try(dev.off(), silent = T)
-       message("all .wav files in working directory have been analyzed")
+       cat("all .wav files in working directory have been analyzed")
        options( show.error.messages = F)
        stop("")}
       if(reccomm) rec.comment <- edit(rec.comment) else rec.comment <- ""   
@@ -341,7 +342,7 @@ manualoc <- function(wl = 512, flim = c(0,12), seltime = 1, tdisp = NULL, reccom
     
     if(!file.exists(file.path(getwd(), files[wavs + 1])))
     {try(dev.off(), silent = T)
-     message("This was the last sound file")
+     cat("This was the last sound file")
      break}
   }
 }

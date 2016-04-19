@@ -67,9 +67,22 @@
 #'   
 #'   \code{\link{dfts}}: Extract the dominant frequency values as a time series
 #'   
+#'   \code{\link{ffts}}: Extract the fundamental frequency values as a time series
+#'   
+#'   \code{\link{dfDTW}}: Calculates acoustic dissimilarity using dynamic time warping
+#'    on dominant frequency contours
+#'   
+#'   \code{\link{ffDTW}}: Calculates acoustic dissimilarity using dynamic time warping
+#'   on fundamental frequency contours
+
+#'      \code{\link{compare.methods}}: Produces graphs to visually assess performance of acoustic 
+#'   distance measurements 
+#'   
 #'   \code{\link{coor.graph}}: Creat graphs of coordinated singing 
 #'   
 #'   \code{\link{coor.test}}: Assess statistical significance of singing coordination 
+#'   
+#'   \code{\link{seltailor}}: nteractive view of spectrograms to tailor start and end of selections
 #'   
 #' @import maps
 #' @import rjson
@@ -81,12 +94,13 @@
 #' @import graphics
 #' @import grDevices
 #' @import utils
-#' @import stats
 #' @import parallel
+#' @importFrom dtw dtwDist
+#' @importFrom stats cor dist aggregate approx ave princomp time ts    
 #' 
 #' @author Marcelo Araya-Salas, Grace Smith Vidaurre, Hua Zhong 
 #'   
-#'   Maintainer: Marcelo Araya-Salas (marceloa27@@gmail.com)
+#'   Maintainer: Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #'   
 #' @docType package
 #' @name warbleR
