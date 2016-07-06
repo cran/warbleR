@@ -4,7 +4,7 @@
 #'   rows.
 #' @usage lspec(X = NULL, flim = c(0,22), sxrow = 5, rows = 10, collev = seq(-40, 0, 1), 
 #' ovlp = 50, parallel = 1, wl = 512, gr = FALSE, pal = reverse.gray.colors.2, 
-#' cex = 1, it = "jpeg", flist = NULL, redo = TRUE) 
+#' cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL) 
 #' @param X Data frame with results from \code{\link{manualoc}} or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). If given, two red dotted lines are plotted at the 
@@ -24,10 +24,7 @@
 #'   consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 50. High values of ovlp 
 #'   slow down the function but produce more accurate selection limits (when X is provided). 
 #' @param parallel Numeric. Controls whether parallel computing is applied.
-#'  It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
-#'   windows OS users need to install \code{warbleR} from github to run parallel. 
-#'   Note that creating images is not compatible with parallel computing 
-#'   (parallel > 1) in OSX (mac).   
+#'  It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
 #' @param gr Logical argument to add grid to spectrogram. Default is \code{FALSE}.
@@ -42,6 +39,8 @@
 #' @param redo Logical argument. If \code{TRUE} all selections will be analyzed again 
 #'   when code is rerun. If \code{FALSE} only the selections that do not have a image 
 #'   file in the working directory will be analyzed. Default is \code{FALSE}.
+#' @param path Character string containing the directory path where the sound files are located. 
+#' If \code{NULL} (default) then the current working directory is used.
 #' @return image files with spectrograms of whole sound files in the working directory. Multiple pages
 #' can be returned, depending on the length of each sound file. 
 #' @export
@@ -49,7 +48,7 @@
 #' @details The function creates spectrograms for complete sound files, printing
 #'   the name of the sound files and the "page" number (p1-p2...) at the upper 
 #'   right corner of the image files. If results from \code{\link{manualoc}} are 
-#'   supplied (or a equivalent data frame), the function delimits and labels the selections. 
+#'   supplied (or an equivalent data frame), the function delimits and labels the selections. 
 #'   This function aims to facilitate visual classification of vocalization units and the 
 #'   analysis of animal vocal sequences.
 #' @examples
@@ -61,33 +60,40 @@
 #' writeWave(Phae.long1,"Phae.long1.wav") 
 #' writeWave(Phae.long2,"Phae.long2.wav")
 #' 
-#' lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors)
+#' lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors, wl = 300)
 #' 
 #' # including selections
-#' lspec(sxrow = 2, rows = 8, X = manualoc.df, pal = reverse.heat.colors, redo = F)
+#' lspec(sxrow = 2, rows = 8, X = manualoc.df, pal = reverse.heat.colors, redo = TRUE, wl = 300)
 #' 
 #' check this floder
 #' getwd()
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Hua Zhong
+#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#last modification on jul-5-2016 (MAS)
 
 lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(-40, 0, 1),  ovlp = 50, parallel = 1, 
-                  wl = 512, gr = FALSE, pal = reverse.gray.colors.2, cex = 1, it = "jpeg", flist = NULL, redo = TRUE) {
+                  wl = 512, gr = FALSE, pal = reverse.gray.colors.2, cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL) {
+  
+  #check path to working directory
+  if(!is.null(path)) 
+    if(class(try(setwd(path), silent = T)) == "try-error") stop("'path' provided does not exist") else 
+      setwd(path) #set working directory
   
   #if sel.comment column not found create it
   if(is.null(X$sel.comment) & !is.null(X)) X<-data.frame(X,sel.comment="")
   
   #read files
-  files <- list.files(path = getwd(), pattern = ".wav$", ignore.case = TRUE)  
+  files <- list.files(pattern = ".wav$", ignore.case = TRUE)  
   
   
   #stop if files are not in working directory
   if(length(files) == 0) stop("no .wav files in working directory")
+  
   #subet based on file list provided (flist)
   if (!is.null(flist)) files <- files[files %in% flist]
   if (length(files) == 0)  stop("selected .wav files are not in working directory")
   
-  #read X files
+  #check that all files are in working directory
   if(!is.null(X)) {manloc <- X
   files<-files[files %in% X$sound.files]
   }  else manloc <- NULL
@@ -149,43 +155,28 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
   #if parallel
-  if(all(parallel > 1, !Sys.info()[1] %in% c("Linux","Windows"))) {
-    parallel <- 1
-    cat("creating images is not compatible with parallel computing (parallel > 1) in OSX (mac)")
-  }
-  
-  #if on windows you need parallelsugar package
-  if(parallel > 1)
-  { 
-    #      options(warn = -1)
-    #      
-    #        
-    #        if(Sys.info()[1] == "Windows"){ 
-    #       cat 
-    #       lapp <- pbapply::pblapply} else 
-    lapp <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = parallel)} else lapp <- pbapply::pblapply
-  
-  options(warn = 0)
+  # if(all(parallel > 1, !Sys.info()[1] %in% c("Linux","Windows"))) {
+  #   parallel <- 1
+  #   message("creating images is not compatible with parallel computing (parallel > 1) in OSX (mac)")
+  # }
   
   # redo
   if(!redo) 
     files <- files[!gsub(".wav$","", list.files(pattern = ".wav$", ignore.case = TRUE),ignore.case = TRUE) %in% 
       unlist(sapply(strsplit(as.character(list.files(pattern = paste(it, "$", 
-                                                                     sep = ""), ignore.case = TRUE)), "-p",fixed=T), "[",1))]
+                                                                     sep = ""), ignore.case = TRUE)), "-p",fixed = TRUE), "[",1))]
   
   
   #stop if files are not in working directory
   if(length(files) == 0) stop("all .wav files have been processed")
   
-  
-  #apply over each sound file
-  invisible(lapp(files, function(z, fl = flim, sl = sxrow, li = rows, ml = manloc, malo = X) {
+    #create function for making spectrograms
+   lspecFUN <-function(z, fl, sl, li, ml, malo) {
     
-
           #loop to print spectros  
     rec <- tuneR::readWave(z) #read wave file 
     f <- rec@samp.rate #set sampling rate
-    frli<- fl #in case flim its higher than can be due to samplin rate
+    frli<- fl #in case flim is higher than can be due to sampling rate
     if(frli[2] > ceiling(f/2000) - 1) frli[2] <- ceiling(f/2000) - 1 
     dur <- length(rec@left)/rec@samp.rate #set duration    
     
@@ -208,7 +199,7 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
         x <- x + 1
         if(all(((x)*sl+li*(sl)*(j-1))-sl<dur & (x)*sl+li*(sl)*(j-1)<dur)){  #for rows with complete spectro
           seewave::spectro(rec, f = f, wl = wl, flim = frli, tlim = c(((x)*sl+li*(sl)*(j-1))-sl, (x)*sl+li*(sl)*(j-1)), 
-                  ovlp = ovlp, collevels = collev, grid = gr, scale = FALSE, palette = pal, axisX = T)
+                  ovlp = ovlp, collevels = collev, grid = gr, scale = FALSE, palette = pal, axisX = TRUE)
           if(x == 1) text((sl-0.01*sl) + (li*sl)*(j - 1), frli[2] - (frli[2]-frli[1])/10, paste(substring(z, first = 1, 
                                                                                                           last = nchar(z)-4), "-p", j, sep = ""), pos = 2, font = 2, cex = cex)
           if(!is.null(malo))  {if(any(!is.na(ml$sel.comment))) {
@@ -222,7 +213,10 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
                                      seewave::spectro(seewave::pastew(seewave::noisew(f = f,  d = (x)*sl+li*(sl)*(j-1)-dur+1,  type = "unif",   
                                                            listen = FALSE,  output = "Wave"), seewave::cutw(wave = rec, f = f, from = ((x)*sl+li*(sl)*(j-1))-sl,
                                                                                                    to = dur, output = "Wave"), f =f,  output = "Wave"), f = f, wl = wl, flim = frli, 
-                                             tlim = c(0, sl), ovlp = ovlp, collevels = collev, grid = gr, scale = FALSE, palette = pal, axisX = F)
+                                             tlim = c(0, sl), ovlp = ovlp, collevels = collev, grid = gr, scale = FALSE, palette = pal, axisX = FALSE)
+                                     
+        if(x == 1) text((sl-0.01*sl) + (li*sl)*(j - 1), frli[2] - (frli[2]-frli[1])/10, paste(substring(z, first = 1, 
+      last = nchar(z)-4), "-p", j, sep = ""), pos = 2, font = 2, cex = cex)                             
                                      
                                      #add X lines and labels
                                      
@@ -249,7 +243,40 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
       }
       dev.off() #reset graphic device
     }
-  }))
-  
-  }
+    }
+    
+   #Apply over each sound file
+    # Run parallel in windows
+    if(parallel > 1) {if(Sys.info()[1] == "Windows") {
+      
+      z <- NULL
+      
+      cl <- parallel::makeCluster(parallel)
+      
+      doParallel::registerDoParallel(cl)
+      
+      
+      sp <- foreach::foreach(z = files) %dopar% {
+          lspecFUN(z = z, fl = flim, sl = sxrow, li = rows, ml = manloc, malo = X)
+      }
+      
+#       sp <- parallel::parLapply(cl, files, function(z)
+#       {
+#         lspecFUN(z = z, fl = flim, sl = sxrow, li = rows, ml = manloc, malo = X)
+#       })
+      
+      parallel::stopCluster(cl)
+      
+    } else {    # Run parallel in other operating systems
+      
+      sp <- parallel::mclapply(files, function(z) {
+        lspecFUN(z = z, fl = flim, sl = sxrow, li = rows, ml = manloc, malo = X)
+      })
+    }
+    }
+    else {sp <- pbapply::pblapply(files, function(z) 
+      lspecFUN(z = z, fl = flim, sl = sxrow, li = rows, ml = manloc, malo = X))
+    }
+     
+}
 

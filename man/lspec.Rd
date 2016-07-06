@@ -6,7 +6,7 @@
 \usage{
 lspec(X = NULL, flim = c(0,22), sxrow = 5, rows = 10, collev = seq(-40, 0, 1), 
 ovlp = 50, parallel = 1, wl = 512, gr = FALSE, pal = reverse.gray.colors.2, 
-cex = 1, it = "jpeg", flist = NULL, redo = TRUE)
+cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL)
 }
 \arguments{
 \item{X}{Data frame with results from \code{\link{manualoc}} or any data frame with columns
@@ -34,10 +34,7 @@ consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 50. High v
 slow down the function but produce more accurate selection limits (when X is provided).}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
-It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
- windows OS users need to install \code{warbleR} from github to run parallel. 
- Note that creating images is not compatible with parallel computing 
- (parallel > 1) in OSX (mac).}
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
 is 512.}
@@ -59,6 +56,9 @@ if X is provided.}
 \item{redo}{Logical argument. If \code{TRUE} all selections will be analyzed again 
 when code is rerun. If \code{FALSE} only the selections that do not have a image 
 file in the working directory will be analyzed. Default is \code{FALSE}.}
+
+\item{path}{Character string containing the directory path where the sound files are located. 
+If \code{NULL} (default) then the current working directory is used.}
 }
 \value{
 image files with spectrograms of whole sound files in the working directory. Multiple pages
@@ -72,7 +72,7 @@ can be returned, depending on the length of each sound file.
 The function creates spectrograms for complete sound files, printing
   the name of the sound files and the "page" number (p1-p2...) at the upper 
   right corner of the image files. If results from \code{\link{manualoc}} are 
-  supplied (or a equivalent data frame), the function delimits and labels the selections. 
+  supplied (or an equivalent data frame), the function delimits and labels the selections. 
   This function aims to facilitate visual classification of vocalization units and the 
   analysis of animal vocal sequences.
 }
@@ -85,16 +85,16 @@ data(list = c("Phae.long1", "Phae.long2","manualoc.df"))
 writeWave(Phae.long1,"Phae.long1.wav") 
 writeWave(Phae.long2,"Phae.long2.wav")
 
-lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors)
+lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors, wl = 300)
 
 # including selections
-lspec(sxrow = 2, rows = 8, X = manualoc.df, pal = reverse.heat.colors, redo = F)
+lspec(sxrow = 2, rows = 8, X = manualoc.df, pal = reverse.heat.colors, redo = TRUE, wl = 300)
 
 check this floder
 getwd()
 }
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Hua Zhong
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
 

@@ -21,6 +21,7 @@ frame contains the following columns: selec, start, end, and selec.file. If soun
 will also contain a sound.file column. In addition, all rows with duplicated data are removed. This is useful when 
 both spectrogram and waveform views are included in the Syrinx selection files. If all.data is set to \code{TRUE}) then all 
 columns in selection files are returned.
+ @seealso \code{\link{imp.raven}}
 }
 \description{
 \code{imp.syrinx} Imports Syrinx selection data from many files simultaneously. 
@@ -34,11 +35,11 @@ setwd(tempdir())
 #load data 
 data(selection.files)
 
-write.table(selection.files[[3]],file = "harpyeagle.wav.txt",row.names = F,
- col.names = F, sep= "\\t")
+write.table(selection.files[[3]],file = "harpyeagle.wav.txt",row.names = FALSE,
+ col.names = FALSE, sep= "\\t")
 
-write.table(selection.files[[4]],file = "Phae.long4.wav.txt",row.names = F, 
-col.names = F, sep= "\\t")
+write.table(selection.files[[4]],file = "Phae.long4.wav.txt",row.names = FALSE, 
+col.names = FALSE, sep= "\\t")
 
 syr.dat<-imp.syrinx(all.data = FALSE)
 

@@ -30,6 +30,7 @@ columns in selection files are returned.
 }
 \details{
 The function import raven selection data from many files simultaneously. Files must be in .txt format. Note that a selection files including data from mulitple recordings cannot be imported.
+ @seealso \code{\link{imp.syrinx}}
 }
 \examples{
 \dontrun{
@@ -39,10 +40,10 @@ setwd(tempdir())
 data(selection.files)
 
 write.table(selection.files[[1]],file = "100889-Garrulax monileger.selections.txt",
-row.names = F, sep= "\\t")
+row.names = FALSE, sep= "\\t")
 
 write.table(selection.files[[2]],file = "1023-Arremonops rufivirgatus.selections.txt",
-row.names = F, sep= "\\t")
+row.names = FALSE, sep= "\\t")
 
 #providing the name of the column with the sound file names
 rav.dat<-imp.raven(sound.file.col = "End.File", all.data = FALSE)

@@ -11,14 +11,14 @@ vignette: >
 <center>![warbleR logo](Logo_Warble-azul_small_margin.png)</center>
 
 <center> <h1><b>Streamlining acoustic analysis</h1></b> </center>
-<center> <i><font size="4">Grace Smith Vidaurre and Marcelo Araya-Salas</font></i> </center>
+<center> <i><font size="4"><a href="http://biology-web.nmsu.edu/~twright/people.html">Grace Smith Vidaurre</a> and <a href="http://marceloarayasalas.weebly.com/">Marcelo Araya-Salas</a></font></i> </center>
 <center> `r Sys.Date()` </center>
 <br>
 
 
 Here we present a case study of how [`warbleR`](https://cran.r-project.org/package=warbleR) functions can be used for bioacoustics, as well as some tips on managing bioacoustic data in R. For more details about function arguments, input or output, please read the documentation for the function in question (e.g. `?querxc`). 
 
-Please note that most tools in [`warbleR`](https://cran.r-project.org/package=warbleR) use functions from the [`seewave package`](https://cran.r-project.org/package=seewave) internally. [`warbleR`](https://cran.r-project.org/package=warbleR) has been designed to make the analyses more accessible to average R-users. However, acoustic analysis in R would not be possible without the tools provided by [`seewave`](https://cran.r-project.org/package=seewave). Hence, both packages should be given credit when using [`warbleR`](https://cran.r-project.org/package=warbleR) and both should be appropriately cited in publications (try `citation("warbleR")` and `citation("seewave")`. 
+Please note that most tools in [`warbleR`](https://cran.r-project.org/package=warbleR) use functions from the [`seewave package`](https://cran.r-project.org/package=seewave) internally. [`warbleR`](https://cran.r-project.org/package=warbleR) has been designed to make the analyses more accessible to average R-users. However, acoustic analysis in R would not be possible without the tools provided by [`seewave`](https://cran.r-project.org/package=seewave). Hence, both packages should be given credit when using [`warbleR`](https://cran.r-project.org/package=warbleR) and both should be appropriately cited in publications (try `citation("warbleR")` and `citation("seewave")`). 
 
 This vignette can be run without an advanced understanding of R, as long as you know how to run code in you R console. However, knowing more about data and file manipulation would be very helpful in order to modify the code to fit your own needs.
 
@@ -278,9 +278,6 @@ for(i in 1:length(recs))
 
 ```
 
-```
-
-
 <br>
 
 ### Filter recordings by visual inspection 
@@ -325,7 +322,7 @@ lspec(flim = c(1.5, 11), ovlp = 10, sxrow = 6, rows = 15, it = "tiff")
 
 ```
 
-The image files should look like this:
+The image files (in the working directory) should look like this:
 
 ![lspec example, make it 700 pxls width](Phaethornis-longirostris-154072-p1.jpg)
 
@@ -399,7 +396,7 @@ autodetec(flist = sub, bp = c(1, 10), threshold = 10, mindur = 0.05, maxdur = 0.
 
 ```
 
-The image files should look like this (shown below is recording ID 154161):
+The image files (in the working directory) should look like this (shown below is recording ID 154161):
 
 ![autodetec image example, make it 700 pxls width](154161-autodetec.th10.jpg)
 
@@ -795,7 +792,8 @@ Songs of the same song type are more similar (they cluster together). This PCA c
 
 <font size="5"><a name="References">References</a></font> 
 
-1. Araya-Salas, M. and T. Wright. 2013. Open-ended song learning in a hummingbird. _Biology Letters_. 9 (5). doi: 10.1098/rsbl.2013.0625 
+1. Araya-Salas, M. and T. Wright. 2013. Open-ended song learning in a hummingbird. _Biology Letters_. 9 (5). doi: 10.1098/rsbl.2013.0625 [PDF](http://marceloarayasalas.weebly.com/uploads/2/5/5/2/25524573/araya-salas__wright_2013.pdf)
 
-2. Medina‐García, Angela, M. Araya‐Salas, and T. Wright. 2015. Does vocal learning accelerate acoustic diversification? Evolution of contact calls in Neotropical parrots. _Journal of Evolutionary Biology_. doi: 10.1111/jeb.12694
+2. Medina‐García, Angela, M. Araya‐Salas, and T. Wright. 2015. Does vocal learning accelerate acoustic diversification? Evolution of contact calls in Neotropical parrots. _Journal of Evolutionary Biology_. doi: 10.1111/jeb.12694 [PDF](http://marceloarayasalas.weebly.com/uploads/2/5/5/2/25524573/medina-garcia_araya-salas_&_wright_2015.pdf)
+
 <br>

@@ -4,14 +4,17 @@
 \alias{mp32wav}
 \title{Convert .mp3 files to .wav}
 \usage{
-mp32wav(samp.rate = 44.1, parallel = 1)
+mp32wav(samp.rate = 44.1, parallel = 1, path = NULL)
 }
 \arguments{
 \item{samp.rate}{Sampling rate at which the .wav files should be written. The maximum permitted is 44.1 kHz (default). Units should be kHz.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
-It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
- For windows OS the \code{warbleR} from github to run parallel.}
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
+Not availble in Windows OS.}
+
+\item{path}{Character string containing the directory path where the sound files are located. 
+If \code{NULL} (default) then the current working directory is used.}
 }
 \value{
 .wav files saved in the working directory with same name as original mp3 files.

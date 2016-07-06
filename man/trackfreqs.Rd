@@ -9,7 +9,8 @@ trackfreqs(X, wl = 512, flim = c(0, 22), wn = "hanning", pal =
   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
   xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = c(0.8, 1), 
   threshold = 15, contour = "both", col = c("chartreuse3", "dodgerblue"),
-   pch = c(17, 16),  mar = 0.05, lpos = "topright", it = "jpeg", parallel = 1)
+   pch = c(17, 16),  mar = 0.05, lpos = "topright", it = "jpeg", parallel = 1, 
+   path = NULL)
 }
 \arguments{
 \item{X}{Data frame with results containing columns for sound file name (sound.files), 
@@ -99,10 +100,10 @@ Default is "topright".}
 "tiff" and "jpeg" are admitted. Default is "jpeg".}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
-It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
-For windows OS the \code{warbleR} from github to run parallel.
-  Note that creating images is not compatible with parallel computing 
-  (parallel > 1) in OSX (mac).}
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
+
+\item{path}{Character string containing the directory path where the sound files are located. 
+If \code{NULL} (default) then the current working directory is used.}
 }
 \value{
 Spectrograms of the signals listed in the input data frame showing the location of 
@@ -132,18 +133,18 @@ writeWave(Cryp.soui, "Cryp.soui.wav") #save sound files
 
 #autodetec location of signals
 ad <- autodetec(threshold = 6, bp = c(1, 3), mindur = 1.2,
-maxdur = 3, img = FALSE, ssmooth = 600)
+maxdur = 3, img = FALSE, ssmooth = 600, wl = 300)
 
 #track dominant frequency graphs
 trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
- bp = c(1, 3), contour = "df")
+ bp = c(1, 3), contour = "df", wl = 300)
  
 # Check this folder
 getwd()
 
 #track both frequencies 
 trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
-bp = c(1, 3), contour = "both")
+bp = c(1, 3), contour = "both", wl = 300)
 
 }
 }

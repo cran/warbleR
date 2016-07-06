@@ -9,7 +9,7 @@ ffDTW(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal =
   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
   xl = 1, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = 1, 
   threshold = 15, col = "dodgerblue", pch = 16,  mar = 0.05, 
-  lpos = "topright", it = "jpeg", img = TRUE, parallel = 1)
+  lpos = "topright", it = "jpeg", img = TRUE, parallel = 1, path = NULL)
 }
 \arguments{
 \item{X}{Data frame with results containing columns for sound file name (sound.files), 
@@ -96,10 +96,11 @@ Default is "topright".}
 \item{img}{Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
-It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
- windows OS users need to install \code{warbleR} from github to run parallel.
- Note that creating images is not compatible with parallel computing 
- (parallel > 1) in OSX (mac).}
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
+Not available in Windows OS.}
+
+\item{path}{Character string containing the directory path where the sound files are located. 
+If \code{NULL} (default) then the current working directory is used.}
 }
 \value{
 A matrix with the pairwise dissimilarity values. If img is 
@@ -113,7 +114,7 @@ time warping. Internally it applies the \code{\link[dtw]{dtwDist}} from the \cod
 \details{
 This function extracts the fundamental frequency values as a time series and
  then calculates the pairwise acoustic dissimilarity of the selections using dynamic time warping.
-The function uses the `approx` function to interpolate values between fundamental
+The function uses the \code{\link[stats]{approx}} function to interpolate values between fundamental
  frequency  measures. If 'img' is  \code{TRUE} the function also produces image files
  with the spectrograms of the signals listed in the input data frame showing the
  location of the fundamental frequencies.
@@ -129,7 +130,7 @@ writeWave(Phae.long2, "Phae.long2.wav") #save sound files
 writeWave(Phae.long1, "Phae.long1.wav")
 
 # run function 
-ffDTW(manualoc.df, length.out = 30, flim = c(1, 12), img = F, bp = c(2, 9))
+ffDTW(manualoc.df, length.out = 30, flim = c(1, 12), img = T, bp = c(0, 9), wl = 300)
 
 }
 }

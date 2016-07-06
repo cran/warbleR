@@ -6,7 +6,7 @@
 \usage{
 compare.methods(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1, wl = 512, ovlp = 90, 
 res = 150, n = 10, length.out = 30, methods = c("XCORR", 
-"dfDTW", "ffDTW", "SP"),it = "jpeg", parallel = 1)
+"dfDTW", "ffDTW", "SP"),it = "jpeg", parallel = 1, path = NULL)
 }
 \arguments{
 \item{X}{Data frame with results from \code{\link{manualoc}} function, \code{\link{autodetec}} 
@@ -48,10 +48,11 @@ methods that would be compared. The methods available are: cross-correlation (XC
 "tiff" and "jpeg" are admitted. Default is "jpeg".}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
-It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
-windows OS users need to install \code{warbleR} from github to run parallel. 
- Note that creating images is not compatible with parallel computing 
- (parallel > 1) in OSX (mac).}
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing). 
+Not available in Windows OS.}
+
+\item{path}{Character string containing the directory path where the sound files are located. 
+If \code{NULL} (default) then the current working directory is used.}
 }
 \value{
 Image files with 4 spectrograms of the selection being compared and scatterplots 
@@ -92,11 +93,11 @@ writeWave(Phae.long2,"Phae.long2.wav")
 writeWave(Phae.long3,"Phae.long3.wav")
 writeWave(Phae.long4,"Phae.long4.wav") 
 
-compare.methods(X = manualoc.df, flim = c(0, 10), bp = c(0, 10), mar = 0.1, wl = 512, 
+compare.methods(X = manualoc.df, flim = c(0, 10), bp = c(0, 10), mar = 0.1, wl = 300, 
 ovlp = 90, res = 200, n = 10, length.out = 30, 
 methods = c("XCORR", "dfDTW"), parallel = 1, it = "tiff")
 
-#check this folder!!
+#check this folder!
 getwd()
 }
 

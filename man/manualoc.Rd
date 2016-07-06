@@ -6,7 +6,7 @@
 \usage{
 manualoc(wl = 512, flim = c(0,12), seltime = 1, tdisp = NULL, reccomm =
   FALSE, wn = "hanning", title = TRUE, selcomm = FALSE, osci = FALSE, player =
-  NULL, pal = reverse.gray.colors.2)
+  NULL, pal = reverse.gray.colors.2, path = NULL)
 }
 \arguments{
 \item{wl}{A numeric vector of length 1 specifying the spectrogram window length. Default is 512.}
@@ -44,6 +44,9 @@ The external program must be closed before resuming analysis. Default is \code{N
 
 \item{pal}{A color palette function to be used to assign colors in the 
 plot, as in \code{\link[seewave]{spectro}}. Default is reverse.gray.colors.2. See Details.}
+
+\item{path}{Character string containing the directory path where the sound files are located. 
+If \code{NULL} (default) then the current working directory is used.}
 }
 \value{
 .csv file saved in the working directory with start and end time of 
@@ -86,14 +89,14 @@ Users can zoom-in a specific sound file segment by clicking at the
   color palette that comes with the seewave package can be used: temp.colors,
   reverse.gray.colors.1, reverse.gray.colors.2, reverse.heat.colors, reverse.terrain.colors,
   reverse.topo.colors, reverse.cm.colors, heat.colors, terrain.colors, topo.colors,
-  cm.colors. The function is slow when working on files of length > 5min.
- @seealso  \code{\link{seltailor}}
+  cm.colors. The function is slow when working on files of length > 5min. In most cases other
+  sound analysis softwares for manually selecting acoustic signals (e.g. Raven, Syrinx) should
+  be prefered.
 }
 \examples{
 \dontrun{
 #First create empty folder
-dir.create(file.path(getwd(),"temp"))
-setwd(file.path(getwd(),"temp"))
+setwd(tempdir())
 
 # save wav file examples
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4"))
@@ -102,15 +105,17 @@ writeWave(Phae.long2,"Phae.long2.wav")
 writeWave(Phae.long3,"Phae.long3.wav")
 writeWave(Phae.long4,"Phae.long4.wav")
 
-manualoc()
+manualoc(wl = 300)
 # need to use the buttoms to manipulate function
 # check working directory for .csv file after stopping function
-
-#remove example directory
-unlink(getwd(),recursive = TRUE)
+#check here:
+getwd()
 }
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Hua Zhong
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}
+\seealso{
+\code{\link{seltailor}}
 }
 

@@ -8,7 +8,7 @@ autodetec(X = NULL, threshold = 15, envt = "abs", ssmooth = NULL, msmooth = NULL
   power = 1, bp = NULL, osci = FALSE, wl = 512, xl = 1, picsize = 1, res = 100, 
   flim = c(0,22), ls = FALSE, sxrow = 10, rows = 10, mindur = NULL, maxdur = 
   NULL, redo = FALSE, img = TRUE, it = "jpeg", set = FALSE, flist = NULL, smadj = NULL,
-  parallel = 1)
+  parallel = 1, path = NULL)
 }
 \arguments{
 \item{X}{Data frame with results from \code{\link{manualoc}} function or any data frame with columns
@@ -78,7 +78,7 @@ seconds) of the signals to be detected. It removes signals above that
 threshold.}
 
 \item{redo}{Logical argument. If \code{TRUE} all selections will be analyzed again 
-when code is rerun. If \code{FALSE} only the selections that do not have a image 
+when code is rerun. If \code{FALSE} only the selections that do not have an 'autodetec' generated image 
 file in the working directory will be analyzed. Default is \code{FALSE}.}
 
 \item{img}{Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.}
@@ -100,10 +100,10 @@ determined by the threshold and ssmooth values. This deviation is more obvious (
 increase and decrease in amplitude at the start and end of the signal (respectively) is not gradual. Ignored if ssmooth is \code{NULL}.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
-It specifies the number of cores to be used. Default is 1 (e.i. no parallel computing).
- windows OS users need to install warbleR from github to run parallel.
- Note that creating images is not compatible with parallel computing 
- (parallel > 1) in OSX (mac).}
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
+
+\item{path}{Character string containing the directory path where the sound files are located. 
+If \code{NULL} (default) then the current working directory is used.}
 }
 \value{
 Image files with spectrograms showing the start and end of the detected signals. It 
@@ -139,7 +139,7 @@ bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE,
 wl = 300, ls = FALSE,  sxrow = 2, rows = 4, mindur=0.1, maxdur=1, set = TRUE)
 
 #run it with different settings
-ad <- autodetec(threshold = 10, env = "abs", ssmooth = 300, power = 1, 
+ad <- autodetec(threshold = 90, env = "abs", ssmooth = 300, power = 1, redo = TRUE,
 bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE, 
 wl = 300, ls = FALSE,  sxrow = 2, rows = 4, mindur=0.1, maxdur=1, set = TRUE)
 
