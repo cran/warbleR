@@ -1,7 +1,7 @@
 #' Randomization test for singing coordination 
 #' 
-#' \code{coor.test} Monte Carlo randomization test to assess the statistical significance of singing coordination
-#' @usage coor.test(X, iterations = 1000, less.than.chance = TRUE, parallel = 1)
+#' Monte Carlo randomization test to assess the statistical significance of singing coordination
+#' @usage coor.test(X, iterations = 1000, less.than.chance = TRUE, parallel = 1, pb = TRUE)
 #' @param  X Data frame containing columns for singing event (sing.event), 
 #' individual (indiv), and start and end time of signal (start and end).
 #' @param iterations number of iterations for shuffling and calculation of the expected number of overlaps. Default is 1000.
@@ -10,6 +10,8 @@
 #' Default is  \code{TRUE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #'  It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
+#' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
+#' when parallel = 1.
 #' @return A data frame with the observed number of overlaps (obs.overlaps), mean number of overlaps expected by chance,
 #' and p value.  
 #' @export
@@ -25,28 +27,37 @@
 #' @examples
 #' \dontrun{
 #' #load  simulated singing data (see data documentation)
-#' data(coor.sing)
+#' , data(sim.coor.sing)
 #' 
 #' # testing if coordination happens less than expected by chance
-#' coor.test(coor.sing, iterations = 1000, less.than.chance = TRUE)
+#' coor.test(sim.coor.sing, iterations = 100, less.than.chance = TRUE)
 #' 
 #' # testing if coordination happens more than expected by chance
-#' coor.test(coor.sing, iterations = 1000, less.than.chance = FALSE)
+#' coor.test(sim.coor.sing, iterations = 100, less.than.chance = FALSE)
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on jul-5-2016 (MAS)
 
-coor.test <- function(X = NULL, iterations = 1000, less.than.chance = TRUE, parallel = 1)
+coor.test <- function(X = NULL, iterations = 1000, less.than.chance = TRUE, parallel = 1, pb = TRUE)
 {
   if(!is.data.frame(X))  stop("X is not a data frame")
   
   #stop if some events have less than 10 observations
   if(any(table(X$sing.event) < 10)) warning("At least one singing event with less than 10 vocalizations")
   
+  #stop if some cells are not labeled
+  if(any(is.na(X$sing.event))) stop("NA's in singing event names ('sing.event' column) not allowed")
+  
+  if(any(is.na(X$indiv))) stop("NA's in individual names ('indiv' column) not allowed")  
+  
+  #if there are NAs in start or end stop
+  if(any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
+  
+  
   #stop if some events do not have 2 individuals 
       qw <- as.data.frame((tapply(X$sing.event, list(X$sing.event, X$indiv), length)))
 
-qw[qw > 0] <- 1
+   qw[qw > 0] <- 1
 
 if(any(apply(qw, 1, sum) != 2)) stop("Some singing events don't have 2 interating individuals ('indiv' colum)")
 
@@ -54,9 +65,7 @@ if(any(apply(qw, 1, sum) != 2)) stop("Some singing events don't have 2 interatin
   if(any(!is.vector(iterations),!is.numeric(iterations))) stop("'interations' must be a numeric vector of length 1") else{
     if(!length(iterations) == 1) stop("'interations' must be a numeric vector of length 1")}
   
-  #if there are NAs in start or end stop
-  if(any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
-  
+   
   interations <- round(iterations)
   
   #interations should be positive
@@ -161,7 +170,13 @@ if(any(apply(qw, 1, sum) != 2)) stop("Some singing events don't have 2 interatin
         })
       
       }
-    } else {cote <- pbapply::pblapply(unique(X$sing.event), function(h) 
+    } else {
+      if(pb)
+      cote <- pbapply::pblapply(unique(X$sing.event), function(h) 
+    { 
+      coortestFUN(X, h)
+    }) else     
+      cote <- lapply(unique(X$sing.event), function(h) 
     { 
       coortestFUN(X, h)
     })

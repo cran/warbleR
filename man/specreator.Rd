@@ -8,7 +8,7 @@ specreator(X, wl = 512, flim = c(0, 22), wn = "hanning", pal
   = reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar =
   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE,
   propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE,  sc = FALSE, line = TRUE,
-  mar = 0.05, it = "jpeg", parallel = 1, path = NULL)
+  mar = 0.05, it = "jpeg", parallel = 1, path = NULL, pb = TRUE)
 }
 \arguments{
 \item{X}{Data frame with results containing columns for sound file name (sound.files), 
@@ -78,6 +78,9 @@ It specifies the number of cores to be used. Default is 1 (i.e. no parallel comp
 
 \item{path}{Character string containing the directory path where the sound files are located. 
 If \code{NULL} (default) then the current working directory is used.}
+
+\item{pb}{Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
+when parallel = 1.}
 }
 \value{
 Image files containing spectrograms of the signals listed in the input data frame.
@@ -101,9 +104,9 @@ writeWave(Phae.long2, "Phae.long2.wav")
 
 # make spectrograms
 
-specreator(manualoc.df, flim = c(0, 11), inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), 
-          picsize = 2, res = 300, cexlab = 2, mar = 0.05, wl = 300)
-#check this folder!!
+specreator(manualoc.df, flim = c(0, 11), res = 300, mar = 0.05, wl = 300)
+ 
+ #' #check this folder!!
 getwd()
 }
 

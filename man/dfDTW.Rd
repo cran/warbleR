@@ -8,8 +8,9 @@ dfDTW(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal =
   reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = 
   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
   xl = 1, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = 1, 
-  threshold = 15, col = "dodgerblue", pch = 16,  mar = 0.05, 
-  lpos = "topright", it = "jpeg", img = TRUE, parallel = 1, path = NULL)
+  threshold = 15, col = "red2", pch = 16,  mar = 0.05, 
+  lpos = "topright", it = "jpeg", img = TRUE, parallel = 1, path = NULL, 
+  img.suffix = "dfDTW", pb = TRUE)
 }
 \arguments{
 \item{X}{Data frame with results containing columns for sound file name (sound.files), 
@@ -76,7 +77,7 @@ See \code{\link[seewave]{spectro}}.}
 \item{threshold}{amplitude threshold (\%) for dominant frequency detection. Default is 15.}
 
 \item{col}{Vector of length 1 specifying colors of points plotted to mark 
-dominant frequency measurements. Default is "dodgerblue".}
+dominant frequency measurements. Default is "red2".}
 
 \item{pch}{Numeric vector of length 1 specifying plotting characters for 
 the frequency measurements. Default is 16.}
@@ -100,6 +101,12 @@ It specifies the number of cores to be used. Default is 1 (i.e. no parallel comp
 
 \item{path}{Character string containing the directory path where the sound files are located. 
 If \code{NULL} (default) then the current working directory is used.}
+
+\item{img.suffix}{A character vector of length 1 with a suffix (label) to add at the end of the names of 
+image files. Default is \code{NULL}.}
+
+\item{pb}{Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
+when parallel = 1.}
 }
 \value{
 A matrix with the pairwise dissimilarity values. If img is 
@@ -108,7 +115,7 @@ input data frame showing the location of the dominant frequencies.
 }
 \description{
 \code{dfDTW} calculates acoustic dissimilarity of dominant frequency contours using dynamic
-time warping. Internally it applies the \code{\link[dtw]{dtwDist}} from the \code{dtw} package.
+time warping. Internally it applies the \code{\link[dtw]{dtwDist}} function from the \code{dtw} package.
 }
 \details{
 This function extracts the dominant frequency values as a time series and

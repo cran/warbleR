@@ -5,7 +5,7 @@
 #'   = reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar =
 #'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE,
 #'   propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE,  sc = FALSE, line = TRUE,
-#'   mar = 0.05, it = "jpeg", parallel = 1, path = NULL)
+#'   mar = 0.05, it = "jpeg", parallel = 1, path = NULL, pb = TRUE)
 #' @param  X Data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signals (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
@@ -52,6 +52,8 @@
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
+#' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
+#' when parallel = 1.
 #' @return Image files containing spectrograms of the signals listed in the input data frame.
 #' @family spectrogram creators
 #' @seealso \code{\link{trackfreqs}} for creating spectrograms to visualize 
@@ -74,10 +76,9 @@
 #' 
 #' # make spectrograms
 #' 
-#' specreator(manualoc.df, flim = c(0, 11), inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), 
-#'           picsize = 2, res = 300, cexlab = 2, mar = 0.05, wl = 300)
-
-#' #check this folder!!
+#' specreator(manualoc.df, flim = c(0, 11), res = 300, mar = 0.05, wl = 300)
+#'  
+#'  #' #check this folder!!
 #' getwd()
 #' }
 #' 
@@ -87,11 +88,14 @@
 specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
                         inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100, 
                         cexlab = 1, title = TRUE, propwidth = FALSE, xl=1, osci = FALSE, 
-                        gr = FALSE, sc = FALSE, line = TRUE, mar = 0.05, it = "jpeg", parallel = 1, path = NULL){
+                        gr = FALSE, sc = FALSE, line = TRUE, mar = 0.05, it = "jpeg", parallel = 1, 
+                       path = NULL, pb = TRUE){
   
   #check path to working directory
   if(!is.null(path))
-  {if(class(try(setwd(path), silent = T)) == "try-error") stop("'path' provided does not exist") else setwd(path)} #set working directory
+  {wd <- getwd()
+  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
+    setwd(path)} #set working directory
   
   #if X is not a data frame
   if(!class(X) == "data.frame") stop("X is not a data frame")
@@ -116,6 +120,9 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   
   #if it argument is not "jpeg" or "tiff" 
   if(!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))  
+  
+  #wrap img creating function
+  if(it == "jpeg") imgfun <- jpeg else imgfun <- tiff
   
   #return warning if not all sound files were found
   recs.wd <- list.files(pattern = ".wav$", ignore.case = TRUE)
@@ -161,19 +168,10 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     
     
     # Spectrogram width can be proportional to signal duration
-    if(propwidth){
-      if(it == "tiff")  tiff(filename = paste(X$sound.files[i],"-", X$selec[i], "-", ".tiff", sep = ""), 
-                             width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-                               jpeg(filename = paste(X$sound.files[i],"-", X$selec[i], "-", ".jpeg", sep = ""), 
-                                    width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, 
-                                    units = "cm", res = res) 
-      
-    } else {
-      if(it == "tiff")  tiff(filename = paste(X$sound.files[i],"-", X$selec[i], "-", ".tiff", sep = ""), 
-                             width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-                               jpeg(filename = paste(X$sound.files[i],"-", X$selec[i], "-", ".jpeg", sep = ""), 
-                                    width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
-    }
+    if(propwidth) pwc <- (10.16) * ((t[2]-t[1])/0.27) * xl * picsize else pwc <- (10.16) * xl * picsize
+    
+    imgfun(filename = paste(X$sound.files[i],"-", X$selec[i], ".", it, sep = ""), 
+           width = pwc, height = (10.16) * picsize, units = "cm", res = res) 
     
     # Change relative heights of rows for spectrogram when osci = TRUE
     if(osci) hts <- c(3, 2) else hts <- NULL
@@ -223,15 +221,17 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
       parallel::stopCluster(cl)
       
     } 
-    if(Sys.info()[1] == "Linux") {    # Run parallel in other operating systems
+    if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
       
       sp <- parallel::mclapply(1:nrow(X), function (i) {
         specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab)
       })
     }
-    if(!any(Sys.info()[1] == c("Linux", "Windows")))
+    if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
     {
       cl <- parallel::makeForkCluster(getOption("cl.cores", parallel))
+      
+      doParallel::registerDoParallel(cl)
       
       sp <- foreach::foreach(i = 1:nrow(X)) %dopar% {
         specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab)
@@ -242,7 +242,10 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     }
     }
   else {
-    sp <- pbapply::pblapply(1:nrow(X), function(i) specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab))
+    if(pb)
+    sp <- pbapply::pblapply(1:nrow(X), function(i) specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab)) else 
+      sp <- lapply(1:nrow(X), function(i) specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab))
   }
-          
+  
+  if(!is.null(path)) on.exit(setwd(wd))
 }

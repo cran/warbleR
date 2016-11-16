@@ -1,13 +1,14 @@
 #' Extract the dominant frequency values as a time series
 #' 
-#' \code{dfts} extract the dominant frequency values as a time series.
+#' \code{dfts} extracts the dominant frequency values as a time series.
 #' of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
 #' @usage dfts(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal =
 #'   reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = 
 #'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
 #'   xl = 1, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = 1, 
-#'   threshold = 15, col = "dodgerblue", pch = 16,  mar = 0.05, 
-#'   lpos = "topright", it = "jpeg", img = TRUE, parallel = 1, path = NULL)
+#'   threshold = 15, col = "red2", pch = 16,  mar = 0.05, 
+#'   lpos = "topright", it = "jpeg", img = TRUE, parallel = 1, path = NULL,
+#'    img.suffix = "dfts", pb = TRUE)
 #' @param  X Data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
@@ -52,7 +53,7 @@
 #'   See \code{\link[seewave]{spectro}}.
 #' @param threshold amplitude threshold (\%) for dominant frequency detection. Default is 15.
 #' @param col Vector of length 1 specifying colors of points plotted to mark 
-#'  dominant frequency measurements. Default is "dodgerblue".
+#'  dominant frequency measurements. Default is "red2".
 #' @param pch Numeric vector of length 1 specifying plotting characters for 
 #'   the frequency measurements. Default is 16.
 #' @param mar Numeric vector of length 1. Specifies the margins adjacent to the selections
@@ -68,9 +69,13 @@
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #'  It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
 #'  Not available in Windows OS.
-#' @param path Character string containing the directory path where the sound files are located.  
+#' @param path Character string containing the directory path where the sound files are located.
+#' @param img.suffix A character vector of length 1 with a sufix (label) to add at the end of the names of 
+#' image files.
+#' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
+#' when parallel = 1.
 #' @return A data frame with the dominant frequency values measured across the signals. If img is 
-#' \code{FALSE} it also produces image files with the spectrograms of the signals listed in the 
+#' \code{TRUE} it also produces image files with the spectrograms of the signals listed in the 
 #' input data frame showing the location of the dominant frequencies.
 #' @family spectrogram creators
 #' @seealso \code{\link{specreator}} for creating spectrograms from selections,
@@ -80,7 +85,12 @@
 #' @name dfts
 #' @details This function extracts the dominant frequency values as a time series. 
 #' The function uses the \code{\link[stats]{approx}} function to interpolate values between dominant frequency 
-#' measures.
+#' measures. If there are no frequencies above the amplitude theshold at the begining or end 
+#'  of the signals then NAs will be generated. On the other hand, if there are no frequencies 
+#'  above the amplitude theshold in between signal segments in which amplitude was 
+#'  detected then the values of this adjacent segments will be interpolated 
+#'  to fill out the missing values (e.g. no NAs in between detected amplitude segments). 
+#' 
 #' @examples
 #' \dontrun{
 #' # set the temp directory
@@ -96,18 +106,21 @@
 #' 
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
-#last modification on jul-5-2016 (MAS)
+#last modification on oct-26-2016 (MAS)
 
 dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
                        inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100, cexlab = 1,
                        title = TRUE, propwidth = FALSE, xl = 1, gr = FALSE, sc = FALSE, 
-                       bp = c(0, 22), cex = 1, threshold = 15, col = "dodgerblue",pch = 16,
-                       mar = 0.05, lpos = "topright", it = "jpeg", img = TRUE, parallel = 1, path = NULL){     
-  
+                       bp = c(0, 22), cex = 1, threshold = 15, col = "red2", pch = 16,
+                       mar = 0.05, lpos = "topright", it = "jpeg", img = TRUE, parallel = 1, path = NULL, 
+                 img.suffix = "dfts", pb = TRUE){     
+
   
   #check path to working directory
   if(!is.null(path))
-  {if(class(try(setwd(path), silent = T)) == "try-error") stop("'path' provided does not exist") else setwd(path)} #set working directory
+  {wd <- getwd()
+  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
+    setwd(path)} #set working directory
   
   
   #if X is not a data frame
@@ -139,6 +152,9 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
   #if it argument is not "jpeg" or "tiff" 
   if(!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))  
   
+  #wrap img creating function
+  if(it == "jpeg") imgfun <- jpeg else imgfun <- tiff
+  
   # If length.out is not numeric
   if(!is.numeric(length.out)) stop("'length.out' must be a numeric vector of length 1") 
   if(any(!(length.out %% 1 == 0),length.out < 1)) stop("'length.out' should be a positive integer")
@@ -156,7 +172,6 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
   }  else 
   X <- X[d, ]
   
-  
   #if parallel is not numeric
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
@@ -172,11 +187,9 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
   {message("parallel computing not availabe in Windows OS for this function")
     parallel <- 1}
 
- if(parallel == 1) {if(img) message("Creating spectrograms overlaid with dominant frequency measurements:") else
+ if(parallel == 1 & pb) {if(img) message("Creating spectrograms overlaid with dominant frequency measurements:") else
     message("Measuring dominant frequency:")}  
   
-  # lst<-lapp(1:length(X$sound.files), 
-            
   dftsFUN <- function(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold){
     
     # Read sound files to get sample rate and length
@@ -196,6 +209,7 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
     
     if(t[2] > r$samples/f) t[2] <- r$samples/f
   
+    #in case bp its higher than can be due to sampling rate
     b<- bp 
     if(!is.null(b)) {if(b[2] > ceiling(f/2000) - 1) b[2] <- ceiling(f/2000) - 1 
     b <- b * 1000}
@@ -203,62 +217,28 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
     
       r <- tuneR::readWave(as.character(X$sound.files[i]), from = t[1], to = t[2], units = "seconds")
     
-    if(img) {
-      #in case bp its higher than can be due to sampling rate
-    
-    fl<- flim #in case flim its higher than can be due to sampling rate
-    if(fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
-    
-    # Spectrogram width can be proportional to signal duration
-    if(propwidth == TRUE){
-      if(it == "tiff") tiff(filename = paste(X$sound.files[i],"-", X$selec[i], "-", "dfts", ".tiff", sep = ""), 
-                            width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-                              jpeg(filename = paste(X$sound.files[i],"-", X$selec[i], "-", "dfts", ".jpeg", sep = ""), 
-                                   width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
-      
-    } else {
-      if(it == "tiff") tiff(filename = paste(X$sound.files[i],"-", X$selec[i], "-", "dfts", ".tiff", sep = ""), 
-                            width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-                              jpeg(filename = paste(X$sound.files[i],"-", X$selec[i], "-", "dfts", ".jpeg", sep = ""), 
-                                   width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
-      
-    }
-    
-    # Change relative widths of columns for spectrogram when sc = TRUE
-    if(sc == TRUE) wts <- c(3, 1) else wts <- NULL
-    
-    # Generate spectrogram using seewave
-    seewave::spectro(r, f = f, wl = wl, ovlp = 70, collevels = seq(-40, 0, 0.5),
-                     wn = "hanning", widths = wts, palette = pal, grid = gr, scale = sc, collab = "black", 
-                     cexlab = cexlab, cex.axis = 0.5*picsize, flim = fl, tlab = "Time (s)", 
-                     flab = "Frequency (kHz)", alab = "")
-    
-    if(title){
-      
-      title(paste(X$sound.files[i], "-", X$selec[i], "-", "dfts", sep = ""), cex.main = cexlab)
-      
-    }
-    
-    # Plot dominant frequency at each time point     
-    dfreq <- seewave::dfreq(r, f = f, wl = wl, plot = FALSE, ovlp = ovlp, bandpass = b, fftw = TRUE, 
-                            threshold = threshold, tlim = c(mar1, mar2))
-    
-    apdom<-approx(dfreq[,1], dfreq[,2], n =length.out, method = "linear")
-    
-    
-    points(apdom$x+mar1, apdom$y, col = col, cex = cex, pch = pch) 
-    abline(v = c(mar1, mar2), col= "red", lty = "dashed")
-    
-    # Legend coordinates can be uniquely adjusted 
-    legend(lpos, legend = c("Dfreq"),
-           pch = pch, col = col, bty = "o", cex = cex)
-    
-    dev.off()
-    } else 
-      dfreq <- seewave::dfreq(r, f = f, wl = wl, plot = FALSE, ovlp = 99, bandpass = b, fftw = TRUE, 
+      # calculate dominant frequency at each time point     
+      dfreq1 <- seewave::dfreq(r, f = f, wl = wl, plot = FALSE, ovlp = ovlp, bandpass = b, fftw = TRUE, 
                               threshold = threshold, tlim = c(mar1, mar2))
-    
-    apdom<-approx(dfreq[,1], dfreq[,2], n =length.out, method = "linear")
+      
+      dfreq <- dfreq1[!is.na(dfreq1[,2]), ]
+      dfreq <- dfreq[dfreq[,2] > b[1]/1000, ]
+      
+      if(nrow(dfreq) < 2) {apdom <- list()
+      apdom$x <- dfreq1[, 1]
+      apdom$y <- rep(NA, length.out)
+      } else
+        apdom <- approx(dfreq[,1], dfreq[,2], xout = seq(from = dfreq1[1, 1],  to = dfreq1[nrow(dfreq1), 1], length.out = length.out), method = "linear")
+      
+      
+  if(img) 
+    trackfreqs(X[i,], wl = wl, flim = flim, wn = wn, pal = pal, ovlp = ovlp,
+      inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab,
+      title = title, propwidth = propwidth, xl = xl, osci = FALSE, gr = gr, sc = sc, 
+      bp = bp, cex = c(cex, cex), threshold = threshold, contour = "df", 
+      col = col,  pch = pch, mar = mar, lpos = lpos, pb = FALSE,
+      it = it, parallel = 1, path = path, img.suffix =  img.suffix, 
+      custom.contour = data.frame(sound.files = X$sound.files[i], selec = X$selec[i], t(apdom$y)))
     
     return(apdom$y)  
   } 
@@ -280,15 +260,17 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
       parallel::stopCluster(cl)
       
     } 
-    if(Sys.info()[1] == "Linux") {    # Run parallel in other operating systems
+    if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
       
       lst <- parallel::mclapply(1:nrow(X), function (i) {
         dftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold)
       })
     }
-    if(!any(Sys.info()[1] == c("Linux", "Windows")))
+    if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
     {
       cl <- parallel::makeForkCluster(getOption("cl.cores", parallel))
+      
+      doParallel::registerDoParallel(cl)
       
       lst <- foreach::foreach(i = 1:nrow(X)) %dopar% {
         dftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold)
@@ -299,12 +281,15 @@ dfts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
     }
   }
   else {
-    lst <- pbapply::pblapply(1:nrow(X), function(i) dftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold))
+   if(pb)
+     lst <- pbapply::pblapply(1:nrow(X), function(i) dftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold)) else
+       lst <- lapply(1:nrow(X), function(i) dftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold))
   }
   
   
-  df<-data.frame(sound.files = X$sound.files, selec = X$selec, (as.data.frame(matrix(unlist(lst),nrow = length(X$sound.files), byrow = TRUE))))
+  df <- data.frame(sound.files = X$sound.files, selec = X$selec, (as.data.frame(matrix(unlist(lst),nrow = length(X$sound.files), byrow = TRUE))))
     colnames(df)[3:ncol(df)]<-paste("dfreq",1:(ncol(df)-2),sep = "-")
                  return(df)
-}
 
+    if(!is.null(path)) on.exit(setwd(wd))
+    }

@@ -6,7 +6,7 @@
 #' inner.mar = c(5, 4, 4, 2), outer.mar = c(0, 0, 0, 0), picsize = 1, 
 #' res = 100, cexlab = 1, title = TRUE, 
 #'   propwidth= FALSE, xl=1, osci = FALSE, gr = FALSE, sc = FALSE, mar = 0.2,
-#'    snrmar = 0.1, it = "jpeg", parallel = 1, path = NULL)
+#'    snrmar = 0.1, it = "jpeg", parallel = 1, path = NULL, pb = TRUE)
 #' @param  X Data frame with results from \code{\link{manualoc}} or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). 
@@ -52,6 +52,8 @@
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
+#' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
+#' when parallel = 1.
 #' @return Spectrograms per selection marked with margins where background noise will be measured.
 #' @family spectrogram creators
 #' @seealso \code{\link{trackfreqs}} for creating spectrograms to visualize 
@@ -85,8 +87,8 @@
 #' # make only Phae.long1 spectrograms
 #' # snrmar now doesn't overlap neighboring signals
 #' 
-#' snrspecs(manualoc.df[grepl(c("Phae.long1"), manualoc.df$sound.files), ], flim = c(3, 14), 
-#' inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), picsize = 2, res = 300, cexlab = 2, 
+#' snrspecs(manualoc.df[grepl(c("Phae.long1"), manualoc.df$sound.files), ], flim = c(3, 14),
+#' inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), picsize = 2, res = 300, cexlab = 2,
 #' mar = 0.2, snrmar = 0.01, wl = 300)
 #' 
 #' #check this folder!!
@@ -100,12 +102,13 @@ snrspecs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
                      inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100,
                      cexlab = 1, title = TRUE, propwidth = FALSE, xl = 1, osci = FALSE, 
                      gr = FALSE, sc = FALSE, mar = 0.2, snrmar = 0.1, it = "jpeg", parallel = 1,
-                     path = NULL){
+                     path = NULL, pb = TRUE){
  
   #check path to working directory
   if(!is.null(path))
-  {if(class(try(setwd(path), silent = T)) == "try-error") stop("'path' provided does not exist") else setwd(path)} #set working directory
-  
+  {wd <- getwd()
+  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
+    setwd(path)} #set working directory
   
   #if X is not a data frame
   if(!class(X) == "data.frame") stop("X is not a data frame")
@@ -127,6 +130,9 @@ snrspecs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
   #if it argument is not "jpeg" or "tiff" 
   if(!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))  
   
+  #wrap img creating function
+  if(it == "jpeg") imgfun <- jpeg else imgfun <- tiff
+  
   #if any selections longer than 20 secs stop
   if(any(X$end - X$start>20)) stop(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))  
   options( show.error.messages = TRUE)
@@ -147,11 +153,6 @@ snrspecs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
-  #if parallel in OSX
-  # if(all(parallel > 1, !Sys.info()[1] %in% c("Linux","Windows"))) {
-  #   parallel <- 1
-  #   message("creating images is not compatible with parallel computing (parallel > 1) in OSX (mac)")
-  # }
   
     snrspeFUN <- function(i, X, wl, flim, ovlp, inner.mar, outer.mar, picsize, res, cexlab, xl, mar, snrmar){
     
@@ -187,19 +188,11 @@ snrspecs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
     
     
 # Spectrogram width can be proportional to signal duration
-    if(propwidth == TRUE){
-      if(it == "tiff")  tiff(filename = paste(X$sound.files[i],"-", X$selec[i], "-", "snr", ".tiff", sep = ""), 
-           width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-             jpeg(filename = paste(X$sound.files[i],"-", X$selec[i], "-", "snr", ".jpeg", sep = ""), 
-                  width = (10.16) * ((t[2]-t[1])/0.27) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
-      
-    } else {
-      if(it == "tiff")  tiff(filename = paste(X$sound.files[i],"-", X$selec[i], "-", "snr", ".tiff", sep = ""), 
-           width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-             jpeg(filename = paste(X$sound.files[i],"-", X$selec[i], "-", "snr", ".jpeg", sep = ""), 
-                  width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
-    }
+    if(propwidth) pwc <- (10.16) * ((en-st)/0.27) * xl * picsize else pwc <- (10.16) * xl * picsize
     
+          imgfun(filename = paste(X$sound.files[i],"-", X$selec[i], "-", "snr.", it, sep = ""), 
+           width = pwc, height = (10.16) * picsize, units = "cm", res = res) 
+
     # Change relative heights of rows for spectrogram when osci = TRUE
     if(osci == TRUE) hts <- c(3, 2) else hts <- NULL
     
@@ -243,29 +236,52 @@ snrspecs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
     dev.off()  
     return (NULL)
   }
-      # Run parallel in windows
-      if(parallel > 1) {if(Sys.info()[1] == "Windows") {
+     
+      
+    # Run parallel in windows
+    if(parallel > 1) {
+      if(Sys.info()[1] == "Windows") {
+        
+        i <- NULL #only to avoid non-declared objects
         
         cl <- parallel::makeCluster(parallel)
         
         doParallel::registerDoParallel(cl)
         
-        a1 <- parallel::parLapply(cl, 1:nrow(X), function(i)
-        {
+        a1 <- foreach::foreach(i = 1:nrow(X)) %dopar% {
           snrspeFUN(X = X, i = i, wl = wl, flim = flim, ovlp = ovlp, inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab, xl = xl, mar = mar, snrmar = snrmar)
-        })
+        }
         
         parallel::stopCluster(cl)
         
-        
-      } else {    # Run parallel in other operating systems
+      } 
+      
+      if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
         
         a1 <- parallel::mclapply(1:nrow(X), function (i) {
           snrspeFUN(X = X, i = i, wl = wl, flim = flim, ovlp = ovlp, inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab, xl = xl, mar = mar, snrmar = snrmar)
         })
       }
+      if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
+      {
+        cl <- parallel::makeForkCluster(getOption("cl.cores", parallel))
+        
+        doParallel::registerDoParallel(cl)
+       
+         a1 <- foreach::foreach(i = 1:nrow(X)) %dopar% {
+          snrspeFUN(X = X, i = i, wl = wl, flim = flim, ovlp = ovlp, inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab, xl = xl, mar = mar, snrmar = snrmar)
+        }
+        
+        parallel::stopCluster(cl)
+        
       }
-      else {sp <- pbapply::pblapply(1:nrow(X), function(i) snrspeFUN(X = X, i = i, wl = wl, flim = flim, ovlp = ovlp, inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab, xl = xl, mar = mar, snrmar = snrmar))
-      }
+    }
+    else {
+      if(pb)
+      a1 <- pbapply::pblapply(1:nrow(X), function(i) snrspeFUN(X = X, i = i, wl = wl, flim = flim, ovlp = ovlp, inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab, xl = xl, mar = mar, snrmar = snrmar)) else
+        a1 <- lapply(1:nrow(X), function(i) snrspeFUN(X = X, i = i, wl = wl, flim = flim, ovlp = ovlp, inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab, xl = xl, mar = mar, snrmar = snrmar))
+    }
+    
+    if(!is.null(path)) on.exit(setwd(wd))
     }
 

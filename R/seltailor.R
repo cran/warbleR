@@ -1,7 +1,7 @@
 #' Interactive view of spectrograms to tailor start and end of selections 
 #' 
-#' \code{seltailor} produces an interactive spectrographic view (similar to \code{\link{manualoc}}) i
-#' n which the start and end times of acoustic signals listed in a data frame can be adjusted.
+#' \code{seltailor} produces an interactive spectrographic view (similar to \code{\link{manualoc}}) in 
+#' which the start and end times of acoustic signals listed in a data frame can be adjusted.
 #' @usage seltailor(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
 #'  osci = FALSE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE, pause = 1,
 #'   comments = TRUE, path = NULL)
@@ -93,7 +93,9 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
   
   #check path to working directory
   if(!is.null(path))
-  {if(class(try(setwd(path), silent = T)) == "try-error") stop("'path' provided does not exist") else setwd(path)} #set working directory
+  {wd <- getwd()
+  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
+    setwd(path)} #set working directory
   
   # stop if not all sound files were found
   fs <- list.files(path = getwd(), pattern = ".wav$", ignore.case = TRUE)
@@ -236,4 +238,5 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
                 break}}   
       }
       }
-}
+  if(!is.null(path)) on.exit(setwd(wd))
+  }

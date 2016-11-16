@@ -1,8 +1,8 @@
 #' Spectrogram cross-correlation 
 #' 
-#' \code{xcorr} Estimates the similarity of two spectrograms by means of cross-correlation
+#' \code{xcorr} estimates the similarity of two spectrograms by means of cross-correlation
 #' @usage xcorr(X, wl =512, frange= NULL, ovlp=90, dens=0.9, bp= NULL, wn='hanning', 
-#' cor.method = "pearson", parallel = 1,  path = NULL)
+#' cor.method = "pearson", parallel = 1, path = NULL, pb = TRUE)
 #' @param  X Data frame containing columns for sound files (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
@@ -26,6 +26,8 @@
 #'  Not available in Windows OS.
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
+#' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
+#' when parallel = 1.
 #' @return A list that includes 1) a data frame with the correlation statistic for each "sliding" step, 2) a matrix with 
 #' the maximum (peak) correlation for each pairwise comparison, and 3) the frequency range.  
 #' @export
@@ -34,8 +36,9 @@
 #' This method "slides" one spectrogram over the other calculating a correlation of the amplitude values at each step.
 #' The function runs pairwise cross-correlations on several signals and returns a list including the correlation statistic
 #' for each "sliding" step as well as the maximum (peak) correlation for each pairwise comparison. To accomplish this the margins
-#' of the signals are expanded by half the duration of the signal both before and after the provided time coordinates. This function
-#' is a modified version of the \code{\link[monitoR]{corMatch}} and \code{\link[monitoR]{makeTemplate}} 
+#' of the signals are expanded by half the duration of the signal both before and after the provided time coordinates. 
+#' The correlation matrix could have NA's if some of the pairwise correlation did not work (common when sound files have been modified by band-pass filters).
+#' This function is a modified version of the \code{\link[monitoR]{corMatch}} and \code{\link[monitoR]{makeTemplate}} 
 #' from the awesome R package `monitoR`.   
 #' @examples
 #' \dontrun{
@@ -49,8 +52,8 @@
 #' writeWave(Phae.long3, "Phae.long3.wav")
 #' writeWave(Phae.long4, "Phae.long4.wav")
 #'
-#' xcor <- xcorr(X = manualoc.df, wl =300, frange= c(2, 9), ovlp=90, 
-#' dens=1, wn='hanning', cor.method = "pearson") 
+#'xcor <- xcorr(X = manualoc.df, wl = 300, frange = c(2, 9), ovlp = 90,
+#'dens = 1, wn = 'hanning', cor.method = "pearson")
 #' 
 #' }
 #' @seealso \code{\link{xcorr.graph}}
@@ -60,12 +63,14 @@
 
 
 xcorr <- function(X = NULL, wl =512, frange= NULL, ovlp=90, dens=0.9, bp= NULL, 
-                   wn='hanning', cor.method = "pearson", parallel = 1, path = NULL)
+                   wn='hanning', cor.method = "pearson", parallel = 1, path = NULL, pb = TRUE)
 {
   
   #check path to working directory
   if(!is.null(path))
-  {if(class(try(setwd(path), silent = T)) == "try-error") stop("'path' provided does not exist") else setwd(path)} #set working directory
+  {wd <- getwd()
+  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
+    setwd(path)} #set working directory
   
   if(!is.data.frame(X))  stop("X is not a data frame")
   
@@ -96,7 +101,7 @@ xcorr <- function(X = NULL, wl =512, frange= NULL, ovlp=90, dens=0.9, bp= NULL,
     if(!is.vector(dens)) stop("'dens' must be a numeric vector of length 1") else{
       if(!length(dens) == 1) stop("'dens' must be a numeric vector of length 1")}} 
   
-if(is.null(frange)) {df<-dfts(X, wl =300, img = FALSE, length.out = 50)
+if(is.null(frange)) {df<-dfts(X, wl =300, img = FALSE, length.out = 50, parallel = parallel)
   df<-df[, 3:ncol(df)]
 frq.lim = c(min(df), max(df))} else{
   frq.lim = frange
@@ -108,17 +113,19 @@ frq.lim = c(min(df), max(df))} else{
   
   #parallel not available on windows
   if(parallel > 1 & Sys.info()[1] == "Windows")
-  {message("parallel computing not availabe in Windows OS for this function")
+  {  if(pb) message("parallel computing not availabe in Windows OS for this function")
     parallel <- 1}
   
   if(parallel > 1) 
-    lapp <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = parallel) else lapp <- pbapply::pblapply
-    
+    lapp <- function(X, FUN) parallel::mclapply(X, FUN, mc.cores = parallel) else { 
+      if(pb)
+      lapp <- pbapply::pblapply else   lapp <- lapply
+  }  
           options(warn = 0)
           
 #create templates
-   if(parallel == 1) message("creating templates:")
-ltemp<-lapp(1:nrow(X), function(x)
+   if(parallel == 1 & pb) message("creating templates:")
+ltemp <- lapp(1:nrow(X), function(x)
 {
    clip <- tuneR::readWave(filename = as.character(X$sound.files[x]),from = X$start[x], to=X$end[x],units = "seconds")
    samp.rate <- clip@samp.rate
@@ -184,11 +191,10 @@ ltemp<-lapp(1:nrow(X), function(x)
 names(ltemp) <- paste(X$sound.files,X$selec,sep = "-")
 
 #run cross-correlation
-if(parallel == 1) message("running cross-correlation:")
+if(parallel == 1 & pb) message("running cross-correlation:")
 
 a<-lapp(1:(nrow(X)-1), function(j)
   {
-
     a <- tuneR::readWave(as.character(X$sound.files[j]), header = TRUE)
   margin <-(X$end[j] - X$start[j])/2
   start <-X$start[j] - margin
@@ -198,8 +204,7 @@ a<-lapp(1:(nrow(X)-1), function(j)
   
   survey<-tuneR::readWave(filename = as.character(X$sound.files[j]), from = start, to = end, units = "seconds")
   
-  
-  score.L <- lapply((1+j):length(ltemp), function(i)
+  FUNXC <- function(i)
   {
     template <- ltemp[[i]]
     
@@ -244,7 +249,7 @@ a<-lapp(1:(nrow(X)-1), function(j)
     amp.template <- pts[, 'amp']
     amp.survey.v <- c(amp.survey)  
     
-# Perform analysis for each time value (bin) of survey 
+    # Perform analysis for each time value (bin) of survey 
     # Starting time value (bin) of correlation window
     c.win.start <- as.list(1:(n.t.survey-n.t.template)*n.frq.template) # Starting position of subset of each survey amp matrix  
     score.survey <- unlist(
@@ -260,8 +265,23 @@ a<-lapp(1:(nrow(X)-1), function(j)
     score.L <- data.frame(sound.file1= paste(X$sound.files[j],X$selec[j], sep= "-"),sound.file2= paste(template$sound.files,template$selec, sep= "-"), time=survey.spec$time[1:(n.t.survey-n.t.template)+n.t.template/2], 
                           score=score.survey)
     return(score.L)
-  })
+  }
   
+  
+  score.L <- lapply((1+j):length(ltemp), function(i) try(FUNXC(i), silent = T))
+  
+  if(any(!sapply(score.L, is.data.frame))) {
+  if(j != (length(ltemp)-1))
+    {combs <- t(combn(paste(X$sound.files, X$selec,sep = "-"), 2))
+  combs <- combs[combs[,1] == paste(X$sound.files[j], X$selec[j],sep = "-"),]
+  comDF <- data.frame(sound.file1 = combs[,1], sound.file2 = combs[,2], time = 0, score = NA, stringsAsFactors = FALSE)
+  
+  score.L <-lapply(1:length(score.L), function(x) {
+    if(is.data.frame(score.L[[x]])) return(score.L[[x]]) else
+      return(comDF[x,])
+  })
+  } else  score.L[[1]] <- data.frame(sound.file1 = paste(X$sound.files[j], X$selec[j],sep = "-"), sound.file2 = paste(X$sound.files[j + 1], X$selec[j + 1], sep = "-"), time = 0, score = NA, stringsAsFactors = FALSE)
+  }
   score.df <- do.call("rbind", score.L)
   
 return(score.df)
@@ -297,4 +317,5 @@ names(c) <- c("correlation.data", "max.xcorr.matrix", "frq.lim")
  
 return(c)
 
+if(!is.null(path)) on.exit(setwd(wd))
 }

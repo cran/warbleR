@@ -78,8 +78,8 @@ table(Phae.lon$Vocalization_type)
 # reflect variation in data entry.
 
 # Luckily, it's very easy to filter the signals we want 
-Phae.lon.song <- droplevels(Phae.lon[grep("song", Phae.lon$Vocalization_type, 
-                                ignore.case = TRUE), ])
+Phae.lon.song <- Phae.lon[grep("song", Phae.lon$Vocalization_type, 
+                                ignore.case = TRUE), ]
 
 # Check resulting data frame
 str(Phae.lon.song) 

@@ -6,7 +6,7 @@
 #'   power = 1, bp = NULL, osci = FALSE, wl = 512, xl = 1, picsize = 1, res = 100, 
 #'   flim = c(0,22), ls = FALSE, sxrow = 10, rows = 10, mindur = NULL, maxdur = 
 #'   NULL, redo = FALSE, img = TRUE, it = "jpeg", set = FALSE, flist = NULL, smadj = NULL,
-#'   parallel = 1, path = NULL)
+#'   parallel = 1, path = NULL, pb = TRUE)
 #' @param X Data frame with results from \code{\link{manualoc}} function or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). 
@@ -68,13 +68,15 @@
 #' if X is provided.
 #' @param smadj adjustment for amplitude smoothing. Character vector of length one indicating whether start end 
 #' values should be adjusted. "start", "end" or "both" are the inputs admitted by this argument. Amplitude 
-#' smoothing through ssmooth generates a predictable deviation from the actual start and end positions of the signals, 
+#' smoothing through ssmooth generates a predictable deviation from the actual start and end positions of the signals,
 #' determined by the threshold and ssmooth values. This deviation is more obvious (and problematic) when the 
 #' increase and decrease in amplitude at the start and end of the signal (respectively) is not gradual. Ignored if ssmooth is \code{NULL}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #'  It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
+#' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
+#' when parallel = 1.
 #' @return Image files with spectrograms showing the start and end of the detected signals. It 
 #'   also returns a data frame containing the start and end of each signal by 
 #'   sound file and selection number.
@@ -99,9 +101,9 @@
 #' writeWave(Phae.long3,"Phae.long3.wav")
 #' writeWave(Phae.long4,"Phae.long4.wav") 
 #' 
-#' ad <- autodetec(threshold = 5, env = "hil", ssmooth = 300, power=1, 
-#' bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE, 
-#' wl = 300, ls = FALSE,  sxrow = 2, rows = 4, mindur=0.1, maxdur=1, set = TRUE)
+#' ad <- autodetec(threshold = 5, env = "hil", ssmooth = 300, power=1,
+#' bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE,
+#' wl = 300, ls = FALSE, sxrow = 2, rows = 4, mindur = 0.1, maxdur = 1, set = TRUE)
 #' 
 #' #run it with different settings
 #' ad <- autodetec(threshold = 90, env = "abs", ssmooth = 300, power = 1, redo = TRUE,
@@ -119,15 +121,17 @@
 autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth = NULL, power = 1, 
                     bp = NULL, osci = FALSE, wl = 512, xl = 1, picsize = 1, res = 100, flim = c(0,22), 
                     ls = FALSE, sxrow = 10, rows = 10, mindur = NULL, maxdur = NULL, redo = FALSE, 
-                    img = TRUE, it = "jpeg", set = FALSE, flist = NULL, smadj = NULL, parallel = 1, path = NULL){
+                    img = TRUE, it = "jpeg", set = FALSE, flist = NULL, smadj = NULL, parallel = 1, 
+                    path = NULL, pb = TRUE){
   
   #check path to working directory
   if(!is.null(path))
-  {if(class(try(setwd(path), silent = T)) == "try-error") stop("'path' provided does not exist") else setwd(path)} #set working directory
-  
+  {wd <- getwd()
+  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
+    setwd(path)} #set working directory
   
   #if bp is not vector or length!=2 stop
-  if(length(list.files(pattern = ".wav$")) == 0) if(is.null(path)) stop("No .wav files in working directory") else stop("No .wav files in 'path' provided") 
+  if(length(list.files(pattern = ".wav$", ignore.case = TRUE)) == 0) if(is.null(path)) stop("No .wav files in working directory") else stop("No .wav files in 'path' provided") 
   
   #if bp is not vector or length!=2 stop
   if(!is.null(bp))
@@ -194,6 +198,9 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
   #if it argument is not "jpeg" or "tiff" 
   if(!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))  
   
+  #wrap img creating function
+  if(it == "jpeg") imgfun <- jpeg else imgfun <- tiff
+  
   #if envt is not vector or length!=1 stop
   if(any(envt %in% c("abs", "hil"))){if(!length(envt) == 1) stop("'envt' must be a numeric vector of length 1")
   } else stop("'envt' must be either 'abs' or 'hil'" )
@@ -241,12 +248,12 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     if(length(d) == 0) stop("The .wav files are not in the working directory") else X <- X[d,]  
   xprov <- T #to replace X if not provided
      } else  { 
-  X <- warbleR::wavdur()
+       if(!is.null(flist)) X <- warbleR::wavdur(files = flist) else
+         X <- warbleR::wavdur()
   X$start <- 0
   X$selec <- 1
   names(X)[2] <- "end"  
   xprov <- F #to replace X if not provided
-  if(!is.null(flist)) X <- X[X$sound.files %in% flist, ]
   if(nrow(X) == 0) stop("Files in 'flist' not in working directory")
   }
     
@@ -254,14 +261,14 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
   if(!redo) {
     imgfs <- list.files(pattern = ".jpeg$|.tiff$")
     done <- sapply(1:nrow(X), function(x){
-      any(grep(paste(gsub(".wav","", X$sound.files[x]),X$selec[x], sep = "-"), imgfs,  invert = F))
+      any(grep(paste(gsub(".wav","", X$sound.files[x]),X$selec[x], sep = "-"), imgfs,  invert = FALSE))
       })
     X <- X[!done, ]
     if(nrow(X) == 0) stop("All selections have been analyzed (redo = FALSE)")
     }    
   
       # if parallel was not called 
-    if(parallel == 1) {if(!ls & img) message("Detecting signals in sound files and producing spectrogram:") else 
+    if(parallel == 1 & pb) {if(!ls & img) message("Detecting signals in sound files and producing spectrogram:") else 
       message("Detecting signals in sound files:")}
     
   #create function to detec signals          
@@ -316,11 +323,11 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     aut.det <- list(s = signal, s.start = start.signal)
     
     #put time of detection in data frame
-    time.song<-data.frame(sound.files = X$sound.files[i], duration = aut.det$s, selec = NA, start = aut.det$s.start+X$start[i], end = (aut.det$s+aut.det$s.start+X$start[i]))
+    time.song <- data.frame(sound.files = X$sound.files[i], duration = aut.det$s, selec = NA, start = aut.det$s.start+X$start[i], end = (aut.det$s+aut.det$s.start+X$start[i]))
    
     #remove signals based on duration  
-    if(!is.null(mindur)) time.song<-time.song[time.song$duration>mindur,]
-    if(!is.null(maxdur)) time.song<-time.song[time.song$duration<maxdur,]
+    if(!is.null(mindur)) time.song <-time.song[time.song$duration > mindur,]
+    if(!is.null(maxdur)) time.song <-time.song[time.song$duration < maxdur,]
     
     if(nrow(time.song)>0) 
     {if(xprov) time.song$selec <- paste(X$selec[i], 1:nrow(time.song), sep = "-") else
@@ -336,11 +343,9 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
         fna<-paste(substring(X$sound.files[i], first = 1, last = nchar(as.character(X$sound.files[i]))-4),
                 "-", X$selec[i], "-autodetec", sep = "")                  
   
-      if(it == "tiff") tiff(filename = paste(fna, ".tiff", sep = "-"), 
-        width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res) else
-          jpeg(filename = paste(fna, "-", X$selec[i], ".jpeg", sep = ""), 
-               width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
-      
+        imgfun(filename = paste(fna, paste0(".", it), sep = "-"), 
+        width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
+        
       seewave::spectro(song, f = f, wl = wl, collevels=seq(-45,0,1),grid = FALSE, main = as.character(X$sound.files[i]), osc = osci,
               scale = FALSE, palette = seewave::reverse.gray.colors.2, flim = fl)
       rm(song)
@@ -357,7 +362,7 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     }
     #if nothing was detected
   if(nrow(time.song)==0)
-  time.song<-data.frame(sound.files = X$sound.files[i], duration=NA,selec=NA,start=NA, end=NA)
+  time.song<-data.frame(sound.files = X$sound.files[i], duration = NA,selec = NA,start = NA, end = NA)
   
     #remove duration column
   time.song <- time.song[,grep("duration",colnames(time.song),invert = TRUE)]
@@ -393,9 +398,11 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     })
     }
   
-    if(!any(Sys.info()[1] == c("Linux", "Windows")))
+    if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
     {
       cl <- parallel::makeForkCluster(getOption("cl.cores", parallel))
+      
+      doParallel::registerDoParallel(cl)
       
       sp <- foreach::foreach(i = 1:nrow(X)) %dopar% {
         adFUN(i, X, flim, wl, bp, envt, msmooth, ssmooth, mindur, maxdur)
@@ -405,8 +412,12 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     }  
     
   } else {
+    if(pb)
     ad <- pbapply::pblapply(1:nrow(X), function(i) 
   {adFUN(i, X, flim, wl, bp, envt, msmooth, ssmooth, mindur, maxdur)
+    }) else
+    ad <- lapply(1:nrow(X), function(i) 
+    {adFUN(i, X, flim, wl, bp, envt, msmooth, ssmooth, mindur, maxdur)
     })
   }
   
@@ -423,7 +434,7 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
   
   # long spectrograms
   if(ls & img) {  
-   if(parallel == 1) message("Producing long spectrogram:")
+   if(parallel == 1 & pb) message("Producing long spectrogram:")
     
     #function for long spectrograms (based on lspec function)
     lspeFUN2 <- function(X, z, fl = flim, sl = sxrow, li = rows, fli = fli, pal) {
@@ -528,13 +539,13 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     
   } 
     
-    if(Sys.info()[1] == "Linux") {    # Run parallel in other operating systems
+    if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
       
       a1 <- parallel::mclapply(unique(results$sound.files), function(z) {
         lspeFUN2(X = results, z = z, fl = flim, sl = sxrow, li = rows, pal = seewave::reverse.gray.colors.2)
       })
     }
-    if(!any(Sys.info()[1] == c("Linux", "Windows")))
+    if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
     {
       cl <- parallel::makeForkCluster(getOption("cl.cores", parallel))
       
@@ -546,13 +557,19 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     }
     
   } else {
-    a1 <- pbapply::pblapply(unique(results$sound.files), function(z) 
+    if(pb)
+     a1 <- pbapply::pblapply(unique(results$sound.files), function(z) 
   { 
   lspeFUN2(X = results, z = z, fl = flim, sl = sxrow, li = rows, pal = seewave::reverse.gray.colors.2)
+  }) else  a1 <- lapply(unique(results$sound.files), function(z) 
+  { 
+    lspeFUN2(X = results, z = z, fl = flim, sl = sxrow, li = rows, pal = seewave::reverse.gray.colors.2)
   })
+  
   }
   }
 
 return(results)
-if(img) on.exit(dev.off())
+  if(img) on.exit(dev.off())
+  if(!is.null(path)) on.exit(setwd(wd))
 }
