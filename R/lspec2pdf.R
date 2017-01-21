@@ -1,6 +1,6 @@
 # Combine lspec images to single pdf files
 #' 
-#' \code{lspec2pdf} combines lspec images in .jpeg format to a single pdf file. 
+#' \code{lspec2pdf} combines \code{\link{lspec}} images in .jpeg format to a single pdf file. 
 #' @usage lspec2pdf(keep.jpeg = TRUE, overwrite = FALSE, parallel = 1, path = NULL)
 #' @param keep.jpeg Logical argument. Indicates whether jpeg files should be kept (default) or remove.
 #'   (including sound file and page number) should be magnified. Default is 1.
@@ -44,8 +44,8 @@ lspec2pdf <- function(keep.jpeg = TRUE, overwrite = FALSE, parallel = 1, path = 
   setwd(path)} #set working directory
   
   #list jpeg files
-  imgs <- list.files(pattern = ".jpeg$", ignore.case = TRUE)
-  if(length(imgs) == 0) stop("NO .jpeg files were found in the working directory")
+  imgs <- list.files(pattern = "\\.jpeg$", ignore.case = TRUE)
+  if(length(imgs) == 0) stop("No .jpeg files were found in the working directory")
   
   #remove images that don't have the pX.jpeg ending
   imgs <- grep("p\\d+\\.jpeg" ,imgs, value = TRUE)

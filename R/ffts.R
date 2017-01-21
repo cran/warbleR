@@ -2,69 +2,23 @@
 #' 
 #' \code{ffts} extracts the fundamental frequency values as a time series
 #' of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
-#' @usage ffts(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal =
-#'   reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = 
-#'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
-#'   xl = 1, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = 1, 
-#'   threshold = 15, col = "red2", pch = 16,  mar = 0.05, 
-#'   lpos = "topright", it = "jpeg", img = TRUE, parallel = 1, path = NULL, 
-#'   img.suffix = "ffts", pb = TRUE)
+#' @usage ffts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = c(0, 22),
+#'   threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "ffts", pb = TRUE, 
+#'   clip.edges = FALSE, leglab = "ffts", ...)
 #' @param  X Data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
-#' @param flim A numeric vector of length 2 for the frequency limit of 
-#'   the spectrogram (in kHz), as in \code{\link[seewave]{spectro}}. Default is c(0, 22).
 #' @param length.out A character vector of length 1 giving the number of measurements of fundamental 
 #' frequency desired (the length of the time series).
 #' @param wn Character vector of length 1 specifying window name. Default is 
 #'   "hanning". See function \code{\link[seewave]{ftwindow}} for more options.
-#' @param pal A color palette function to be used to assign colors in the 
-#'   plot, as in \code{\link[seewave]{spectro}}. Default is reverse.gray.colors.2.
 #' @param ovlp Numeric vector of length 1 specifying \% of overlap between two 
 #'   consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70. 
-#' @param inner.mar Numeric vector with 4 elements, default is c(5,4,4,2). 
-#'   Specifies number of lines in inner plot margins where axis labels fall, 
-#'   with form c(bottom, left, top, right). See \code{\link[graphics]{par}}.
-#' @param outer.mar Numeric vector with 4 elements, default is c(0,0,0,0). 
-#'   Specifies number of lines in outer plot margins beyond axis labels, with 
-#'   form c(bottom, left, top, right). See \code{\link[graphics]{par}}.
-#' @param picsize Numeric argument of length 1. Controls relative size of 
-#'   spectrogram. Default is 1.
-#' @param res Numeric argument of length 1. Controls image resolution.
-#'   Default is 100 (faster) although 300 - 400 is recommended for publication/ 
-#'   presentation quality.
-#' @param cexlab Numeric vector of length 1 specifying the relative size of axis 
-#'   labels. See \code{\link[seewave]{spectro}}.
-#' @param title Logical argument to add a title to individual spectrograms. 
-#'   Default is \code{TRUE}.
-#' @param propwidth Logical argument to scale the width of spectrogram 
-#'   proportionally to duration of the selected call. Default is \code{FALSE}.
-#' @param xl Numeric vector of length 1. A constant by which to scale 
-#'   spectrogram width. Default is 1.
-#' @param gr Logical argument to add grid to spectrogram. Default is \code{FALSE}.
-#' @param sc Logical argument to add amplitude scale to spectrogram, default is 
-#'   \code{FALSE}.
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
 #'   frequency bandpass filter (in kHz). Default is c(0, 22).
-#' @param cex Numeric vector of length 1, specifies relative size of points 
-#'   plotted for frequency measurements and legend font/points, respectively. 
-#'   See \code{\link[seewave]{spectro}}.
 #' @param threshold amplitude threshold (\%) for fundamental frequency detection. Default is 15.
-#' @param col Vector of length 1 specifying colors of points plotted to mark 
-#'  fundamental frequency measurements. Default is "red2".
-#' @param pch Numeric vector of length 1 specifying plotting characters for 
-#'   the frequency measurements. Default is 16.
-#' @param mar Numeric vector of length 1. Specifies the margins adjacent to the selections
-#'  to set spectrogram limits. Default is 0.05.
-#' @param lpos Character vector of length 1 or numeric vector of length 2, 
-#'   specifiying position of legend. If the former, any keyword accepted by 
-#'   xy.coords can be used (see below). If the latter, the first value will be the x 
-#'   coordinate and the second value the y coordinate for the legend's position.
-#'   Default is "topright".
-#' @param it A character vector of length 1 giving the image type to be used. Currently only
-#' "tiff" and "jpeg" are admitted. Default is "jpeg".
 #' @param img Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #'  It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
@@ -75,11 +29,22 @@
 #' image files.
 #' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
 #' when parallel = 1.
+#' @param clip.edges Logical argument to control whether edges (start or end of signal) in
+#' which amplitude values above the threshold were not detected will be removed. If 
+#' \code{TRUE} this edges will be excluded and signal contour will be calculated on the
+#' remainging values. Default is \code{FALSE}. 
+#' #' @param leglab A character vector of length 1 or 2 containing the label(s) of the frequency contour legend 
+#' in the output image.
+#' @param leglab A character vector of length 1 or 2 containing the label(s) of the frequency contour legend 
+#' in the output image.
+#' @param ... Additional arguments to be passed to \code{\link{trackfreqs}}. for customizing
+#' graphical output.
 #' @return A data frame with the fundamental frequency values measured across the signals. If img is 
 #' \code{TRUE} it also produces image files with the spectrograms of the signals listed in the 
-#' input data frame showing the location of the fundamental frequencies.
+#' input data frame showing the location of the fundamental frequencies 
+#' (see \code{\link{trackfreqs}} description for more details).
 #' @family spectrogram creators
-#' @seealso \code{\link{sig2noise}}, \code{\link{dfts}}, \code{\link{ffDTW}}, \code{\link{dfDTW}}
+#' @seealso \code{\link{sig2noise}}, \code{\link{trackfreqs}}, \code{\link{dfts}}, \code{\link{ffDTW}}, \code{\link{dfDTW}}
 #' @export
 #' @name ffts
 #' @details This function extracts the fundamental frequency values as a time series. 
@@ -94,12 +59,12 @@
 #' setwd(tempdir())
 #' 
 #' #load data
-#' data(list = c("Phae.long1", "Phae.long2","manualoc.df"))
+#' data(list = c("Phae.long1", "Phae.long2","selec.table"))
 #' writeWave(Phae.long1, "Phae.long1.wav") #save sound files 
 #' writeWave(Phae.long2, "Phae.long2.wav") #save sound files 
 #' 
 #' # run function 
-#' ffts(manualoc.df, length.out = 50, flim = c(1, 12), bp = c(2, 9), wl = 300)
+#' ffts(selec.table, length.out = 50, flim = c(1, 12), bp = c(2, 9), wl = 300)
 #' 
 #' Note that fundamental frequency is not accurate for noisy signals, works better with pure tones
 #' 
@@ -107,12 +72,9 @@
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on oct-26-2016 (MAS)
 
-ffts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
-                       inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100, cexlab = 1,
-                       title = TRUE, propwidth = FALSE, xl = 1, gr = FALSE, sc = FALSE, 
-                       bp = c(0, 22), cex = 1, threshold = 15, col = "red2", pch = 16,
-                       mar = 0.05, lpos = "topright", it = "jpeg", img = TRUE, parallel = 1,
-                 path = NULL, img.suffix = "ffts", pb = TRUE){     
+ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, 
+                              bp = c(0, 22), threshold = 15, img = TRUE, parallel = 1,
+                 path = NULL, img.suffix = "ffts", pb = TRUE, clip.edges = FALSE, leglab = "ffts", ...){     
   
   #check path to working directory
   if(!is.null(path))
@@ -145,15 +107,9 @@ ffts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
   if(!is.null(bp)) {if(!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
     if(!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")}}
   
-  #if it argument is not "jpeg" or "tiff" 
-  if(!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))  
-  
-  #wrap img creating function
-  if(it == "jpeg") imgfun <- jpeg else imgfun <- tiff
-  
   #return warning if not all sound files were found
-  recs.wd <- list.files(path = getwd(), pattern = ".wav$", ignore.case = TRUE)
-  if(length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files))) 
+  recs.wd <- list.files(path = getwd(), pattern = "\\.wav$", ignore.case = TRUE)
+  if(length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files)) & pb) 
     message(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
                   ".wav file(s) not found"))
   
@@ -166,68 +122,70 @@ ffts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
   #if parallel is not numeric
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
-  
-  #if parallel
-  if(all(parallel > 1, img, !Sys.info()[1] %in% c("Linux","Windows"))) {
-    parallel <- 1
-    message("creating images is not compatible with parallel computing (parallel > 1) in OSX (mac)")
-  }
-  
-  #parallel not available on windows
-  if(parallel > 1 & Sys.info()[1] == "Windows")
-  {message("parallel computing not availabe in Windows OS for this function")
-    parallel <- 1}
 
  if(parallel == 1 & pb) {if(img) message("Creating spectrograms overlaid with fundamental frequency measurements:") else
-    message("Measuring fundamental frequency:")}  
+    message("Measuring fundamental frequency:")}
   
-        fftsFUN <- function(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold){
+        fftsFUN <- function(X, i, bp, wl, threshold){
     
     # Read sound files to get sample rate and length
     r <- tuneR::readWave(file.path(getwd(), X$sound.files[i]), header = TRUE)
     f <- r$sample.rate
-    t <- c(X$start[i] - mar, X$end[i] + mar)
-    
-    #reset coordinates of signals 
-    mar1 <- X$start[i]-t[1]
-    mar2 <- mar1 + X$end[i] - X$start[i]
-    
-    if (t[1] < 0) { t[2] <- abs(t[1]) + t[2] 
-    mar1 <- mar1  + t[1]
-    mar2 <- mar2  + t[1]
-    t[1] <- 0
-    }
-    
-    if(t[2] > r$samples/f) t[2] <- r$samples/f
   
     b<- bp 
     if(!is.null(b)) {if(b[2] > ceiling(f/2000) - 1) b[2] <- ceiling(f/2000) - 1 
     b <- b * 1000}
     
     
-      r <- tuneR::readWave(as.character(X$sound.files[i]), from = t[1], to = t[2], units = "seconds")
+      r <- tuneR::readWave(as.character(X$sound.files[i]), from = X$start[i], to = X$end[i], units = "seconds")
     
       # calculate fundamental frequency at each time point     
-      ffreq1 <- seewave::fund(r, from=mar1, to = mar2,  
-                             fmax= b[2], f = f, ovlp = ovlp, threshold = threshold, plot = FALSE) 
+      ffreq1 <- seewave::fund(r, fmax= b[2], f = f, ovlp = ovlp, threshold = threshold, plot = FALSE) 
       ffreq <- ffreq1[!is.na(ffreq1[,2]), ]
       ffreq <- ffreq[ffreq[,2] > b[1]/1000, ]
       
-      if(nrow(ffreq) < 2) {apfund <- list()
+      if(nrow(ffreq) < 2) {
+        apfund <- list()
       apfund$x <- ffreq1[, 1]
       apfund$y <- rep(NA, length.out)
-      } else
-      apfund <- approx(ffreq[,1], ffreq[,2], xout = seq(from = ffreq1[1, 1],  to = ffreq1[nrow(ffreq1), 1], length.out = length.out), method = "linear")
+      apfund1 <- apfund
+      } else {
+        if(!clip.edges)  {
+          apfund <- approx(ffreq[,1], ffreq[,2], xout = seq(from = ffreq1[1, 1],
+                to = ffreq1[nrow(ffreq1), 1], length.out = length.out), 
+                method = "linear") 
+          apfund1 <- apfund
+          } else {
+            apfund <- approx(ffreq[,1], ffreq[,2], 
+                      xout = seq(from = ffreq[1, 1],  to = ffreq[nrow(ffreq), 1], 
+                                 length.out = length.out), method = "linear")
+          
+          #fix for ploting with trackfreqs
+          #calculate time at start and end with no amplitude detected (duration of clipped edges)
+          durend1 <- suppressWarnings(diff(range(ffreq1[,1][rev(cumsum(rev(ffreq1[,2])) == 0)])))
+          durend <- durend1
+          if(is.infinite(durend) | is.na(durend)) durend <- 0
+
+          durst1 <- suppressWarnings(diff(range(ffreq1[,1][cumsum(ffreq1[,2]) == 0])))   
+          durst <- durst1
+          if(is.infinite(durst) | is.na(durst)) durst <- 0
+          
+          by.dur <- mean(diff(apfund$x))
+          clipst <- length(seq(from = 0, to = durst, by = by.dur))
+          clipend <- length(seq(from = 0, to = durend, by = by.dur))
+          
+          apfund1 <- apfund
+          apfund1$y <- c(rep(NA, clipst) ,apfund$y, rep(NA, clipend))
+          
+          if(is.infinite(durst1) | is.na(durst1)) apfund1$y <- apfund1$y[-1]
+          if(is.infinite(durend1) | is.na(durend1)) apfund1$y <- apfund1$y[-length(apfund1$y)]
+          }
+      }
       
     if(img) 
-      trackfreqs(X[i,], wl = wl, flim = flim, wn = wn, pal = pal, ovlp = ovlp,
-                 inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab,
-                 title = title, propwidth = propwidth, xl = xl, osci = FALSE, gr = gr, sc = sc, 
-                 bp = bp, cex = c(cex, cex), threshold = threshold, contour = "ff", 
-                 col = col,  pch = pch, mar = mar, lpos = lpos, pb = FALSE,
-                 it = it, parallel = 1, path = path, img.suffix =  img.suffix, 
-                 custom.contour = data.frame(sound.files = X$sound.files[i], selec = X$selec[i], t(apfund$y)))
-      
+      trackfreqs(X[i,], wl = wl, osci = FALSE, leglab = leglab, pb = FALSE, wn = wn,
+                 parallel = 1, path = path, img.suffix =  img.suffix, ovlp = ovlp,
+                 custom.contour = data.frame(sound.files = X$sound.files[i], selec = X$selec[i], t(apfund$y)), ...)
       
     return(apfund$y)  
   } 
@@ -243,7 +201,7 @@ ffts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
             doParallel::registerDoParallel(cl)
             
             lst <- foreach::foreach(i = 1:nrow(X)) %dopar% {
-              fftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold)
+              fftsFUN(X, i, bp, wl, threshold)
             }
             
             parallel::stopCluster(cl)
@@ -252,7 +210,7 @@ ffts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
           if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
             
             lst <- parallel::mclapply(1:nrow(X), function (i) {
-              fftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold)
+              fftsFUN(X, i, bp, wl, threshold)
             })
           }
           if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
@@ -262,7 +220,7 @@ ffts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
             doParallel::registerDoParallel(cl)
             
             lst <- foreach::foreach(i = 1:nrow(X)) %dopar% {
-              fftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold)
+              fftsFUN(X, i, bp, wl, threshold)
             }
             
             parallel::stopCluster(cl)
@@ -271,8 +229,8 @@ ffts <- function(X, wl = 512, flim = c(0, 22), length.out = 20, wn = "hanning", 
         }
         else {
           if(pb)
-          lst <- pbapply::pblapply(1:nrow(X), function(i) fftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold)) else
-            lst <- lapply(1:nrow(X), function(i) fftsFUN(X, i, mar, bp, xl,  picsize, res, flim, wl, cexlab, threshold))
+          lst <- pbapply::pblapply(1:nrow(X), function(i) fftsFUN(X, i, bp, wl, threshold)) else
+            lst <- lapply(1:nrow(X), function(i) fftsFUN(X, i, bp, wl, threshold))
         }
         
   df <- data.frame(sound.files = X$sound.files, selec = X$selec, as.data.frame(matrix(unlist(lst),nrow = length(X$sound.files), byrow = TRUE)))

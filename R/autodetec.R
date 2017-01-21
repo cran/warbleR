@@ -84,11 +84,11 @@
 #' @name autodetec
 #' @details This function determines the start and end of signals in the segments of the sound files listed 
 #'   in the input data frame. Alternatively, if no data frame is provided, the function detects signals across
-#'   each entire sound file and creates long spectrograms for all sound files in the working directory.
-#'   The input data frame should have the following columns: c("sound.files","selec","start","end"). 
-#'   The ouptut of \code{\link{manualoc}} can be used as the input data frame. This function uses 
-#'   a modified version of the \code{\link[seewave]{timer}} function from seewave 
-#'   package to detect signals. 
+#'   each entire sound file and creates long spectrograms highlighting the start and of the detected
+#'   signals for all sound files in the working directory. The input data frame should have the following 
+#'   columns: c("sound.files","selec","start","end"). The ouptut of \code{\link{manualoc}} can be used as the 
+#'   input data frame. This function uses a modified version of the \code{\link[seewave]{timer}} function from 
+#'   seewave package to detect signals. 
 #'   
 #' @examples
 #' \dontrun{
@@ -131,7 +131,7 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     setwd(path)} #set working directory
   
   #if bp is not vector or length!=2 stop
-  if(length(list.files(pattern = ".wav$", ignore.case = TRUE)) == 0) if(is.null(path)) stop("No .wav files in working directory") else stop("No .wav files in 'path' provided") 
+  if(length(list.files(pattern = "\\.wav$", ignore.case = TRUE)) == 0) if(is.null(path)) stop("No .wav files in working directory") else stop("No .wav files in 'path' provided") 
   
   #if bp is not vector or length!=2 stop
   if(!is.null(bp))
@@ -238,7 +238,7 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     if(any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
     
     #return warning if not all sound files were found
-    fs <- list.files(pattern = ".wav$", ignore.case = TRUE)
+    fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
     if(length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
       message(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                     ".wav file(s) not found"))
@@ -259,7 +259,7 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     
     #redo the ones that have no images in folder
   if(!redo) {
-    imgfs <- list.files(pattern = ".jpeg$|.tiff$")
+    imgfs <- list.files(pattern = "\\.jpeg$|\\.tiff$")
     done <- sapply(1:nrow(X), function(x){
       any(grep(paste(gsub(".wav","", X$sound.files[x]),X$selec[x], sep = "-"), imgfs,  invert = FALSE))
       })
@@ -274,8 +274,10 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
   #create function to detec signals          
   adFUN <- function(i, X, flim, wl, bp, envt, msmooth, ssmooth, mindur, maxdur)
   {
-     song<-tuneR::readWave(as.character(X$sound.files[i]),from=X$start[i],to=X$end[i],units="seconds")
+     song <- tuneR::readWave(as.character(X$sound.files[i]),from=X$start[i],to=X$end[i],units="seconds")
     
+     if(length(song@left) > wl + 2)
+    { 
     f <- song@samp.rate
     fl<- flim #in case flim is higher than can be due to sampling rate
     if(fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
@@ -359,7 +361,8 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
     
 
  dev.off()
-    }
+ }  
+  }
     #if nothing was detected
   if(nrow(time.song)==0)
   time.song<-data.frame(sound.files = X$sound.files[i], duration = NA,selec = NA,start = NA, end = NA)

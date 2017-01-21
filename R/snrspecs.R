@@ -43,7 +43,8 @@
 #' @param sc Logical argument to add amplitude scale to spectrogram, default is 
 #'   \code{FALSE}.
 #' @param mar Numeric vector of length 1. Specifies the margins adjacent to the 
-#' start and end points of the selections to define spectrogram limits. Default is 0.2.
+#' start and end points of the selections to define spectrogram limits. Default is 0.2. If snrmar 
+#' is larger than mar, then mar is set to be equal to snrmar.
 #' @param snrmar Numeric vector of length 1. Specifies the margins adjacent to the start and end
 #' points of the selections where noise will be measured. Default is 0.1.
 #' @param it A character vector of length 1 giving the image type to be used. Currently only
@@ -74,20 +75,20 @@
 #' # First create empty folder
 #' setwd(tempdir())
 #'  
-#' data(list = c("Phae.long1", "Phae.long2", "manualoc.df"))
+#' data(list = c("Phae.long1", "Phae.long2", "selec.table"))
 #' writeWave(Phae.long1, "Phae.long1.wav") #save sound.files
 #' writeWave(Phae.long2, "Phae.long2.wav") 
 #' 
 #' # make Phae.long1 and Phae.long2 spectrograms
 #' # snrmar needs to be smaller before moving on to sig2noise()
 #' 
-#' snrspecs(manualoc.df, flim = c(0, 14), inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), 
+#' snrspecs(selec.table, flim = c(0, 14), inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), 
 #' picsize = 2, res = 300, cexlab = 2, mar = 0.2, snrmar = 0.1, it = "jpeg", wl = 300)
 #' 
 #' # make only Phae.long1 spectrograms
 #' # snrmar now doesn't overlap neighboring signals
 #' 
-#' snrspecs(manualoc.df[grepl(c("Phae.long1"), manualoc.df$sound.files), ], flim = c(3, 14),
+#' snrspecs(selec.table[grepl(c("Phae.long1"), selec.table$sound.files), ], flim = c(3, 14),
 #' inner.mar = c(4,4.5,2,1), outer.mar = c(4,2,2,1), picsize = 2, res = 300, cexlab = 2,
 #' mar = 0.2, snrmar = 0.01, wl = 300)
 #' 
@@ -138,7 +139,7 @@ snrspecs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
   options( show.error.messages = TRUE)
     
   #return warning if not all sound files were found
-  fs <- list.files(pattern = ".wav$", ignore.case = TRUE)
+  fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
   if(length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     message(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                   ".wav file(s) not found"))
@@ -170,20 +171,35 @@ snrspecs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
     # Set mar equals to snrmar if is smaller
     if(mar < snrmar) mar <- snrmar
     
-    # Correct start and end time if is smaller than 0 or higher than length of rec
+    # # Correct start and end time if is smaller than 0 or higher than length of rec
+    # st <- X$start[i] - mar
+    # en <- X$end[i] + mar
+    # mar1 <- mar
+    # 
+    # if (st < 0)  {
+    #   mar1 <- mar1  + st
+    #   st <- 0
+    #   }
+    # 
+    # mar2 <- mar1 + X$end[i] - X$start[i]
+    # 
+    # if(en > r$samples/f) en <- r$samples/f
+
+    #reset coordinates of signals 
     st <- X$start[i] - mar
     en <- X$end[i] + mar
     mar1 <- mar
+    
+    if (st < 0) { 
+      mar1 <- mar1  + st
+      st <- 0
+    }
+    
     mar2 <- mar1 + X$end[i] - X$start[i]
     
-    if (st < 0)  {
-      mar1 <- mar1  + st
-      mar2 <- mar2  + st
-      st <- 0
-      }
-  
     if(en > r$samples/f) en <- r$samples/f
-
+    
+    
     r <- tuneR::readWave(as.character(X$sound.files[i]), from = st, to = en, units = "seconds")
     
     

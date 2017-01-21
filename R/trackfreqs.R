@@ -8,7 +8,8 @@
 #'   xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = c(0.6, 1), 
 #'   threshold = 15, contour = "both", col = c("skyblue", "red2"),
 #'    pch = c(21, 24),  mar = 0.05, lpos = "topright", it = "jpeg", parallel = 1, 
-#'    path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE)
+#'    path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE, type = "p", 
+#'    leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE)
 #' @param  X Data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
@@ -47,7 +48,8 @@
 #' @param sc Logical argument to add amplitude scale to spectrogram, default is 
 #'   \code{FALSE}.
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
-#'   frequency bandpass filter (in kHz). Default is c(0, 22).
+#'   frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f 
+#'   and high.f columns will be used as bandpass limits. Default is c(0, 22).
 #' @param cex Numeric vector of length 2, specifies relative size of points 
 #'   plotted for frequency measurements and legend font/points, respectively. 
 #'   See \code{\link[seewave]{spectro}}.
@@ -81,6 +83,12 @@
 #' identical to the corresponding columns in X (same order). 
 #' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
 #' when parallel = 1.
+#' @param type A character vector of length 1 indicating the type of frequency contour plot to be drawn. 
+#' Possible types are "p" for points, "l" for lines and "b" for both.
+#' @param leglab A character vector of length 1 or 2 containing the label(s) of the frequency contour legend 
+#' in the output image.
+#' @param col.alpha A numeric vector of length 1  within [0,1] indicating how transparent the lines/points should be.
+#' @param line Logical argument to add red lines (or box if low.f and high.f columns are provided) at start and end times of selection. Default is \code{TRUE}.
 #' @return Spectrograms of the signals listed in the input data frame showing the location of 
 #' the dominant and fundamental frequencies.
 #' @family spectrogram creators
@@ -139,7 +147,8 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
                        title = TRUE, propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, 
                        bp = c(0, 22), cex = c(0.6, 1), threshold = 15, contour = "both", 
                        col = c("skyblue", "red2"),  pch = c(21, 24), mar = 0.05, lpos = "topright", 
-                       it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE){     
+                       it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE,
+                       type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE){     
   
   #check path to working directory
   if(!is.null(path))
@@ -166,11 +175,17 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   
   #if any selections longer than 20 secs stop
   if(any(X$end - X$start>20)) stop(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))  
-  options( show.error.messages = TRUE)
   
-  #if bp is not vector or length!=2 stop
-  if(!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
-    if(!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")}
+  # bp checking
+  if(bp != "frange")
+  {if(!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
+    if(!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")} 
+  } else
+  {if(!any(names(X) == "low.f") & !any(names(X) == "high.f")) stop("'bp' = frange requires low.f and high.f columns in X")
+    if(any(is.na(c(X$low.f, X$high.f)))) stop("NAs found in low.f and/or high.f") 
+    if(any(c(X$low.f, X$high.f) < 0)) stop("Negative values found in low.f and/or high.f") 
+    if(any(X$high.f - X$low.f < 0)) stop("high.f should be higher than low.f")
+    }
   
   #if it argument is not "jpeg" or "tiff" 
   if(!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))  
@@ -178,14 +193,17 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   #wrap img creating function
   if(it == "jpeg") imgfun <- jpeg else imgfun <- tiff
   
+  #if type not l b or p
+  if(!any(type %in% c("p", "l", "b"))) stop(paste("Type", type, "not allowed"))  
+
   #join img.suffix and it
   if(is.null(img.suffix))
     img.suffix2 <- paste("trackfreqs", it, sep = ".") else   img.suffix2 <- paste(img.suffix, it, sep = ".")
   
   #return warning if not all sound files were found
-  recs.wd <- list.files(pattern = ".wav$", ignore.case = TRUE)
+  recs.wd <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
   if(length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files))) 
-    (paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
+    message(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
            ".wav file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
@@ -204,17 +222,27 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     if(!identical(names(custom.contour)[1:2], c("sound.files", "selec"))) stop("'sound.files' and/or 'selec' columns are not found in custom.contour")
 
       #check if the info in sound.files and selec columns is the same for X and custom.contour
-      clms <- grep("^sound.files$|^selec$", names(X))
-  if(!identical(X[,sort(clms)], custom.contour[ ,1:2])) stop("'sound.files' and/or 'selec' columns are not identical in X and custom.contour")
-  }  
+      #remove custom.contour selections not in X
+      custom.contour <- custom.contour[paste(custom.contour[,c("sound.files")], custom.contour[,c("selec")]) %in% paste(X[,c("sound.files")], X[,c("selec")])]
+
+      #stop if not the same number of selections
+      if(nrow(X) > nrow(custom.contour)) stop("selection(s) in X but not in custom.contour")
+      
+      #order custom.contour as in X
+      custom.contour <- custom.contour[match(paste(custom.contour[,c("sound.files")], custom.contour[,c("selec")]), paste(X[,c("sound.files")], X[,c("selec")])),]      
+    }
   
-  #if only 1 pch was specfified
+  # adjust if only 1 pch was specfified
   if(length(pch) == 1) pch <- c(pch, pch)
+ 
+  # adjust if only 1 color was specified
+  if(length(col) == 1) col <- c(col, col)
+  
+  # adjust if only 1 leglab was specified
+  if(length(leglab) == 1) leglab <- c(leglab, leglab)
   
   #make colors transparent
-  if(length(col) == 1) col <- c(col, col)
-  col <- adjustcolor(c(col, "yellow", "black", "white", "red"), alpha.f = 0.7)
-  
+  col <- adjustcolor(c(col, "yellow", "black", "white", "red"), alpha.f = col.alpha)
   
           trackfreFUN <- function(X, i, mar, flim, xl, picsize, wl, cexlab, inner.mar, outer.mar, res, bp, cex, threshold, pch, custom.contour){
     
@@ -222,25 +250,27 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     r <- tuneR::readWave(as.character(X$sound.files[i]), header = TRUE)
     f <- r$sample.rate
     t <- c(X$start[i] - mar, X$end[i] + mar)
-    if(t[1]<0) t[1]<-0
-    if(t[2]>r$samples/f) t[2]<-r$samples/f
     
-    
+    #adjust margins if signal is close to start or end of sound file
     mar1 <- mar
+      
+    if(t[1] < 0) {
+      t[1] <- 0
+    mar1 <- X$start[i]
+    }
+
     mar2 <- mar1 + X$end[i] - X$start[i]
     
-    if (t[1] < 0) { 
-      mar1 <- mar1  + t[1]
-      mar2 <- mar2  + t[1]
-      t[1] <- 0
-    }
-    
     if(t[2] > r$samples/f) t[2] <- r$samples/f
-    
+
+
     # read rec segment
     r <- tuneR::readWave(as.character(X$sound.files[i]), from = t[1], to = t[2], units = "seconds")
+   
     #in case bp its higher than can be due to sampling rate
+    if(bp == "frange") bp <- c(X$low.f[i], X$high.f[i])
     b<- bp 
+
     if(b[2] > ceiling(r@samp.rate/2000) - 1) b[2] <- ceiling(r@samp.rate/2000) - 1 
     
     fl<- flim #in case flim its higher than can be due to sampling rate
@@ -282,21 +312,27 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     # Calculate fundamental frequencies at each time point
 if(contour %in% c("both", "ff") & is.null(custom.contour))
 {
-  ffreq1 <- seewave::fund(wave = r, wl = wl, from=mar1, to = mar2,
+  ffreq1 <- seewave::fund(wave = r, wl = wl, from = mar1, to = mar2,
               fmax= b[2]*1000, f = f, ovlp = 70, threshold = threshold, plot = FALSE)
-  ffreq <- ffreq1[!is.na(ffreq1[,2]),]  
-  ffreq <- ffreq[ffreq[,2] > b[1],]
+  ffreq <- matrix(ffreq1[!is.na(ffreq1[,2]),], ncol = 2)  
+  ffreq <- matrix(ffreq[ffreq[,2] > b[1],], ncol = 2)
     
     # Plot extreme values fundamental frequency
-    points(c(ffreq[c(which.max(ffreq[,2]),which.min(ffreq[,2])),1])+mar1, c(ffreq[c(which.max(ffreq[,2]), 
+      points(c(ffreq[c(which.max(ffreq[,2]),which.min(ffreq[,2])),1]) + mar1, c(ffreq[c(which.max(ffreq[,2]), 
         which.min(ffreq[,2])),2]), col = col[3], cex = cex[1] * 1.6, pch = pch[1], lwd = 2)  
   
   # Plot all fundamental frequency values
-    points(c(ffreq[,1])+mar1, c(ffreq[,2]), col = col[1], cex = cex[1], pch = pch[1], bg = col[1])
-    
+  if(type %in% c("p", "b"))
+     points(c(ffreq[,1])+mar1, c(ffreq[,2]), col = col[1], cex = cex[1], pch = pch[1], bg = col[1])
+ 
+  # plot lines      
+  if(type %in% c("l", "b"))
+    lines(ffreq[,1] + mar1, ffreq[,2], col = col[1], lwd = 3) 
+      
+         
     # Plot empty points at the bottom for the bins that did not detected any frequencies or out of bp
     if(nrow(ffreq1) > nrow(ffreq))
-    points(c(ffreq1[!ffreq1[,1] %in% ffreq[,1], 1]) + mar1, rep(fl[1] + (fl[2] - fl[1]) * 0.05, nrow(ffreq1) - nrow(ffreq)), col = col[4], cex = cex[1] * 0.7, pch = pch[1])
+    points(c(ffreq1[!ffreq1[,1] %in% ffreq[,1], 1]) + mar1, rep(fl[1] + (fl[2] - fl[1]) * 0.04, nrow(ffreq1) - nrow(ffreq)), col = col[4], cex = cex[1] * 0.7, pch = pch[1])
 }
      
   
@@ -305,22 +341,26 @@ if(contour %in% c("both", "ff") & is.null(custom.contour))
 {    
       dfreq1 <- seewave::dfreq(r, f = f, wl = wl, ovlp = 70, plot = FALSE, bandpass = b * 1000, fftw = TRUE, 
                    threshold = threshold, tlim = c(mar1, mar2)) 
-      dfreq <- dfreq1[!is.na(dfreq1[,2]),]  
+      dfreq <- matrix(dfreq1[!is.na(dfreq1[,2]),], ncol = 2)  
 
     # Plot extreme values dominant frequency
-    points(c(dfreq[c(which.max(dfreq[,2]),which.min(dfreq[,2])),1])+mar1, c(dfreq[c(which.max(dfreq[,2]),
+        points(c(dfreq[c(which.max(dfreq[,2]),which.min(dfreq[,2])),1])+mar1, c(dfreq[c(which.max(dfreq[,2]),
         which.min(dfreq[,2])),2]), col = col[3], cex = cex[1] * 1.6, pch = pch[2], lwd = 2) 
 
    # Plot all dominant frequency values
-    points(dfreq[,1] + mar1, dfreq[,2], col = col[2], cex = cex[1], pch = pch[2], bg = col[2]) 
+   if(type %in% c("p", "b"))
+     points(dfreq[,1] + mar1, dfreq[,2], col = col[2], cex = cex[1], pch = pch[2], bg = col[2]) 
+    
+  # plot lines      
+    if(type %in% c("l", "b"))
+    lines(dfreq[,1] + mar1, dfreq[,2], col = col[2], lwd = 3) 
     
     # Plot empty points at the bottom for the bins that did not detected any frequencies or out of bp
     if(nrow(dfreq1) > nrow(dfreq))
       points(c(dfreq1[!dfreq1[,1] %in% dfreq[,1], 1]) + mar1, rep(fl[1] + (fl[2] - fl[1]) * 0.02, nrow(dfreq1) - nrow(dfreq)), col = col[4], cex = cex[1] * 0.7, pch = pch[2])
-    
         }
     
-    # Calculate dominant frequency at each time point     
+    # Use freq values provided by user   
     if(!is.null(custom.contour))
     {    
       custom <- custom.contour[i, 3:ncol(custom.contour)]
@@ -333,35 +373,54 @@ if(contour %in% c("both", "ff") & is.null(custom.contour))
                                                                                       which.min(freq[,2])),2]), col = col[3], cex = cex[1] * 1.6, pch = pch[2], lwd = 2) 
       
       # Plot all dominant frequency values
-      points(freq[,1] + mar1, freq[,2], col = col[2], cex = cex[1], pch = pch[1], bg = col[2]) 
+      if(type %in% c("p", "b"))
+        points(freq[,1] + mar1, freq[,2], col = col[2], cex = cex[1], pch = pch[2], bg = col[2]) 
+      
+      
+      # plot lines      
+      if(type %in% c("l", "b"))
+        lines(freq[,1] + mar1, freq[,2], col = col[2], lwd = 3) 
       
       # Plot empty points at the bottom for the bins that did not detected any frequencies or out of bp
       if(nrow(freq1) > nrow(freq))
-        points(c(freq1[!freq1[,1] %in% freq[,1], 1]) + mar1, rep(fl[1] + (fl[2] - fl[1]) * 0.02, nrow(freq1) - nrow(freq)), col = col[4], cex = cex[1] * 0.7, pch = pch[1])
+        points(c(freq1[!freq1[,1] %in% freq[,1], 1]) + mar1, rep(fl[1] + (fl[2] - fl[1]) * 0.02, nrow(freq1) - nrow(freq)), col = col[4], cex = cex[1] * 0.7, pch = pch[2])
       
     }
     
-    abline(v = c(mar1, mar2), col= col[6], lty = "dashed")
+  if(line){  
+    if(any(names(X) == "low.f") & any(names(X) == "high.f"))
+  {   if(!is.na(X$low.f[i]) & !is.na(X$high.f[i]))
+      polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$low.f[i], X$high.f[i], X$high.f[i], X$low.f[i]), lty = 3, border = "blue", lwd = 1.2, col = adjustcolor("blue", alpha.f = 0.05)) else
+          abline(v = c(mar1, mar2), col= col[6], lty = "dashed")
+    } else abline(v = c(mar1, mar2), col= col[6], lty = "dashed")
+    }
     
-    # Legend coordinates can be uniquely adjusted 
-  if(is.null(custom.contour))
-     { if(contour == "both")
-    legend(lpos, legend = c("Ffreq", "Dfreq"), bg = col[5],
-           pch = pch, col = col[1:2], bty = "o", cex = cex[2], pt.bg = col[1:2])
+## legend
+      # remove points fo legend
+    if(type == "l") pch <- NA
+    if(type %in% c("l", "b")) lwd <- 3 else lwd = NA
+    
+    # Adjust legend coordinates  
+    if(is.null(custom.contour))
+    {
+      if(contour == "both")
+    legend(lpos, legend = leglab, bg = col[5],
+           pch = pch, col = col[1:2], bty = "o", cex = cex[2], pt.bg = col[1:2], lwd = lwd)
 
     if(contour == "ff")
-      legend(lpos, legend = "Ffreq",
-             pch = pch[1], col = col[1], bty = "o", cex = cex[2], bg = col[5], pt.bg = col[1])
+      legend(lpos, legend = leglab[1],
+             pch = pch[1], col = col[1], bty = "o", cex = cex[2], bg = col[5], pt.bg = col[1], lwd = lwd)
 
     if(contour == "df")
-      legend(lpos, legend = "Dfreq",
-             pch = pch[2], col = col[2], bty = "o", cex = cex[2], bg = col[5], pt.bg = col[2])
-    } else
-               legend(lpos, legend = "Freq",
-                      pch = pch[1], col = col[1], bty = "o", cex = cex[2], bg = col[5], pt.bg = col[1])
+      legend(lpos, legend = leglab[2],
+             pch = pch[2], col = col[2], bty = "o", cex = cex[2], bg = col[5], pt.bg = col[2], lwd = lwd)
+      } else
     
+{ 
+legend(lpos, legend = leglab[1],
+             pch = pch[2], col = col[2], bty = "o", cex = cex[2], bg = col[5], pt.bg = col[2], lwd = lwd)}
     
-    invisible() # execute par(old.par)  
+    invisible() 
     dev.off()
     return(NULL)
     

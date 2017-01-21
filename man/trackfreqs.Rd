@@ -10,7 +10,8 @@ trackfreqs(X, wl = 512, flim = c(0, 22), wn = "hanning", pal =
   xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = c(0.6, 1), 
   threshold = 15, contour = "both", col = c("skyblue", "red2"),
    pch = c(21, 24),  mar = 0.05, lpos = "topright", it = "jpeg", parallel = 1, 
-   path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE)
+   path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE, type = "p", 
+   leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE)
 }
 \arguments{
 \item{X}{Data frame with results containing columns for sound file name (sound.files), 
@@ -68,7 +69,8 @@ in \code{\link[seewave]{spectro}}. Default is \code{FALSE}.}
 \code{FALSE}.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
-frequency bandpass filter (in kHz). Default is c(0, 22).}
+frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f 
+and high.f columns will be used as bandpass limits. Default is c(0, 22).}
 
 \item{cex}{Numeric vector of length 2, specifies relative size of points 
 plotted for frequency measurements and legend font/points, respectively. 
@@ -115,6 +117,16 @@ identical to the corresponding columns in X (same order).}
 
 \item{pb}{Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
 when parallel = 1.}
+
+\item{type}{A character vector of length 1 indicating the type of frequency contour plot to be drawn. 
+Possible types are "p" for points, "l" for lines and "b" for both.}
+
+\item{leglab}{A character vector of length 1 or 2 containing the label(s) of the frequency contour legend 
+in the output image.}
+
+\item{col.alpha}{A numeric vector of length 1  within [0,1] indicating how transparent the lines/points should be.}
+
+\item{line}{Logical argument to add red lines (or box if low.f and high.f columns are provided) at start and end times of selection. Default is \code{TRUE}.}
 }
 \value{
 Spectrograms of the signals listed in the input data frame showing the location of 
@@ -180,6 +192,6 @@ Grace Smith Vidaurre and Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 Other spectrogram.creators: \code{\link{dfDTW}},
   \code{\link{dfts}}, \code{\link{ffDTW}},
   \code{\link{ffts}}, \code{\link{snrspecs}},
-  \code{\link{specreator}}
+  \code{\link{sp.en.ts}}, \code{\link{specreator}}
 }
 

@@ -58,14 +58,14 @@
 #' # First create empty folder
 #' setwd(tempdir())
 #' # save sound file examples
-#' data(list = c("Phae.long1", "Phae.long2","manualoc.df"))
+#' data(list = c("Phae.long1", "Phae.long2","selec.table"))
 #' writeWave(Phae.long1,"Phae.long1.wav") 
 #' writeWave(Phae.long2,"Phae.long2.wav")
 #' 
 #' lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors, wl = 300)
 #' 
 #' # including selections
-#' lspec(sxrow = 2, rows = 8, X = manualoc.df, pal = reverse.heat.colors, redo = TRUE, wl = 300)
+#' lspec(sxrow = 2, rows = 8, X = selec.table, pal = reverse.heat.colors, redo = TRUE, wl = 300)
 #' 
 #' check this floder
 #' getwd()
@@ -86,7 +86,7 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
   if(is.null(X$sel.comment) & !is.null(X)) X<-data.frame(X,sel.comment="")
   
   #read files
-  files <- list.files(pattern = ".wav$", ignore.case = TRUE)  
+  files <- list.files(pattern = "\\.wav$", ignore.case = TRUE)  
   
   
   #stop if files are not in working directory
@@ -162,7 +162,7 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
   
   # redo
   if(!redo) 
-    files <- files[!gsub(".wav$","", list.files(pattern = ".wav$", ignore.case = TRUE),ignore.case = TRUE) %in% 
+    files <- files[!gsub(".wav$","", list.files(pattern = "\\.wav$", ignore.case = TRUE),ignore.case = TRUE) %in% 
       unlist(sapply(strsplit(as.character(list.files(pattern = paste(it, "$", 
                                                                      sep = ""), ignore.case = TRUE)), "-p",fixed = TRUE), "[",1))]
   

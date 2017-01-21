@@ -8,8 +8,9 @@
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can
 #' be used as the input data frame.
-#' @param bp Numeric vector of length 2 giving the lower and upper limits of the 
-#' frequency bandpass filter (in kHz). Default is c(0, 22).
+#' @param bp A numeric vector of length 2 for the lower and upper limits of a 
+#'   frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f 
+#'   and high.f columns will be used as bandpass limits. Default is c(0, 22).
 #' @param wl A numeric vector of length 1 specifying the spectrogram window length. Default is 512.
 #' @param threshold amplitude threshold (\%) for fundamental frequency and 
 #'   dominant frequency detection. Default is 15.
@@ -65,16 +66,16 @@
 #' # First set temporary folder
 #' setwd(tempdir())
 #' 
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "manualoc.df"))
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
 #' writeWave(Phae.long1,"Phae.long1.wav")
 #' writeWave(Phae.long2,"Phae.long2.wav")
 #' writeWave(Phae.long3,"Phae.long3.wav")
 #' writeWave(Phae.long4,"Phae.long4.wav")
 #' 
-#' a <- specan(X = manualoc.df, bp = c(0, 22))
+#' a <- specan(X = selec.table, bp = c(0, 22))
 #' 
 #' # using a diferent threshold
-#' a <- specan(X = manualoc.df, bp = c(0, 22), threshold = 20)
+#' a <- specan(X = selec.table, bp = c(0, 22), threshold = 20)
 #' # View(a)
 #' 
 #' }
@@ -111,12 +112,19 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
   if(any(X$end - X$start>20)) stop(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))  
   options( show.error.messages = TRUE)
   
-  #if bp is not vector or length!=2 stop
-  if(!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
-    if(!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")}
+  # bp checking
+  if(bp != "frange")
+  {if(!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
+    if(!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")} 
+  } else
+  {if(!any(names(X) == "low.f") & !any(names(X) == "high.f")) stop("'bp' = frange requires low.f and high.f columns in X")
+    if(any(is.na(c(X$low.f, X$high.f)))) stop("NAs found in low.f and/or high.f") 
+    if(any(c(X$low.f, X$high.f) < 0)) stop("Negative values found in low.f and/or high.f") 
+    if(any(X$high.f - X$low.f < 0)) stop("high.f should be higher than low.f")
+  }
   
   #return warning if not all sound files were found
-  fs <- list.files(pattern = ".wav$", ignore.case = TRUE)
+  fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
   if(length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     message(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                   ".wav file(s) not found"))
@@ -136,6 +144,9 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
   #create function to run within Xapply functions downstream
   spFUN <- function(i, X, bp, wl, threshold) { 
     r <- tuneR::readWave(as.character(X$sound.files[i]), from = X$start[i], to = X$end[i], units = "seconds") 
+    
+    if(bp == "frange") bp <- c(X$low.f[i], X$high.f[i])
+    b<- bp 
     
     b<- bp #in case bp its higher than can be due to sampling rate
     if(b[2] > ceiling(r@samp.rate/2000) - 1) b[2] <- ceiling(r@samp.rate/2000) - 1 
@@ -173,9 +184,9 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
     #Dominant frecuency parameters
     y <- seewave::dfreq(r, f = r@samp.rate, wl = wl, ovlp = 0, plot = FALSE, threshold = threshold, bandpass = b * 1000, fftw = TRUE)[, 2]
     meandom <- mean(y, na.rm = TRUE)
-    mindom <- min(y, na.rm = TRUE)
+    if(length(y[y > 0 & !is.na(y)]) > 0) mindom <- min(y[y > 0 & !is.na(y)]) else mindom <- NA
     maxdom <- max(y, na.rm = TRUE)
-    dfrange <- (maxdom - mindom)
+    if(is.na(mindom)) dfrange <- NA else dfrange <- maxdom - mindom
     duration <- (X$end[i] - X$start[i])
     startdom <- y[!is.na(y)][1]
     enddom <- y[!is.na(y)][length(y[!is.na(y)])]

@@ -13,8 +13,9 @@ files, 2) "sel": number of the selections, 3) "start": start time of selections,
 end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can
 be used as the input data frame.}
 
-\item{bp}{Numeric vector of length 2 giving the lower and upper limits of the 
-frequency bandpass filter (in kHz). Default is c(0, 22).}
+\item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
+frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f 
+and high.f columns will be used as bandpass limits. Default is c(0, 22).}
 
 \item{wl}{A numeric vector of length 1 specifying the spectrogram window length. Default is 512.}
 
@@ -82,16 +83,16 @@ The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used
 # First set temporary folder
 setwd(tempdir())
 
-data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "manualoc.df"))
+data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
 writeWave(Phae.long1,"Phae.long1.wav")
 writeWave(Phae.long2,"Phae.long2.wav")
 writeWave(Phae.long3,"Phae.long3.wav")
 writeWave(Phae.long4,"Phae.long4.wav")
 
-a <- specan(X = manualoc.df, bp = c(0, 22))
+a <- specan(X = selec.table, bp = c(0, 22))
 
 # using a diferent threshold
-a <- specan(X = manualoc.df, bp = c(0, 22), threshold = 20)
+a <- specan(X = selec.table, bp = c(0, 22), threshold = 20)
 # View(a)
 
 }

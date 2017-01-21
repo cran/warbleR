@@ -4,7 +4,7 @@
 \alias{checksels}
 \title{Check selection data frames}
 \usage{
-checksels(X, parallel =  1, path = NULL)
+checksels(X, parallel =  1, path = NULL, check.header = FALSE)
 }
 \arguments{
 \item{X}{data frame with the following columns: 1) "sound.files": name of the .wav 
@@ -18,9 +18,17 @@ Not available in Windows OS.}
 
 \item{path}{Character string containing the directory path where the sound files are located. 
 If \code{NULL} (default) then the current working directory is used.}
+
+\item{check.header}{Logical. Controls whether sound file headers correspond to the actual file properties 
+(i.e. if is corrupted). This could significantly affect the performance of the function (much slower) particularly 
+with long sound files.}
 }
 \value{
-If all .wav files are ok, returns message "All files are ok!".
+A data frame with the sane columns as the input data frame (X) with 2 additional columns:
+"check.res" (check selections), and "min.n.samples" (the smallest number of samples). Note the number of samples available
+in a selection limits the minimum window length (wl argument in other functions) that can be used in batch analyses
+ 
+ If the .wav files can be read and returns message "All files are ok!".
   Otherwise returns "These file(s) cannot be read" message with names of the
   corrupted .wav files.
 }
@@ -28,8 +36,8 @@ If all .wav files are ok, returns message "All files are ok!".
 \code{checksels} checks whether selections can be read by subsequent functions.
 }
 \details{
-This function checks if the selections listed in the data frame correspond to .wav files
-in the working directory, if the sound files can be read and if so, if the start and end time
+This function checks 1) if the selections listed in the data frame correspond to .wav files
+in the working directory, 2) if the sound files can be read and if so, 3) if the start and end time
 of the selections are found within the duration of the sound files. Note that the sound files 
 should be in the working directory (or the directory provided in 'path').
 This is useful for avoiding errors in dowstream functions (e.g. \code{\link{specan}}).
@@ -40,12 +48,12 @@ This is useful for avoiding errors in dowstream functions (e.g. \code{\link{spec
 setwd(tempdir())
 
 # save wav file examples
-data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "manualoc.df"))
+data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "selec.table"))
 writeWave(Phae.long1,"Phae.long1.wav")
 writeWave(Phae.long2,"Phae.long2.wav")
 writeWave(Phae.long3,"Phae.long3.wav")
 
-checksels(X = manualoc.df)
+checksels(X = selec.table)
 }
 }
 \author{

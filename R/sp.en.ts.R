@@ -1,23 +1,25 @@
-#' Extract the dominant frequency values as a time series
+#' Extract the spectral entropy across signals as a time series
 #' 
-#' \code{dfts} extracts the dominant frequency values as a time series.
+#' \code{sp.en.ts} spectral entropy across signals as a time series.
 #' of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
-#' @usage dfts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = c(0, 22),
-#'   threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "dfts", pb = TRUE, 
-#'   clip.edges = FALSE, leglab = "dfts", ...)
+#' @usage sp.en.ts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = NULL,
+#'   threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "sp.en.ts",
+#'    pb = TRUE, clip.edges = FALSE, leglab = "sp.en.ts", sp.en.range = c(2, 10), ...)
 #' @param  X Data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
-#'   is 512.
-#' @param length.out A character vector of length 1 giving the number of measurements of dominant 
-#' frequency desired (the length of the time series).
+#'   is 512. Note that this is particularly important for measuring spectral entropy. Low values (~100) 
+#'   generate a very detail contour of the variation in spectral entropy that is probably not useful for 
+#'   assesing signal similarity.
+#' @param length.out A character vector of length 1 giving the number of measurements of spectral entropy 
+#'  desired (the length of the time series).
 #' @param wn Character vector of length 1 specifying window name. Default is 
 #'   "hanning". See function \code{\link[seewave]{ftwindow}} for more options.
 #' @param ovlp Numeric vector of length 1 specifying \% of overlap between two 
 #'   consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70. 
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
-#'   frequency bandpass filter (in kHz). Default is c(0, 22).
+#'   frequency bandpass filter (in kHz). Default is \code{NULL}.
 #' @param threshold amplitude threshold (\%) for dominant frequency detection. Default is 15.
 #' @param img Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
@@ -34,6 +36,9 @@
 #' remainging values. Default is \code{FALSE}. 
 #' @param leglab A character vector of length 1 or 2 containing the label(s) of the frequency contour legend 
 #' in the output image.
+#' @param sp.en.range Numeric vector of length 2. Range of frequency in which to display the entropy values 
+#' on the spectrogram (when img = TRUE). Default is c(2, 10). Negative values can be used in order to stretch more
+#' the range. 
 #' @param ... Additional arguments to be passed to \code{\link{trackfreqs}} for customizing
 #' graphical output.
 #' @return A data frame with the dominant frequency values measured across the signals. If img is 
@@ -45,14 +50,15 @@
 #'  \code{\link{snrspecs}} for creating spectrograms to 
 #'   optimize noise margins used in \code{\link{sig2noise}}
 #' @export
-#' @name dfts
-#' @details This function extracts the dominant frequency values as a time series. 
-#' The function uses the \code{\link[stats]{approx}} function to interpolate values between dominant frequency 
-#' measures. If there are no frequencies above the amplitude theshold at the begining or end 
-#'  of the signals then NAs will be generated. On the other hand, if there are no frequencies 
-#'  above the amplitude theshold in between signal segments in which amplitude was 
+#' @name sp.en.ts
+#' @details This function spectral entropy across signals as a time series. 
+#' The function uses the \code{\link[stats]{approx}} function to interpolate values between spectral 
+#' entropy measures (calculated with \code{\link[seewave]{csh}}). If there are no frequencies above the amplitude theshold 
+#' at the begining or end  of the signals then NAs will be generated. On the other hand, 
+#' if there are no frequenciesabove the amplitude theshold in between signal segments in which amplitude was 
 #'  detected then the values of this adjacent segments will be interpolated 
-#'  to fill out the missing values (e.g. no NAs in between detected amplitude segments). 
+#'  to fill out the missing values (e.g. no NAs in between detected amplitude segments). Missing values at the start
+#'  of end can be removed with "clip.edges".
 #' 
 #' @examples
 #' \dontrun{
@@ -60,20 +66,27 @@
 #' setwd(tempdir())
 #' 
 #' #load data
-#' data(list = c("Phae.long1", "Phae.long2","selec.table"))
+#' data(list = c("Phae.long1", "Phae.long2",  "Phae.long3",  "Phae.long4","selec.table"))
 #' writeWave(Phae.long2, "Phae.long2.wav") #save sound files 
 #' writeWave(Phae.long1, "Phae.long1.wav")
+#' writeWave(Phae.long3, "Phae.long3.wav") #save sound files 
+#' writeWave(Phae.long4, "Phae.long4.wav")
 #' 
-#' # run function 
-#' dfts(X = selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300)
+#' # without clip edges
+#' sp.en.ts(X = selec.table, threshold = 10, bp = NULL, clip.edges = F, length.out = 10,
+#'  type = "b", sp.en.range = c(-25, 10))
+#' 
+#' # with clip edges and length.out 10
+#' sp.en.ts(X = selec.table, threshold = 10, bp = c(2, 12), clip.edges = T, length.out = 10)
 #' 
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on oct-26-2016 (MAS)
 
-dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, 
-                  bp = c(0, 22), threshold = 15, img = TRUE, parallel = 1,
-                  path = NULL, img.suffix = "dfts", pb = TRUE, clip.edges = FALSE, leglab = "dfts", ...){     
+sp.en.ts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, 
+                  bp = NULL, threshold = 15, img = TRUE, parallel = 1,
+                  path = NULL, img.suffix = "sp.en.ts", pb = TRUE, clip.edges = FALSE,
+                  leglab = "sp.en.ts", sp.en.range = c(2, 10), ...){     
 
   
   #check path to working directory
@@ -109,6 +122,10 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   if(!is.null(bp)) {if(!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
     if(!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")}}
   
+  #if sp.en.range is not vector or length!=2 stop
+  if(!is.vector(sp.en.range)) stop("'sp.en.range' must be a numeric vector of length 2") else
+    if(!length(sp.en.range) == 2) stop("'sp.en.range' must be a numeric vector of length 2")
+  
   # If length.out is not numeric
   if(!is.numeric(length.out)) stop("'length.out' must be a numeric vector of length 1") 
   if(any(!(length.out %% 1 == 0),length.out < 1)) stop("'length.out' should be a positive integer")
@@ -136,10 +153,15 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
     message("creating images is not compatible with parallel computing (parallel > 1) in OSX (mac)")
   }
   
+  #parallel not available on windows
+  if(parallel > 1 & Sys.info()[1] == "Windows")
+  {message("parallel computing not availabe in Windows OS for this function")
+    parallel <- 1}
+
  if(parallel == 1 & pb) {if(img) message("Creating spectrograms overlaid with dominant frequency measurements:") else
     message("Measuring dominant frequency:")}  
   
-  dftsFUN <- function(X, i, bp, wl, threshold){
+  sp.en.tsFUN <- function(X, i, bp, wl, threshold, sp.en.range){
     
     # Read sound files to get sample rate and length
     r <- tuneR::readWave(as.character(X$sound.files[i]), header = TRUE)
@@ -150,63 +172,49 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
     if(!is.null(b)) {if(b[2] > ceiling(f/2000) - 1) b[2] <- ceiling(f/2000) - 1 
     b <- b * 1000}
     
+    
       r <- tuneR::readWave(as.character(X$sound.files[i]), from = X$start[i], to = X$end[i], units = "seconds")
     
-      # calculate dominant frequency at each time point     
-      dfreq1 <- seewave::dfreq(r, f = f, wl = wl, plot = FALSE, ovlp = ovlp, bandpass = b, fftw = TRUE, 
-                              threshold = threshold)
+      #filter if this was needed
+      if(!is.null(bp)) r <- ffilter(wave = r, from = b[1], to = b[2]) 
       
-      dfreq <- dfreq1[!is.na(dfreq1[,2]), ]
-      dfreq <- dfreq[dfreq[,2] > b[1]/1000, ]
+      # measure espectral entropy
+      sp.en <- csh(wave = r, f = f, wl = wl, ovlp = ovlp, wn = wn, 
+                   threshold = threshold, plot = F)
       
-      if(nrow(dfreq) < 2) {apdom <- list()
-      apdom$x <- dfreq1[, 1]
-      apdom$y <- rep(NA, length.out)
-      apdom1 <- apdom
+      if(clip.edges) 
+      {    #remove initial values with 0
+        sp.en1 <- sp.en[cumsum(sp.en[,2]) != 0, ]
+        
+        #remove end values with 0
+        sp.en1 <- sp.en1[rev(cumsum(rev(sp.en1[,2])) != 0),]
+        
+      } else sp.en1 <- sp.en
       
-       } else {
-        if(!clip.edges)
-{        apdom <- approx(dfreq[,1], dfreq[,2], xout = seq(from = dfreq1[1, 1], 
-            to = dfreq1[nrow(dfreq1), 1], length.out = length.out),
-            method = "linear")
-      apdom1 <- apdom
-          } else {
-              apdom <- approx(dfreq[,1], dfreq[,2], 
-              xout = seq(from = dfreq[1, 1],  to = dfreq[nrow(dfreq), 1], 
-              length.out = length.out), method = "linear")
-            
+      apen <- approx(sp.en1[,1], sp.en1[,2], xout = seq(from = sp.en1[1, 1],
+                            to = sp.en1[nrow(sp.en1), 1], length.out = length.out),
+                     method = "linear")  
+      
       #fix for ploting with trackfreqs
-      dfreq1[,2][is.na(dfreq1[,2])] <- 0
+      if(clip.edges) 
+      { apen1 <- approx(sp.en[,1], sp.en[,2], xout = seq(from = sp.en[1, 1],
+                            to = sp.en[nrow(sp.en), 1], length.out = length.out),
+                        method = "linear")
       
-      #calculate time at start and end with no amplitude detected (duration of clipped edges)
-      durend1 <- suppressWarnings(diff(range(dfreq1[,1][rev(cumsum(rev(dfreq1[,2])) == 0)])))
-      durend <- durend1
-      if(is.infinite(durend) | is.na(durend)) durend <- 0
+      #make 0s at start and end NAs so they are plot at the bottom by trackfreqs
+      apen1$y[cumsum(apen1$y) == 0] <- NA
+      apen1$y[rev(cumsum(rev(apen1$y))) == 0] <- NA
+      }  else apen1 <- apen
       
-      durst1 <- suppressWarnings(diff(range(dfreq1[,1][cumsum(dfreq1[,2]) == 0])))   
-      durst <- durst1
-      if(is.infinite(durst) | is.na(durst)) durst <- 0
-      
-      by.dur <- mean(diff(apdom$x))
-      clipst <- length(seq(from = 0, to = durst, by = by.dur))
-      clipend <- length(seq(from = 0, to = durend, by = by.dur))
-      
-      apdom1 <- apdom
-      apdom1$y <- c(rep(NA, clipst) ,apdom$y, rep(NA, clipend))
-      
-      if(is.infinite(durst1) | is.na(durst1)) apdom1$y <- apdom1$y[-1]
-      if(is.infinite(durend1) | is.na(durend1)) apdom1$y <- apdom1$y[-length(apdom1$y)]
-               } 
-          }
-      
+      correc.apen <- sp.en.range[1] + (sp.en.range[2] - sp.en.range[1]) * apen1$y 
       
   if(img) 
       trackfreqs(X[i,], wl = wl, osci = FALSE, leglab = leglab, pb = FALSE, wn = wn,
                  parallel = 1, path = path, img.suffix =  img.suffix, ovlp = ovlp,
-                 custom.contour = data.frame(sound.files = X$sound.files[i], selec = X$selec[i], t(apdom1$y)), ...)
+                 custom.contour = data.frame(sound.files = X$sound.files[i], selec = X$selec[i], t(correc.apen)), ...)
       
       
-    return(apdom$y)  
+    return(apen$y)  
   } 
 
   # Run parallel in windows
@@ -220,7 +228,7 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
       doParallel::registerDoParallel(cl)
       
       lst <- foreach::foreach(i = 1:nrow(X)) %dopar% {
-        dftsFUN(X, i, bp, wl, threshold)
+        sp.en.tsFUN(X, i, bp, wl, threshold, sp.en.range)
       }
       
       parallel::stopCluster(cl)
@@ -229,7 +237,7 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
     if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
       
       lst <- parallel::mclapply(1:nrow(X), function (i) {
-        dftsFUN(X, i, bp, wl, threshold)
+        sp.en.tsFUN(X, i, bp, wl, threshold, sp.en.range)
       })
     }
     if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
@@ -239,7 +247,7 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
       doParallel::registerDoParallel(cl)
       
       lst <- foreach::foreach(i = 1:nrow(X)) %dopar% {
-        dftsFUN(X, i, bp, wl, threshold)
+        sp.en.tsFUN(X, i, bp, wl, threshold, sp.en.range)
       }
       
       parallel::stopCluster(cl)
@@ -247,8 +255,8 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
     }
   } else {
    if(pb)
-     lst <- pbapply::pblapply(1:nrow(X), function(i) dftsFUN(X, i, bp, wl, threshold)) else
-       lst <- lapply(1:nrow(X), function(i) dftsFUN(X, i, bp, wl, threshold))
+     lst <- pbapply::pblapply(1:nrow(X), function(i) sp.en.tsFUN(X, i, bp, wl, threshold, sp.en.range)) else
+       lst <- lapply(1:nrow(X), function(i) sp.en.tsFUN(X, i, bp, wl, threshold, sp.en.range))
   }
   
   

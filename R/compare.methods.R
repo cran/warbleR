@@ -69,18 +69,18 @@
 #' # First create empty folder
 #' setwd(tempdir())
 #' 
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "manualoc.df"))
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
 #' writeWave(Phae.long1,"Phae.long1.wav")
 #' writeWave(Phae.long2,"Phae.long2.wav")
 #' writeWave(Phae.long3,"Phae.long3.wav")
 #' writeWave(Phae.long4,"Phae.long4.wav")
 #' 
-#' compare.methods(X = manualoc.df, flim = c(0, 10), bp = c(0, 10), mar = 0.1, wl = 300,
+#' compare.methods(X = selec.table, flim = c(0, 10), bp = c(0, 10), mar = 0.1, wl = 300,
 #' ovlp = 90, res = 200, n = 10, length.out = 30,
 #' methods = c("XCORR", "dfDTW"), parallel = 1, it = "jpeg")
 #' 
 #' #remove progress bar
-#' compare.methods(X = manualoc.df, flim = c(0, 10), bp = c(0, 10), mar = 0.1, wl = 300,
+#' compare.methods(X = selec.table, flim = c(0, 10), bp = c(0, 10), mar = 0.1, wl = 300,
 #' ovlp = 90, res = 200, n = 10, length.out = 30,
 #' methods = c("XCORR", "dfDTW"), parallel = 1, it = "jpeg", pb = FALSE)
 #'
@@ -157,7 +157,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   if(any(!(length.out %% 1 == 0),length.out < 1)) stop("'length.out' should be a positive integer")
   
   #return warning if not all sound files were found
-  fs <- list.files(path = getwd(), pattern = ".wav$", ignore.case = TRUE)
+  fs <- list.files(path = getwd(), pattern = "\\.wav$", ignore.case = TRUE)
   if(length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     message(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                   ".wav file(s) not found"))

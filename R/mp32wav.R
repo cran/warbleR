@@ -39,9 +39,13 @@
 mp32wav <- function(samp.rate = 44.1, parallel = 1, from.path = NULL, to.path = NULL, normalize = NULL, 
                     pb = TRUE) {
   
-  if(!is.null(to.path))
+  if(!is.null(from.path))
   {if(class(try(setwd(from.path), silent = TRUE)) == "try-error") stop("'path' provided does not exist")} else
     from.path <- getwd() #set working directory
+
+  if(!is.null(to.path))
+  {if(class(try(setwd(to.path), silent = TRUE)) == "try-error") stop("'path' provided does not exist")} else
+    to.path <- getwd() #set working directory
   
   #normalize
   if(!is.null(normalize))
@@ -70,14 +74,16 @@ mp32wav <- function(samp.rate = 44.1, parallel = 1, from.path = NULL, to.path = 
   if(length(files) == 0) stop("no 'mp3' files in working directory")
   
   #exclude the ones that already have a .wav version
-  wavs <- list.files(path=getwd(), pattern = ".wav$", ignore.case = TRUE)
+  wavs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
   files <- files[!substr(files, 0, nchar(files) - 4) %in% substr(wavs, 0, nchar(wavs) - 4)]
   if(length(files) == 0) stop("all 'mp3' files have been converted")
   
   message("Start writing wav files:")
   
 if(!is.null(normalize))  
- suppressWarnings( a<-lapp(files, function(x) tuneR::writeWave(object = tuneR::normalize(tuneR::downsample(tuneR::readMP3(filename =  x), samp.rate = samp.rate * 1000), unit = normalize), filename = paste0(from.path, substr(x, 0, nchar(x) - 4), ".wav")))) else
-  suppressWarnings( a<-lapp(files, function(x) tuneR::writeWave(object = tuneR::downsample(tuneR::readMP3(filename =  x), samp.rate = samp.rate * 1000), filename = paste0(from.path, substr(x, 0, nchar(x) - 4), ".wav")))) 
+ suppressWarnings(a<-lapp(files, function(x) tuneR::writeWave(object = tuneR::normalize(tuneR::downsample(tuneR::readMP3(filename =  x), samp.rate = samp.rate * 1000), unit = normalize), filename = file.path(from.path, paste0(substr(x, 0, nchar(x) - 4), ".wav"))))) else
+  suppressWarnings( 
+    a<-lapp(files, function(x) tuneR::writeWave(object = tuneR::readMP3(filename =  x), filename = file.path(from.path, paste0(substr(x, 0, nchar(x) - 4), ".wav"))))
+    ) 
   
      }

@@ -34,15 +34,15 @@
 #' # First set temporary folder
 #' setwd(tempdir())
 #' 
-#' data(list = c("Phae.long1","manualoc.df"))
+#' data(list = c("Phae.long1","selec.table"))
 #' writeWave(Phae.long1, "Phae.long1.wav") #save sound files 
 #' 
 #' # specifying the correct margin is important
 #' # use snrspecs to troubleshoot margins for sound files
-#' sig2noise(manualoc.df[grep("Phae.long1", manualoc.df$sound.files), ], mar = 0.2)
+#' sig2noise(selec.table[grep("Phae.long1", selec.table$sound.files), ], mar = 0.2)
 #' 
 #' # this smaller margin doesn't overlap neighboring signals
-#' sig2noise(manualoc.df[grep("Phae.long1", manualoc.df$sound.files), ], mar = 0.1)
+#' sig2noise(selec.table[grep("Phae.long1", selec.table$sound.files), ], mar = 0.1)
 #' }
 #' 
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
@@ -80,7 +80,7 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE){
    options( show.error.messages = TRUE)
   
   #return warning if not all sound files were found
-  fs <- list.files(path = getwd(), pattern = ".wav$", ignore.case = TRUE)
+  fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
   if(length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     message(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                   ".wav file(s) not found"))
@@ -116,13 +116,13 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE){
       stn <- X$start[y] - mar
       enn <- X$end[y] + mar
       mar1 <- mar
-      mar2 <- mar1 + X$end[y] - X$start[y]
       
       if (stn < 0) { 
       mar1 <- mar1  + stn
-      mar2 <- mar2  + stn
       stn <- 0
       }
+      
+      mar2 <- mar1 + X$end[y] - X$start[y]
       
       if(enn > r$samples/f) enn <- r$samples/f
       

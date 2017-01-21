@@ -1,7 +1,7 @@
 #' Check selection data frames
 #' 
 #' \code{checksels} checks whether selections can be read by subsequent functions.
-#' @usage checksels(X, parallel =  1, path = NULL)
+#' @usage checksels(X, parallel =  1, path = NULL, check.header = FALSE)
 #' @param X data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
@@ -11,11 +11,18 @@
 #'  Not available in Windows OS.
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
-#' @return If all .wav files are ok, returns message "All files are ok!".
+#' @param check.header Logical. Controls whether sound file headers correspond to the actual file properties 
+#' (i.e. if is corrupted). This could significantly affect the performance of the function (much slower) particularly 
+#' with long sound files.  
+#' @return A data frame with the sane columns as the input data frame (X) with 2 additional columns:
+#' "check.res" (check selections), and "min.n.samples" (the smallest number of samples). Note the number of samples available
+#' in a selection limits the minimum window length (wl argument in other functions) that can be used in batch analyses
+#'  
+#'  If the .wav files can be read and returns message "All files are ok!".
 #'   Otherwise returns "These file(s) cannot be read" message with names of the
 #'   corrupted .wav files.
-#' @details This function checks if the selections listed in the data frame correspond to .wav files
-#' in the working directory, if the sound files can be read and if so, if the start and end time
+#' @details This function checks 1) if the selections listed in the data frame correspond to .wav files
+#' in the working directory, 2) if the sound files can be read and if so, 3) if the start and end time
 #' of the selections are found within the duration of the sound files. Note that the sound files 
 #' should be in the working directory (or the directory provided in 'path').
 #' This is useful for avoiding errors in dowstream functions (e.g. \code{\link{specan}}).
@@ -28,17 +35,17 @@
 #' setwd(tempdir())
 #' 
 #' # save wav file examples
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "manualoc.df"))
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "selec.table"))
 #' writeWave(Phae.long1,"Phae.long1.wav")
 #' writeWave(Phae.long2,"Phae.long2.wav")
 #' writeWave(Phae.long3,"Phae.long3.wav")
 #' 
-#' checksels(X = manualoc.df)
+#' checksels(X = selec.table)
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on jul-5-2016 (MAS)
 
-checksels <- function(X = NULL, parallel =  1, path = NULL){
+checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE){
   
   #check path to working directory
   if(!is.null(path))
@@ -53,14 +60,12 @@ checksels <- function(X = NULL, parallel =  1, path = NULL){
             "start", "end") %in% colnames(X))) 
     stop(paste(paste(c("sound.files", "selec", "start", "end")[!(c("sound.files", "selec", 
                                                                    "start", "end") %in% colnames(X))], collapse=", "), "column(s) not found in data frame"))
-
+  
   #check if files are in working directory
   files <- list.files(pattern = "wav$", ignore.case = TRUE)
   if (length(files) == 0) 
     stop("no .wav files in working directory")
   
-  if(!any(X$sound.files %in% files)) stop("Sound files in X aren't found in the working directory")
-    
   #if there are NAs in start or end stop
   if(any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
   
@@ -70,74 +75,125 @@ checksels <- function(X = NULL, parallel =  1, path = NULL){
   #if any start higher than end stop
   if(any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
   
-  #if any selections longer than 20 secs stop
-  if(any(X$end - X$start>20)) stop(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))  
-  options( show.error.messages = TRUE)
+  #if any selection labels are repeated within a sound file
+  if(length(unique(paste(X$sound.files, X$selec))) != nrow(X))
+ stop("Repeated selection labels within (a) sound file(s)")  
   
-  
-    csFUN <- function(x, X){
+    #function to run over each sound file
+  csFUN <- function(x, X){
     Y <- X[X$sound.files == x, ]
-    if(file.exists(as.character(x)))     {
+    
+    if(file.exists(as.character(x))){
       rec <- try(suppressWarnings(tuneR::readWave(as.character(x), header = TRUE)), silent = TRUE)
-      if(is.list(rec) & is.numeric(unlist(rec)) & all(unlist(rec) > 0))
-      {maxdur <- rec$samples/rec$sample.rate  
-        Y$check.res <- "OK"
-        Y$check.res[Y$end > maxdur] <- "exceeds sound file length"} else
-          Y$check.res <- "Sound file can't be read"
-        } else    Y$check.res <- "sound file not found"
-    return(Y)
-      }
-      #parallel not available on windows
-      if(parallel > 1 & Sys.info()[1] == "Windows")
-      {message("parallel computing not availabe in Windows OS for this function")
-        parallel <- 1}
       
-      if(parallel > 1) {
-        if(Sys.info()[1] == "Windows") {
-          
-          x <- NULL #only to avoid non-declared objects
-          
-          cl <- parallel::makeCluster(parallel)
-          
-          doParallel::registerDoParallel(cl)
-          
-          a1 <- foreach::foreach(x = unique(X$sound.files)) %dopar% {
-            csFUN(x, X)
-          }
-          
-          parallel::stopCluster(cl)
-          
-        } 
-        
-        if(Sys.info()[1] == "Linux"){    # Run parallel in other operating systems
-          
-          a1 <- parallel::mclapply(unique(X$sound.files), function(x) {
-            csFUN(x, X)
-          })
-          
-        }
-        if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
+      if(is.list(rec) & is.numeric(unlist(rec)) & all(unlist(rec) > 0))
+      {
+        if(check.header)  
         {
-          cl <- parallel::makeForkCluster(getOption("cl.cores", parallel))
+          recfull <- try(suppressWarnings(tuneR::readWave(as.character(x), header = FALSE)), silent = TRUE)
+          if(any(rec$sample.rate != recfull@samp.rate, !all.equal(rec$channels == 2, 
+            recfull@stereo), rec$bits != recfull@bit, rec$samples != length(recfull@left)))
+          {
+          Y$check.res <- "file header corrupted"
+          Y$duration <- NA
+          Y$min.n.samples <- NA
+          Y$sample.rate <- NA
+          Y$channels <- NA
+          Y$bits <- NA
+          } else
+           { 
+             maxdur <- rec$samples/rec$sample.rate  
+          Y$check.res <- "OK"
           
-          doParallel::registerDoParallel(cl)
-          
-          a1 <- foreach::foreach(x = unique(X$sound.files)) %dopar% {
-            csFUN(x, X)
+          if(any(Y$end > maxdur))  Y$check.res[Y$end > maxdur] <- "exceeds sound file length"
+          Y$duration <- Y$end - Y$start
+          Y$min.n.samples <- floor(Y$duration * rec$sample.rate)
+          Y$sample.rate <- rec$sample.rate
+          Y$channels <- rec$channels
+          Y$bits <- rec$bits
           }
-          parallel::stopCluster(cl)
-        }
-        
-        
-      } else {a1 <- pbapply::pblapply(unique(X$sound.files), function(x) 
-      { 
+                
+        } else
+     { maxdur <- rec$samples/rec$sample.rate  
+      Y$check.res <- "OK"
+      
+      if(any(Y$end > maxdur))  Y$check.res[Y$end > maxdur] <- "exceeds sound file length"
+      Y$duration <- Y$end - Y$start
+      Y$min.n.samples <- floor(Y$duration * rec$sample.rate)
+      Y$sample.rate <- rec$sample.rate
+      Y$channels <- rec$channels
+      Y$bits <- rec$bits
+      }
+        } else {        
+        Y$check.res <- "Sound file can't be read"
+        Y$duration <- NA
+        Y$min.n.samples <- NA
+        Y$sample.rate <- NA
+        Y$channels <- NA
+        Y$bits <- NA
+      }    } else {
+  Y$check.res <- "sound file not found"
+  Y$duration <- NA
+  Y$min.n.samples <- NA
+  Y$sample.rate <- NA
+  Y$channels <- NA
+  Y$bits <- NA
+      }
+    return(Y)
+  }
+  
+  #parallel not available on windows
+  if(parallel > 1 & Sys.info()[1] == "Windows")
+  {message("parallel computing not availabe in Windows OS for this function")
+    parallel <- 1}
+  
+  if(parallel > 1) {
+    if(Sys.info()[1] == "Windows") {
+      
+      x <- NULL #only to avoid non-declared objects
+      
+      cl <- parallel::makeCluster(parallel)
+      
+      doParallel::registerDoParallel(cl)
+      
+      a1 <- foreach::foreach(x = unique(X$sound.files)) %dopar% {
+        csFUN(x, X)
+      }
+      
+      parallel::stopCluster(cl)
+      
+    } 
+    
+    if(Sys.info()[1] == "Linux"){    # Run parallel in other operating systems
+      
+      a1 <- parallel::mclapply(unique(X$sound.files), function(x) {
         csFUN(x, X)
       })
       
-      }    
-      
-  return(do.call(rbind, a1))  
-    if(!is.null(path)) on.exit(setwd(wd))
     }
+    if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
+    {
+      cl <- parallel::makeForkCluster(getOption("cl.cores", parallel))
+      
+      doParallel::registerDoParallel(cl)
+      
+      a1 <- foreach::foreach(x = unique(X$sound.files)) %dopar% {
+        csFUN(x, X)
+      }
+      parallel::stopCluster(cl)
+    }
+    
+    
+  } else {a1 <- pbapply::pblapply(unique(X$sound.files), function(x) 
+  { 
+    csFUN(x, X)
+  })
+  
+  }    
+  res <- do.call(rbind, a1)
+  res <- res[match(paste(X$sound.files, X$selec), paste(res$sound.files, res$selec)),]
+  return(res)  
+  if(!is.null(path)) on.exit(setwd(wd))
+}
 
 
