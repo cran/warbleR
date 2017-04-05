@@ -3,8 +3,8 @@
 #' \code{dfDTW} calculates acoustic dissimilarity of dominant frequency contours using dynamic
 #' time warping. Internally it applies the \code{\link[dtw]{dtwDist}} function from the \code{dtw} package.
 #' @usage dfDTW(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = c(0, 22),
-#'   threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "dfDTW", pb = TRUE, 
-#'   clip.edges = FALSE, ...)
+#'   threshold = 5, img = TRUE, parallel = 1, path = NULL, img.suffix = "dfDTW", pb = TRUE, 
+#'   clip.edges = TRUE, window.type = "none", open.end = FALSE, scale = FALSE, ...)
 #' @param  X Data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
@@ -18,7 +18,7 @@
 #'   consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70. 
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
 #'   frequency bandpass filter (in kHz). Default is c(0, 22).
-#' @param threshold amplitude threshold (\%) for dominant frequency detection. Default is 15.
+#' @param threshold amplitude threshold (\%) for dominant frequency detection. Default is 5.
 #' @param img Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #'  It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing). Not availble in Windows OS.
@@ -32,6 +32,11 @@
 #' which amplitude values above the threshold were not detected will be removed. If 
 #' \code{TRUE} (default) this edges will be excluded and signal contour will be calculated on the
 #' remainging values. Note that DTW cannot be applied if missing values (e.i. when amplitude is not detected).
+#' @param window.type	\code{\link[dtw]{dtw}} windowing control parameter. Character: "none", "itakura", or a function (see \code{\link[dtw]{dtw}}).
+#' @param open.end \code{\link[dtw]{dtw}} control parameter. Performs 
+#' open-ended alignments (see \code{\link[dtw]{dtw}}).
+#' @param scale Logical. If \code{TRUE} dominant frequency values are z-transformed using the \code{\link[base]{scale}} function, which "ignores" differences in absolute frequencies between the signals in order to focus the 
+#' comparison in the frequency contour, regardless of the pitch of signals. Default is \code{TRUE}.
 #' @param ... Additional arguments to be passed to \code{\link{trackfreqs}} for customizing
 #' graphical output.
 #' @return A matrix with the pairwise dissimilarity values. If img is 
@@ -41,6 +46,7 @@
 #' @seealso \code{\link{specreator}} for creating spectrograms from selections,
 #'  \code{\link{snrspecs}} for creating spectrograms to 
 #'   optimize noise margins used in \code{\link{sig2noise}} and \code{\link{dfts}}, \code{\link{ffts}}, \code{\link{ffDTW}} for frequency contour overlaid spectrograms.
+#'  \url{https://marce10.github.io/2016-09-12-Similarity_of_acoustic_signals_with_dynamic_time_warping_(DTW)/}
 #' @export
 #' @name dfDTW
 #' @details This function extracts the dominant frequency values as a time series and
@@ -67,8 +73,9 @@
 #last modification on nov-31-2016 (MAS)
 
 dfDTW <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, 
-           bp = c(0, 22), threshold = 15, img = TRUE, parallel = 1, path = NULL, 
-           img.suffix = "dfDTW", pb = TRUE, clip.edges = FALSE, ...){     
+           bp = c(0, 22), threshold = 5, img = TRUE, parallel = 1, path = NULL, 
+           img.suffix = "dfDTW", pb = TRUE, clip.edges = TRUE, 
+           window.type = "none", open.end = FALSE, scale = FALSE, ...){     
  
   #stop if only 1 selection
   if(nrow(X) == 1) stop("you need more than one selection for dfDTW")
@@ -78,14 +85,19 @@ dfDTW <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
               bp = bp, threshold = threshold, img = img, parallel = parallel,
               path = path, img.suffix = img.suffix, pb = pb, clip.edges = clip.edges, ...)
   
+  
     #matrix of dom freq time series
   mat <- res[,3:ncol(res)]
   
+  if(scale)
+  mat <- t(apply(mat, 1, scale))  
+
   #stop if NAs in matrix
   if(any(is.na(mat))) stop("missing values in frequency time series (fundamental frequency was not detected at
                            the start and/or end of the signal)")
   
-  dm <- dtw::dtwDist(mat, mat)       
+  dm <- dtw::dtwDist(mat, mat, window.type = window.type, open.end = open.end)    
+  
   rownames(dm) <- colnames(dm) <- paste(res$sound.files, res$selec, sep = "-")
   return(dm)
 }

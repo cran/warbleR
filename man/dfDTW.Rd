@@ -5,8 +5,8 @@
 \title{Acoustic dissimilarity using dynamic time warping on dominant frequency contours}
 \usage{
 dfDTW(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = c(0, 22),
-  threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "dfDTW", pb = TRUE, 
-  clip.edges = FALSE, ...)
+  threshold = 5, img = TRUE, parallel = 1, path = NULL, img.suffix = "dfDTW", pb = TRUE, 
+  clip.edges = TRUE, window.type = "none", open.end = FALSE, scale = FALSE, ...)
 }
 \arguments{
 \item{X}{Data frame with results containing columns for sound file name (sound.files), 
@@ -28,7 +28,7 @@ consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70.}
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
 frequency bandpass filter (in kHz). Default is c(0, 22).}
 
-\item{threshold}{amplitude threshold (\%) for dominant frequency detection. Default is 15.}
+\item{threshold}{amplitude threshold (\%) for dominant frequency detection. Default is 5.}
 
 \item{img}{Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.}
 
@@ -48,6 +48,14 @@ when parallel = 1.}
 which amplitude values above the threshold were not detected will be removed. If 
 \code{TRUE} (default) this edges will be excluded and signal contour will be calculated on the
 remainging values. Note that DTW cannot be applied if missing values (e.i. when amplitude is not detected).}
+
+\item{window.type}{\code{\link[dtw]{dtw}} windowing control parameter. Character: "none", "itakura", or a function (see \code{\link[dtw]{dtw}}).}
+
+\item{open.end}{\code{\link[dtw]{dtw}} control parameter. Performs 
+open-ended alignments (see \code{\link[dtw]{dtw}}).}
+
+\item{scale}{Logical. If \code{TRUE} dominant frequency values are z-transformed using the \code{\link[base]{scale}} function, which "ignores" differences in absolute frequencies between the signals in order to focus the 
+comparison in the frequency contour, regardless of the pitch of signals. Default is \code{TRUE}.}
 
 \item{...}{Additional arguments to be passed to \code{\link{trackfreqs}} for customizing
 graphical output.}
@@ -91,6 +99,7 @@ Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 \code{\link{specreator}} for creating spectrograms from selections,
  \code{\link{snrspecs}} for creating spectrograms to 
   optimize noise margins used in \code{\link{sig2noise}} and \code{\link{dfts}}, \code{\link{ffts}}, \code{\link{ffDTW}} for frequency contour overlaid spectrograms.
+ \url{https://marce10.github.io/2016-09-12-Similarity_of_acoustic_signals_with_dynamic_time_warping_(DTW)/}
 
 Other spectrogram.creators: \code{\link{dfts}},
   \code{\link{ffDTW}}, \code{\link{ffts}},

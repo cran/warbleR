@@ -14,18 +14,15 @@
 #' @param check.header Logical. Controls whether sound file headers correspond to the actual file properties 
 #' (i.e. if is corrupted). This could significantly affect the performance of the function (much slower) particularly 
 #' with long sound files.  
-#' @return A data frame with the sane columns as the input data frame (X) with 2 additional columns:
+#' @return A data frame including the columns in the input data frame (X) and 2 additional columns:
 #' "check.res" (check selections), and "min.n.samples" (the smallest number of samples). Note the number of samples available
-#' in a selection limits the minimum window length (wl argument in other functions) that can be used in batch analyses
-#'  
-#'  If the .wav files can be read and returns message "All files are ok!".
-#'   Otherwise returns "These file(s) cannot be read" message with names of the
-#'   corrupted .wav files.
+#' in a selection limits the minimum window length (wl argument in other functions) that can be used in batch analyses.
 #' @details This function checks 1) if the selections listed in the data frame correspond to .wav files
 #' in the working directory, 2) if the sound files can be read and if so, 3) if the start and end time
 #' of the selections are found within the duration of the sound files. Note that the sound files 
 #' should be in the working directory (or the directory provided in 'path').
-#' This is useful for avoiding errors in dowstream functions (e.g. \code{\link{specan}}).
+#' This is useful for avoiding errors in dowstream functions (e.g. \code{\link{specan}}, \code{\link{xcorr}}, \code{\link{catalog}}, \code{\link{dfDTW}}). Note that corrupt files can be
+#' fixed using \code{\link{fixwavs}}) ('sox' must be installed to be able to run this function).
 #' @seealso \code{\link{checkwavs}}
 #' @export
 #' @name checksels
@@ -86,7 +83,7 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
     if(file.exists(as.character(x))){
       rec <- try(suppressWarnings(tuneR::readWave(as.character(x), header = TRUE)), silent = TRUE)
       
-      if(is.list(rec) & is.numeric(unlist(rec)) & all(unlist(rec) > 0))
+      if(!class(rec) == "try-error")
       {
         if(check.header)  
         {
@@ -166,7 +163,7 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
     
     if(Sys.info()[1] == "Linux"){    # Run parallel in other operating systems
       
-      a1 <- parallel::mclapply(unique(X$sound.files), function(x) {
+      a1 <- parallel::mclapply(unique(X$sound.files), mc.cores = parallel, function(x) {
         csFUN(x, X)
       })
       
@@ -193,7 +190,7 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
   res <- do.call(rbind, a1)
   res <- res[match(paste(X$sound.files, X$selec), paste(res$sound.files, res$selec)),]
   return(res)  
-  if(!is.null(path)) on.exit(setwd(wd))
+  if(!is.null(path)) setwd(wd)
 }
 
 

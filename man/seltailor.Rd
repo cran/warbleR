@@ -11,7 +11,7 @@ seltailor(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
 \arguments{
 \item{X}{data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
-end time of selections. The ouptut of \code{\link{seltailor}} or \code{\link{autodetec}} can 
+end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above. Required. Notice that, if an output file ("seltailor_output.csv") is found in the working directory it will be given priority over an input data frame.}
 
 \item{wl}{A numeric vector of length 1 specifying the spectrogram window length. Default is 512.}
@@ -49,7 +49,7 @@ in the title of the spectrograms. Default is \code{TRUE}.}
 
 \item{frange}{Logical argument specifying whether limits on frequency range should be
  recorded. 
-If \code{NULL} (default) then the current working directory is used.}
+If \code{NULL} (default) then only the time limits are recorded.}
 }
 \value{
 .csv file saved in the working directory with start and end time of 
@@ -62,7 +62,7 @@ which the start and end times of acoustic signals listed in a data frame can be 
 \details{
 This function produces an interactive spectrographic view (similar to \code{\link{manualoc}}) 
 in which users can select a new start and end of a vocalization unit (e.g. elements)
- by clicking at the end and then at the start of the signal (in any order). In addition, 2
+ by clicking at the end and at the start of the signal (in any order). In addition, 2
   "buttons" are provided at the upper right side of the spectrogram that
   allow to stop the analysis ("Stop") or go to the next sound file ("next sel"). When a unit 
   has been selected, the function plots red dotted lines in the start and end of the 
@@ -87,7 +87,7 @@ in which users can select a new start and end of a vocalization unit (e.g. eleme
 }
 \examples{
 \dontrun{
-#First create empty folder
+#Set temporary working directory
 setwd(tempdir())
 
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))

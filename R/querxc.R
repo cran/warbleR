@@ -24,8 +24,8 @@
 #' @param file.name Character vector indicating the tags (or column names) to be included in the sound file names (if download = \code{TRUE}). Several tags can be included. If \code{NULL} only the Xeno-Canto recording identification number ("Recording_ID") is used. Default is c("Genus", "Specific_epithet").
 #' Note that recording id is always used (whether or not is listed by users) to avoid duplicated names.
 #' @param parallel Numeric. Controls whether parallel computing is applied when downloading mp3 files.
-#' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing). Might not work 
-#' in Windows OS.
+#' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing). Currently only applied when downloading files. Might not work 
+#' improve performance on Windows OS. 
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
 #' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
@@ -35,10 +35,13 @@
 #' @name querxc
 #' @details This function queries for avian vocalization recordings in the open-access
 #' online repository Xeno-Canto (\url{http://www.xeno-canto.org/}). It can return recordings metadata
-#' or download the associated sound files.  
+#' or download the associated sound files. Maps of recording coordinates can be produced using 
+#' \code{\link{xcmaps}}
+#' @seealso \code{\link{xcmaps}}, 
+#' \url{https://marce10.github.io/2016-12-22-Download_a_single_recording_for_each_species_in_a_site_from_Xeno-Canto/} 
 #' @examples
 #' \dontrun{
-#' # First create empty folder
+#' # Set temporary working directory
 #' setwd(tempdir())
 #' 
 #' # search without downloading
@@ -105,7 +108,7 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
   {
     
     #search recs in xeno-canto (results are returned in pages with 500 recordings each)
-    if(pb)
+    if(any(parallel == 1, Sys.info()[1] == "Linux") & pb)
       message("Obtaining recording list...")
     
     #format JSON
@@ -119,7 +122,30 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
       nms <- c("id", "gen", "sp", "ssp", "en", "rec", "cnt", "loc", "lat", "lng", "type", "file", "lic", "url", "q", "time", "date")
       
       #loop over pages
-      f <- pbapply::pblapply(1:q$numPages, function(y)
+      if(pb) f <- pbapply::pblapply(1:q$numPages, function(y)
+      {
+        #search for each page
+        a <- rjson::fromJSON(, paste0("http://www.xeno-canto.org/api/2/recordings?query=", qword, "&page=", y))  
+        
+        #put together as data frame
+        d <-lapply(1:length(a$recordings), function(z) data.frame(t(unlist(a$recordings[[z]]))))
+        
+        d2 <- lapply(d,  function(x) 
+        {
+          if(!all(nms %in% names(x))){ 
+            dif <- setdiff(nms, names(x))
+            mis <- rep(NA, length(dif))
+            names(mis) <- dif
+            return(cbind(x, t(mis)))
+          }
+          return(x)
+        })
+        
+        e <- do.call(rbind, d2)
+        
+        return(e)
+      }
+      ) else f <- lapply(1:q$numPages, function(y)
       {
         #search for each page
         a <- rjson::fromJSON(, paste0("http://www.xeno-canto.org/api/2/recordings?query=", qword, "&page=", y))  
@@ -194,7 +220,7 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
                       extra = getOption("download.file.extra"))
       return (NULL)
     }
-      if(pb)
+    if(any(parallel == 1, Sys.info()[1] == "Linux") & pb)
       message("Downloading sound files...")
 
       
@@ -218,9 +244,11 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
     
     if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
       
-      a1 <- parallel::mclapply(1:nrow(results), function(x) {
-      xcFUN(results, x) 
-      })
+     if(pb) 
+       a1 <- pbmcapply::pbmclapply(1:nrow(results), mc.cores = parallel, function(x) {
+         xcFUN(results, x)  })  else
+       a1 <- parallel::mclapply(1:nrow(results), mc.cores = parallel, function(x) {
+      xcFUN(results, x) })
     }
     if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
     {
@@ -281,9 +309,11 @@ if(pb)
     
     if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
       
-      a1 <- parallel::mclapply(1:nrow(Y), function(x) {
-      xcFUN(Y, x) 
-      })
+    if(pb)
+      a1 <- pbmcapply::pbmclapply(1:nrow(Y), mc.cores = parallel, function(x) {
+        xcFUN(Y, x) }) else      
+        a1 <- parallel::mclapply(1:nrow(Y), mc.cores = parallel, function(x) {
+      xcFUN(Y, x) })
     }
     if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
     {
@@ -317,5 +347,5 @@ if(pb)
     
   }
  if(is.null(X)) if(as.numeric(q$numRecordings) > 0) return(droplevels(results))
-    if(!is.null(path)) on.exit(setwd(wd))
+    if(!is.null(path)) setwd(wd)
    }

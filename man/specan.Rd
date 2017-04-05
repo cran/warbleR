@@ -5,7 +5,7 @@
 \title{Measure acoustic parameters in batches of sound files}
 \usage{
 specan(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast = TRUE, path = NULL, 
-pb = TRUE)
+pb = TRUE, ovlp = 50, ff.method = "seewave", wn = "hanning")
 }
 \arguments{
 \item{X}{Data frame with the following columns: 1) "sound.files": name of the .wav 
@@ -14,7 +14,7 @@ end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{auto
 be used as the input data frame.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
-frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f 
+frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f
 and high.f columns will be used as bandpass limits. Default is c(0, 22).}
 
 \item{wl}{A numeric vector of length 1 specifying the spectrogram window length. Default is 512.}
@@ -32,34 +32,62 @@ substantially increases performance (~9 times faster).}
 \item{path}{Character string containing the directory path where the sound files are located. 
 If \code{NULL} (default) then the current working directory is used.}
 
-\item{pb}{Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
+\item{pb}{Logical argument to control progress bar and messages. Default is \code{TRUE}. Note that progress bar is only used
 when parallel = 1.}
+
+\item{ovlp}{Numeric vector of length 1 specifying \% of overlap between two 
+consecutive windows, used for fundamental frequency (using \code{\link[seewave]{fund}} or \code{\link[tuneR]{FF}}) and dominant frequency (using \code{\link[seewave]{dfreq}}). 
+Default is 50.}
+
+\item{ff.method}{Character. Selects the method used to calculate the fundamental
+frequency. Either 'tuneR' (using \code{\link[tuneR]{FF}}) or 'seewave' (using 
+\code{\link[seewave]{fund}}). Default is 'seewave'. Use trackfreqs to decide which method works the best. 
+'tuneR' performs faster (and seems to be more accurate) than 'seewave'.}
+
+\item{wn}{Character vector of length 1 specifying window name. Default is hanning'. 
+See function \code{\link[seewave]{ftwindow}} for more options.}
 }
 \value{
-Data frame with the following acoustic parameters: 
+Data frame with 'sound.files' and 'selec' as in the input data frame, plus the following acoustic parameters: 
 \itemize{
-   \item \code{duration}: length of signal
-   \item \code{meanfreq}: mean frequency (in kHz)
-   \item \code{sd}: standard deviation of frequency 
-   \item \code{median}: median frequency (in kHz) 
-   \item \code{Q25}: first quantile (in kHz) 
-   \item \code{Q75}: third quantile (in kHz) 
-   \item \code{IQR}: interquantile range (in kHz) 
-   \item \code{skew}: skewness (see note in \code{\link[seewave]{specprop}} description) 
-   \item \code{kurt}:  kurtosis (see note in \code{\link[seewave]{specprop}} description)
-   \item \code{sp.ent}: spectral entropy 
-   \item \code{sfm}: spectral flatness 
-   \item \code{mode}: mode frequency
-   \item \code{centroid}: frequency centroid (see \code{\link[seewave]{specprop}})
-   \item \code{peakf}: peak frequency (frequency with highest energy) 
-   \item \code{meanfun}: average of fundamental frequency measured across acoustic signal 
-   \item \code{minfun}: minimum fundamental frequency measured across acoustic signal 
-   \item \code{maxfun}: maximum fundamental frequency measured across acoustic signal 
-   \item \code{meandom}: average of dominant frequency measured across acoustic signal 
-   \item \code{mindom}: minimum of dominant frequency measured across acoustic signal
-   \item \code{maxdom}: maximum of dominant frequency measured across acoustic signal 
-   \item \code{dfrange}: range of dominant frequency measured across acoustic signal 
-   \item \code{modindx}: modulation index. Calculated as the accumulated absolute 
+   \item \code{duration}: length of signal (in s)
+   \item \code{meanfreq}: mean frequency. Weighted average of frequency by amplitude (in kHz)
+   \item \code{sd}: standard deviation of frequency weighted by amplitude
+   \item \code{freq.median}: median frequency. The frequency at which the signal is divided in two frequency
+   intervals of equal energy (in kHz) 
+   \item \code{freq.Q25}: first quartile frequency. The frequency at which the signal is divided in two 
+   frequency intervals of 25\% and 75\% energy respectively (in kHz) 
+   \item \code{freq.Q75}: third quartile frequency. The frequency at which the signal is divided in two
+   frequency intervals of 75\% and 25\% energy respectively (in kHz) 
+   \item \code{freq.IQR}: interquartile frequency range. Frequency range between 'freq.Q25' and 'freq.Q75' 
+   (in kHz) 
+   \item \code{time.median}: median time. The time at which the signal is divided in two time
+   intervals of equal energy (in s) 
+   \item \code{time.Q25}: first quartile time. The time at which the signal is divided in two
+time intervals of 25\% and 75\% energy respectively (in s). See \code{\link[seewave]{acoustat}}
+   \item \code{time.Q75}: third quartile time. The time at which the signal is divided in two
+   time intervals of 75\% and 25\% energy respectively (in s). See \code{\link[seewave]{acoustat}}
+   \item \code{time.IQR}: interquartile time range. Time range between 'time.Q25' and 'time.Q75' 
+   (in s). See \code{\link[seewave]{acoustat}}
+   \item \code{skew}: skewness. Asymmetry of the spectrum (see note in \code{\link[seewave]{specprop}} description) 
+   \item \code{kurt}: kurtosis. Peakedness of the spectrum (see note in \code{\link[seewave]{specprop}} description)
+   \item \code{sp.ent}: spectral entropy. Energy distribution of the frequency spectrum. Pure tone ~ 0; 
+   noisy ~ 1. See \code{\link[seewave]{sh}}
+   \item \code{time.ent}: time entropy. Energy distribution on the time envelope. Pure tone ~ 0; 
+   noisy ~ 1. See \code{\link[seewave]{th}}
+   \item \code{entropy}: spectral entropy. Product of time and spectral entropy \code{sp.ent * time.ent}. 
+   See \code{\link[seewave]{H}}
+   \item \code{sfm}: spectral flatness. Similar to sp.ent (Pure tone ~ 0; 
+   noisy ~ 1). See \code{\link[seewave]{sfm}}
+   \item \code{peakf}: peak frequency. Frequency with highest energy
+   \item \code{meanfun}: average of fundamental frequency measured across the acoustic signal 
+   \item \code{minfun}: minimum fundamental frequency measured across the acoustic signal 
+   \item \code{maxfun}: maximum fundamental frequency measured across the acoustic signal 
+   \item \code{meandom}: average of dominant frequency measured across the acoustic signal 
+   \item \code{mindom}: minimum of dominant frequency measured across the acoustic signal
+   \item \code{maxdom}: maximum of dominant frequency measured across the acoustic signal 
+   \item \code{dfrange}: range of dominant frequency measured across the acoustic signal 
+   \item \code{modindx}: modulation index. Calculated as the cumulative absolute 
      difference between adjacent measurements of dominant frequencies divided
      by the dominant frequency range
    \item \code{startdom}:  dominant frequency measurement at the start of the signal 
@@ -73,7 +101,7 @@ are provided.
 }
 \details{
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used 
- directly without any additional modification. The function measures 25 acoustic parameters (if fast = \code{TRUE}) on 
+ directly without any additional modification. The function measures 29 acoustic parameters (if fast = \code{TRUE}) on 
  each selection in the data frame. Most parameters are produced internally by 
  \code{\link[seewave]{specprop}}, \code{\link[seewave]{fpeaks}}, \code{\link[seewave]{fund}},
  and \code{\link[seewave]{dfreq}} from the package seewave.

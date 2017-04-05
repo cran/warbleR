@@ -1,6 +1,48 @@
 # NEWS
 
 
+# warbleR 1.1.6 
+##### (Release date: XXXXXXX)
+
+## New functions:
+
+* "catalog" function to create song catalogs (i.e. images with multiple spectrograms in several rows/columns that can be color-labeled)
+* "fixwavs" function to convert corrupted files to a format that can be imported into R
+
+## Changes and additions:
+
+* added new acoustic parameters to "specan" function related to distribution of energy in the time axis. Also time entropy ("time.ent") and overall entropy ("entropy") were added
+* "centroid" and "mode" parameters were removed from "specan" function
+* sig2noise function can return signal-to-noise ratio in dB ("in.dB" argument). It can also measure noise at both sides of the signal or just right before ("before" argument)   
+* scale argument in dfDTW and ffDTW to allow to focus dynamic time warping comparisons on the frequency contours while ignoring differences in pitch
+* NAs can be removed from xcorr function output. They can also be ignored when using XCORR in compare.methods function 
+* filtersels can return selections with or without image files ("missing" argument). It can also return a data frame or the row index of the selections ("index" argument)
+* imp.raven function can import raven selections from files that do not share all the columns and extract the sound file name from the selection table name
+* FF function (from tuneR package) now can be used for measuring fundamental frequency (in trackfreqs, specan, ffts and ffDTW functions). Seems to be more accurate and faster than fund function from seewave 
+* window overlap can now be defined by users for fundamental and dominant frequency 
+measures in specan function
+* More arguments to control dynamic time warping settings in dfDTW and ffDTW
+* Progress bar is available for parallel computing (when parallel > 1) in Linux and for some funtions also in iOS. It works using the function mcpbapply::pbmclapply
+*Spectrogram creating functions (manualoc, specreator, trackfreqs, dfts, ffts, dfDTW, ffDTW, lspec, catalog) can performe faster (4-10 times) using a different image algorithm. This can be called with the argument "fast.spec". Note that not all spectrogram options are available when fast.spec = TRUE 
+* selections longer than 20 s can be analyzed with specan function (previously it returned an error, this is going to be slow anyways)
+* "clip.edges" argument in compare.methods function to set removing mising values at the start and end of signals when using dfDTW and ffDTW methods  
+* "treshold" argument in compare.methods function to set the amplitude detection threshold for ffDTW, dfDTW and SP methods  
+* "exclude" agument in imp.syrinx function to exclude selection files that cannot be read
+* "rm.imcomp" argument in coor.test function to exclude singing events that only have one individual
+* "cutoff" argument in coor.test function to determine the minimum number of signals per individual needed for a singing event to
+be included
+* "rm.solo" argument in coor.test to control if signals that are not intercalated at the start or end of the 
+sequence are removed. For instances the sequence of signals A-A-A-B-A-B-A-B-B-B (in which A and B represent 
+different individuals) would be subset to A-B-A-B-A-B
+* "incl.wav" argument in filtersels function to indicate if the sound file extension is included in the image files
+* 3 different options (formulas) for calculating signal-to-noise ratio are now available (sig2noise function). In addition the "eq.dur" argument allows to measure a noise segment of the same duration than the signal
+* grid can be removed from spectrograms in compare.methods function
+
+# Bug fixes:
+* error produced when calculating frequency limits based on dominant frequency contours in xcorr (when frange is not provided)
+* error for identifying readable sound files in some specific .wav formats in checkwavs function
+* error when comparing signals with a high duration difference in xcorr
+
 # warbleR 1.1.5 
 ##### (Release date: 2017-01-19)
 

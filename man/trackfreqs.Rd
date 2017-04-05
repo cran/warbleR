@@ -11,7 +11,8 @@ trackfreqs(X, wl = 512, flim = c(0, 22), wn = "hanning", pal =
   threshold = 15, contour = "both", col = c("skyblue", "red2"),
    pch = c(21, 24),  mar = 0.05, lpos = "topright", it = "jpeg", parallel = 1, 
    path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE, type = "p", 
-   leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE)
+   leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, 
+   fast.spec = FALSE, ff.method = "seewave", ...)
 }
 \arguments{
 \item{X}{Data frame with results containing columns for sound file name (sound.files), 
@@ -127,6 +128,20 @@ in the output image.}
 \item{col.alpha}{A numeric vector of length 1  within [0,1] indicating how transparent the lines/points should be.}
 
 \item{line}{Logical argument to add red lines (or box if low.f and high.f columns are provided) at start and end times of selection. Default is \code{TRUE}.}
+
+\item{fast.spec}{Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
+increases performance (much faster), although some options become unavailable, as collevels, and sc (amplitude scale).
+This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
+\code{\link[monitoR]{gray.3}}, \code{\link[monitoR]{topo.1}} and \code{\link[monitoR]{rainbow.1}} (which should be imported from the package monitoR) seem
+to work better with 'fast' spectograms. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
+\code{\link[monitoR]{gray.3}} offer 
+decreasing darkness levels. THIS IS STILL BEING TESTED.}
+
+\item{ff.method}{Character. Selects the method used to calculate the fundamental
+frequency. Either 'tuneR' (using \code{\link[tuneR]{FF}}) or 'seewave' (using 
+\code{\link[seewave]{fund}}). Default is 'seewave'. 'tuneR' performs faster (and seems to be more accurate) than 'seewave'.}
+
+\item{...}{Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments.}
 }
 \value{
 Spectrograms of the signals listed in the input data frame showing the location of 
@@ -149,7 +164,7 @@ This function provides visualization of frequency measurements as the ones
 }
 \examples{
 \dontrun{
-#Set temporal folder as working directory
+#Set temporary working directory
 setwd(tempdir())
 
 #load data

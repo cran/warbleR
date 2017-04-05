@@ -41,9 +41,7 @@
 #' input data frame showing the location of the dominant frequencies 
 #' (see \code{\link{trackfreqs}} description for more details).
 #' @family spectrogram creators
-#' @seealso \code{\link{specreator}} for creating spectrograms from selections,
-#'  \code{\link{snrspecs}} for creating spectrograms to 
-#'   optimize noise margins used in \code{\link{sig2noise}}
+#' @seealso \code{\link{sig2noise}}, \code{\link{trackfreqs}}, \code{\link{ffts}}, \code{\link{ffDTW}}, \code{\link{dfDTW}}
 #' @export
 #' @name dfts
 #' @details This function extracts the dominant frequency values as a time series. 
@@ -136,8 +134,8 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
     message("creating images is not compatible with parallel computing (parallel > 1) in OSX (mac)")
   }
   
- if(parallel == 1 & pb) {if(img) message("Creating spectrograms overlaid with dominant frequency measurements:") else
-    message("Measuring dominant frequency:")}  
+  if(any(parallel == 1, Sys.info()[1] == "Linux") & pb) {if(img) message("Creating spectrograms overlaid with dominant frequency measurements:") else
+    message("measuring dominant frequency:")}  
   
   dftsFUN <- function(X, i, bp, wl, threshold){
     
@@ -228,7 +226,11 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
     } 
     if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
       
-      lst <- parallel::mclapply(1:nrow(X), function (i) {
+     if(pb)
+       lst <- pbmcapply::pbmclapply(1:nrow(X), mc.cores = parallel, function (i) {
+         dftsFUN(X, i, bp, wl, threshold)
+       }) else
+       lst <- parallel::mclapply(1:nrow(X), mc.cores = parallel, function (i) {
         dftsFUN(X, i, bp, wl, threshold)
       })
     }
@@ -256,5 +258,5 @@ dfts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
     colnames(df)[3:ncol(df)]<-paste("dfreq",1:(ncol(df)-2),sep = "-")
                  return(df)
 
-    if(!is.null(path)) on.exit(setwd(wd))
+    if(!is.null(path)) setwd(wd)
     }

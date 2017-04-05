@@ -16,10 +16,12 @@
 #' @details This function checks if .wav files in the working directory can be read.
 #' Users must set the working directory where they wish to check .wav files beforehand. 
 #' If X is provided it also returns the smallest number of samples from
-#' the selections listed in X (if all files can be read).  The function is intended for a "quick and dirty"
-#' check of the .wav files in a selections data frame. For a more thourough analysis see \code{\link{checksels}}.
+#' the selections listed in X (if all files can be read). Note that corrupt files can be
+#' fixed using \code{\link{fixwavs}}) ('sox' must be installed to be able to run this function).
+#' The function is intended for a "quick and dirty" check of the .wav files in a selections data
+#'  frame. For a more thourough analysis see \code{\link{checksels}}.
 #' @export
-#' @seealso \code{\link{checksels}}
+#' @seealso \code{\link{checksels}} \code{\link{seltailor}}
 #' @name checkwavs
 #' @examples
 #' \dontrun{
@@ -74,8 +76,6 @@ checkwavs <- function(X = NULL, path = NULL) {
     #if any start higher than end stop
     if(any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
     
-    
-    
     if(length(unique(X$sound.files[(X$sound.files %in% files)])) != length(unique(X$sound.files))) 
       message(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% files)])), 
                     ".wav file(s) not found"))
@@ -92,8 +92,8 @@ checkwavs <- function(X = NULL, path = NULL) {
   
   a <- sapply(files, function(x) {
     r <- try(suppressWarnings(tuneR::readWave(as.character(x), header = TRUE)), silent = TRUE)
-    if(is.list(r) & is.numeric(unlist(r)) & all(unlist(r) > 0))
-      return(r$sample.rate) else return (NA)}) 
+    if(class(r) == "try-error") return (NA) else
+      return(r$sample.rate)  }) 
   
   if(length(files[is.na(a)])>0){
     message("Some file(s) cannot be read ")
@@ -104,5 +104,5 @@ checkwavs <- function(X = NULL, path = NULL) {
       message("  smallest number of samples: ", floor(min((df$end - df$start)*df$f)), " (sound file:", as.character(df$sound.files[which.min((df$end - df$start)*df$f)]),"; selection label: ", df$selec[which.min((df$end - df$start)*df$f)], ")", sep = "")
     }
   }
-  if(!is.null(path)) on.exit(setwd(wd))
+  if(!is.null(path)) setwd(wd)
 }

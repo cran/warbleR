@@ -6,7 +6,8 @@
 \usage{
 lspec(X = NULL, flim = c(0,22), sxrow = 5, rows = 10, collev = seq(-40, 0, 1), 
 ovlp = 50, parallel = 1, wl = 512, gr = FALSE, pal = reverse.gray.colors.2, 
-cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL, pb = TRUE)
+cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL, pb = TRUE, 
+fast.spec = FALSE)
 }
 \arguments{
 \item{X}{Data frame with results from \code{\link{manualoc}} or any data frame with columns
@@ -62,6 +63,14 @@ If \code{NULL} (default) then the current working directory is used.}
 
 \item{pb}{Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
 when parallel = 1.}
+
+\item{fast.spec}{Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
+increases performance (much faster), although some options become unavailable, as collevels, and sc (amplitude scale).
+This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
+\code{\link[monitoR]{gray.3}}, \code{\link[monitoR]{topo.1}} and \code{\link[monitoR]{rainbow.1}} (which should be imported from the package monitoR) seem
+to work better with 'fast' spectograms. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
+\code{\link[monitoR]{gray.3}} offer 
+decreasing darkness levels. THIS IS STILL BEING TESTED.}
 }
 \value{
 image files with spectrograms of whole sound files in the working directory. Multiple pages
@@ -81,7 +90,7 @@ The function creates spectrograms for complete sound files, printing
 }
 \examples{
 \dontrun{
-# First create empty folder
+# Set temporary working directory
 setwd(tempdir())
 # save sound file examples
 data(list = c("Phae.long1", "Phae.long2","selec.table"))

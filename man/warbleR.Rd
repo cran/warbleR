@@ -47,8 +47,12 @@ License: GPL (>= 2)
   \code{\link{mp32wav}}: Convert several .mp3 files in working directory to .wav
   format
   
+  \code{\link{checksels}}: checks whether selections can be read by subsequent functions
+  
   \code{\link{checkwavs}}: Check whether .wav files can be read by subsequent 
   functions and the minimum windows length ("wl" argument) that can be used
+  
+  \code{\link{fixwavs}}: Fix .wav files to allow importing them into R
   
   \code{\link{wavdur}}: Determine the duration of sound files
 }
@@ -64,6 +68,8 @@ License: GPL (>= 2)
 
   \code{\link{autodetec}}: Automatic detection of acoustic signals based on ampltiude 
 
+  \code{\link{seltailor}}: Interactive view of spectrograms to tailor start and end of selections
+  
   \code{\link{lspec}}: Produce spectrograms of whole recordings split into 
   multiple rows
   
@@ -88,9 +94,11 @@ License: GPL (>= 2)
   
   \code{\link{xcorr.graph}}: Pairwise cross-correlation of multiple signals
   
-  \code{\link{dfts}}: Extract the dominant frequency values as a time series
+  \code{\link{dfts}}: Extract the dominant frequency values across the signal as a time series
   
-  \code{\link{ffts}}: Extract the fundamental frequency values as a time series
+  \code{\link{ffts}}: Extract the fundamental frequency values across the signal as a time series
+  
+  \code{\link{sp.en.ts}}: Extract the spectral entropy values across the signal as a time series
   
   \code{\link{dfDTW}}: Calculate acoustic dissimilarity using dynamic time warping
    on dominant frequency contours
@@ -101,11 +109,14 @@ License: GPL (>= 2)
   \code{\link{compare.methods}}: Produce graphs to visually assess performance of acoustic 
   distance measurements 
   
+  \code{\link{catalog}}: Produce a vocalization catalog with spectrograms in and array with
+  several rows and columns  
+  
+  \code{\link{catalog2pdf}}: Combine catalog images to single pdf files
+  
   \code{\link{coor.graph}}: Creat graphs of coordinated singing 
   
-  \code{\link{coor.test}}: Assess statistical significance of singing coordination 
-  
-  \code{\link{seltailor}}: Interactive view of spectrograms to tailor start and end of selections
+  \code{\link{coor.test}}: Assess statistical significance of singing coordination
 }
 \author{
 Marcelo Araya-Salas & Grace Smith Vidaurre

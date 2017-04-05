@@ -33,8 +33,8 @@ the recordings to be downloaded based on their attributes.}
 Note that recording id is always used (whether or not is listed by users) to avoid duplicated names.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied when downloading mp3 files.
-It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing). Might not work 
-in Windows OS.}
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing). Currently only applied when downloading files. Might not work 
+improve performance on Windows OS.}
 
 \item{path}{Character string containing the directory path where the sound files are located. 
 If \code{NULL} (default) then the current working directory is used.}
@@ -51,11 +51,12 @@ If X is not provided the function returns a data frame with the following record
 \details{
 This function queries for avian vocalization recordings in the open-access
 online repository Xeno-Canto (\url{http://www.xeno-canto.org/}). It can return recordings metadata
-or download the associated sound files.
+or download the associated sound files. Maps of recording coordinates can be produced using 
+\code{\link{xcmaps}}
 }
 \examples{
 \dontrun{
-# First create empty folder
+# Set temporary working directory
 setwd(tempdir())
 
 # search without downloading
@@ -86,5 +87,9 @@ femsong <- querxc(qword = 'type:song type:female', download = FALSE)
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}
+\seealso{
+\code{\link{xcmaps}}, 
+\url{https://marce10.github.io/2016-12-22-Download_a_single_recording_for_each_species_in_a_site_from_Xeno-Canto/}
 }
 

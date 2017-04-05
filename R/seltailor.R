@@ -7,7 +7,7 @@
 #'   comments = TRUE, path = NULL, frange = FALSE)
 #' @param X data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
-#' end time of selections. The ouptut of \code{\link{seltailor}} or \code{\link{autodetec}} can 
+#' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 #' be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above. Required. Notice that, if an output file ("seltailor_output.csv") is found in the working directory it will be given priority over an input data frame.
 #' @param wl A numeric vector of length 1 specifying the spectrogram window length. Default is 512.
 #' @param flim A numeric vector of length 2 specifying the frequency limit (in kHz) of 
@@ -33,14 +33,14 @@
 #' @param path Character string containing the directory path where the sound files are located.
 #' @param frange Logical argument specifying whether limits on frequency range should be
 #'  recorded. 
-#' If \code{NULL} (default) then the current working directory is used.
+#' If \code{NULL} (default) then only the time limits are recorded.
 #' @return .csv file saved in the working directory with start and end time of 
 #'   selections.
 #' @export
 #' @name seltailor
 #' @examples
 #' \dontrun{
-#' #First create empty folder
+#' #Set temporary working directory
 #' setwd(tempdir())
 #' 
 #' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
@@ -60,7 +60,7 @@
 #' }
 #' @details This function produces an interactive spectrographic view (similar to \code{\link{manualoc}}) 
 #' in which users can select a new start and end of a vocalization unit (e.g. elements)
-#'  by clicking at the end and then at the start of the signal (in any order). In addition, 2
+#'  by clicking at the end and at the start of the signal (in any order). In addition, 2
 #'   "buttons" are provided at the upper right side of the spectrogram that
 #'   allow to stop the analysis ("Stop") or go to the next sound file ("next sel"). When a unit 
 #'   has been selected, the function plots red dotted lines in the start and end of the 
@@ -90,12 +90,25 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
             osci = FALSE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE,
             pause = 1, comments = TRUE, path = NULL, frange = FALSE)
 {
+ 
+  #X must be provided
+  if(is.null(X)) stop("'X' must be provided (a data frame)")
   
   #check path to working directory
   if(!is.null(path))
   {wd <- getwd()
   if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
     setwd(path)} #set working directory
+  
+  #if there are NAs in start or end stop
+  if(any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
+  
+  #if end or start are not numeric stop
+  if(all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'end' and 'selec' must be numeric")
+  
+  #if any start higher than end stop
+  if(any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))
+  
   
   # stop if not all sound files were found
   fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
@@ -248,5 +261,5 @@ abline(v = xy$x, lty = 3, col = "red", lwd = 1.2)
                 break}}   
       }
       }
-  if(!is.null(path)) on.exit(setwd(wd))
+  if(!is.null(path)) setwd(wd)
   }
