@@ -35,8 +35,12 @@
 #' @name querxc
 #' @details This function queries for avian vocalization recordings in the open-access
 #' online repository Xeno-Canto (\url{http://www.xeno-canto.org/}). It can return recordings metadata
-#' or download the associated sound files. Maps of recording coordinates can be produced using 
-#' \code{\link{xcmaps}}
+#' or download the associated sound files. Complex queries can be done by using search terms that follow the 
+#'  xeno-canto advance query syntax (check "qword" argument description). 
+#'  Files are double-checked after downloading and "empty" files are re-downloaded. 
+#'  File downloading process can be interrupted and resume later as long as the working directory is the same.
+#'  Maps of recording coordinates can be produced using 
+#' \code{\link{xcmaps}}.
 #' @seealso \code{\link{xcmaps}}, 
 #' \url{https://marce10.github.io/2016-12-22-Download_a_single_recording_for_each_species_in_a_site_from_Xeno-Canto/} 
 #' @examples
@@ -90,6 +94,13 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
   # If parallel is not numeric
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
+  
+  #if parallel and pb in windows
+  if(parallel > 1 &  pb & Sys.info()[1] == "Windows") {
+    message("parallel with progress bar is currently not available for windows OS")
+    message("running parallel without progress bar")
+    pb <- FALSE
+  } 
   
   file.name <- gsub(" ", "_", file.name) 
   file.name <- tolower(file.name) 

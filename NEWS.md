@@ -1,8 +1,17 @@
 # NEWS
 
+# warbleR 1.1.7
+##### (Release date: 2017-04-24)
+
+## Changes and additions:
+
+* "seltailor" function now can use external graphic devices (X11 or quartz)
+
+# Bug fixes:
+* installation in windows OS fixed (pbmcapply conflict in previous version)
 
 # warbleR 1.1.6 
-##### (Release date: XXXXXXX)
+##### (Release date: 2017-04-05)
 
 ## New functions:
 

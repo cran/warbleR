@@ -47,6 +47,13 @@ lspec2pdf <- function(keep.jpeg = TRUE, overwrite = FALSE, parallel = 1, path = 
     if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
   setwd(path)} #set working directory
   
+  #if parallel and pb in windows
+  if(parallel > 1 &  pb & Sys.info()[1] == "Windows") {
+    message("parallel with progress bar is currently not available for windows OS")
+    message("running parallel without progress bar")
+    pb <- FALSE
+  } 
+  
   #list jpeg files
   imgs <- list.files(pattern = "\\.jpeg$", ignore.case = TRUE)
   if(length(imgs) == 0) stop("No .jpeg files were found in the working directory")
@@ -73,11 +80,11 @@ lspec2pdf <- function(keep.jpeg = TRUE, overwrite = FALSE, parallel = 1, path = 
     }
     
     #plot
-    plot.new()
     img <- jpeg::readJPEG(subimgs[1])
     par(mar = rep(0, 4))
+    plot.new()
     mr <- par("usr")
-    graphics::rasterImage(img, mr[1]- 0.12, mr[3] - 0.14, mr[2] + 0.07, mr[4] + 0.1)
+    graphics::rasterImage(img, mr[1], mr[3], mr[2], mr[4])
     
     #loop over the following pages if more than 1 page
     if(length(subimgs) > 1)
