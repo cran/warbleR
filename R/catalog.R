@@ -123,7 +123,7 @@
 #'  ovlp = 90, parallel = 1, mar = 0.01, wl = 200, 
 #'  orientation = "v",  labels = c("sound.files", "selec"), legend = 0, 
 #'  tag.pal = list(terrain.colors))
-#'  #'  
+#'  
 #'  #adding tags and changing spectro palette
 #' catalog(X = selec.table, flim = c(1, 10), nrow = 4, ncol = 2, same.time.scale = F,
 #'  ovlp = 90, parallel = 1, mar = 0.01, wl = 200, pal = reverse.heat.colors,
@@ -135,25 +135,25 @@
 #'  X <- rbind(X, X)
 #'  
 #'  #create some simulated labels
-#'  X$songtype <- sample(letters[1:3], nrow(X), replace = T)
+#'  X$songtype <- sample(letters[13:15], nrow(X), replace = T)
 #'  X$indiv <- sample(letters[1:12], nrow(X), replace = T)
 #' 
 #' # 12 columns in 5 rows, 2 tags
-#' catalog(X = selec.table, flim = c(1, 10), nrow = 5, ncol = 12, same.time.scale = F,
+#' catalog(X = X, flim = c(1, 10), nrow = 5, ncol = 12, same.time.scale = F,
 #'  ovlp = 90, parallel = 1, mar = 0.01, wl = 200, 
 #'  orientation = "v",  labels = c("sound.files", "selec"), legend = 3, 
 #'  collev = seq(-65, 0, 5), tag.pal = list(terrain.colors), tags = c("songtype", "indiv"))
 #' 
 #'
 #' # with legend
-#' catalog(X = selec.table, flim = c(1, 10), nrow = 5, ncol = 12, same.time.scale = F,
+#' catalog(X = X, flim = c(1, 10), nrow = 5, ncol = 12, same.time.scale = F,
 #'  ovlp = 90, parallel = 1, mar = 0.01, wl = 200, gr = FALSE,
 #'  orientation = "v",  labels = c("sound.files", "selec"), legend = 3, 
 #'  width = 20, collev = seq(-65, 0, 5), tag.pal = list(terrain.colors),
 #'   tags = c("songtype", "indiv"))
 #'   
-#'   #' horizontal orientation
-#' catalog(X = selec.table, flim = c(1, 10), nrow = 5, ncol = 12, same.time.scale = F,
+#'   # horizontal orientation
+#' catalog(X = X, flim = c(1, 10), nrow = 5, ncol = 12, same.time.scale = F,
 #'  ovlp = 90, parallel = 1, mar = 0.01, wl = 200, gr = FALSE,
 #'  orientation = "h",  labels = c("sound.files", "selec"), legend = 3, 
 #'  width = 20, collev = seq(-65, 0, 5), tag.pal = list(terrain.colors),
@@ -314,7 +314,7 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
     if(length(tags) == 1 & legend == 2) legend <- 0
     
      #convert to character
-    Y <- rapply(X, as.character, classes="factor", how="replace")
+    Y <- as.data.frame(rapply(X, as.character, classes="factor", how="replace"))
     
     #if tag is numeric
     if(is.numeric(X[, tags[1]])) 
@@ -461,7 +461,7 @@ X <- do.call(rbind, X2)
 
  
     
-catalFUN <- function(X, nrow, ncol, page, labels, grid, fast.spec, flim, wl, ovlp, pal, width, height, tag.col.df, legend, cex)
+catalFUN <- function(X, nrow, ncol, page, labels, grid, fast.spec, flim, wl, ovlp, pal, width, height, tag.col.df, legend, cex, img.suffix)
 {
 #set layout for screensplit
 #rows
@@ -535,7 +535,7 @@ X3 <- X[rep(1:nrow(X), each = 2), ]
 X3 <- rapply(X3, as.character, classes="factor", how="replace")
 
 #start graphic device
-if(!is.null(img.suffix)) img.suffix <- paste0("-",img.suffix)
+if(!is.null(img.suffix)) img.suffix <- paste0("-", img.suffix)
 imgfun(filename = paste0("Catalog_p", page, img.suffix, ".", it), units = "in", width = width, height = height, res = res)
 invisible(close.screen(all.screens = TRUE))
 split.screen(figs = m)
@@ -788,7 +788,7 @@ if(cel < 1)
 
      out <- foreach::foreach(z = 1:length(Xlist)) %dopar% {
        catalFUN(X = Xlist[[z]], nrow, ncol, page = z, labels, grid, fast.spec, flim, wl, ovlp, pal, 
-                width, height, tag.col.df, legend, cex)
+                width, height, tag.col.df, legend, cex, img.suffix)
 
      parallel::stopCluster(cl)
 
@@ -799,11 +799,11 @@ if(cel < 1)
      if(pb)
      out <- pbmcapply::pbmclapply(1:length(Xlist), mc.cores = parallel, function (z) {
        catalFUN(X = Xlist[[z]], nrow, ncol, page = z, labels, grid, fast.spec, flim, wl, ovlp, pal, 
-                width, height, tag.col.df, legend, cex)
+                width, height, tag.col.df, legend, cex, img.suffix)
      }) else
          out <- parallel::mclapply(1:length(Xlist),  mc.cores = parallel, function (z) {
        catalFUN(X = Xlist[[z]], nrow, ncol, page = z, labels, grid, fast.spec, flim, wl, ovlp, pal,
-                width, height, tag.col.df, legend, cex)
+                width, height, tag.col.df, legend, cex, img.suffix)
             })
    }
    if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
@@ -814,7 +814,7 @@ if(cel < 1)
 
      out <- foreach::foreach(z = 1:length(Xlist)) %dopar% {
        catalFUN(X = Xlist[[z]], nrow, ncol, page = z, labels, grid, fast.spec, flim, wl, ovlp, pal, 
-                width, height, tag.col.df, legend, cex)
+                width, height, tag.col.df, legend, cex, img.suffix)
      }
 
      parallel::stopCluster(cl)
@@ -825,10 +825,10 @@ if(cel < 1)
    if(pb)
      out <- pbapply::pblapply(1:length(Xlist), function(z)
        catalFUN(X = Xlist[[z]], nrow, ncol, page = z, labels, grid, fast.spec, flim, wl, ovlp, pal, 
-                width, height, tag.col.df, legend, cex))  else
+                width, height, tag.col.df, legend, cex, img.suffix))  else
          out <- lapply(1:length(Xlist), function(z)
            catalFUN(X = Xlist[[z]], nrow, ncol, page = z, labels, grid, fast.spec, flim, wl, ovlp, pal, 
-                    width, height, tag.col.df, legend, cex))
+                    width, height, tag.col.df, legend, cex, img.suffix))
  }
 
 if(!is.null(path)) setwd(wd)
