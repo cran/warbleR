@@ -2,18 +2,19 @@
 % Please edit documentation in R/seltailor.R
 \name{seltailor}
 \alias{seltailor}
-\title{Interactive view of spectrograms to tailor start and end of selections}
+\title{Interactive view of spectrograms to tailor selections}
 \usage{
 seltailor(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
  osci = TRUE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE, pause = 1,
   comments = TRUE, path = NULL, frange = FALSE, fast.spec = FALSE, ext.window = TRUE,
-  width = 15, height = 5, ...)
+  width = 15, height = 5, index = NULL, collevels = NULL, 
+  title = c("sound.files", "selec"),...)
 }
 \arguments{
-\item{X}{data frame with the following columns: 1) "sound.files": name of the .wav 
+\item{X}{'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
 end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
-be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above. Required. Notice that, if an output file ("seltailor_output.csv") is found in the working directory it will be given priority over an input data frame.}
+be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above. Notice that, if an output file ("seltailor_output.csv") is found in the working directory it will be given priority over an input data frame.}
 
 \item{wl}{A numeric vector of length 1 specifying the spectrogram window length. Default is 512.}
 
@@ -53,7 +54,7 @@ in the title of the spectrograms. Default is \code{TRUE}.}
 If \code{NULL} (default) then only the time limits are recorded.}
 
 \item{fast.spec}{Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
-increases performance (much faster), although some options become unavailable, as collevels, and sc (amplitude scale).
+increases performance (much faster), although some options become unavailable, as sc (amplitude scale).
 This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
 \code{\link[monitoR]{gray.3}}, \code{\link[monitoR]{topo.1}} and \code{\link[monitoR]{rainbow.1}} (which should be imported from the package monitoR) seem
 to work better with 'fast' spectograms. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
@@ -69,40 +70,46 @@ if \code{ext.window = FALSE}. Default is 15.}
 \item{height}{Numeric of length 1 controling the height of the external graphic window.
 Ignored if \code{ext.window = FALSE}. Default is 5.}
 
+\item{index}{Numeric vector indicating which selections (rows) of 'X' should be tailored. 
+Default is \code{NULL}. Ignored when the process is resumed. This can be useful when combined
+with \code{\link{filtersels}}) output (see 'index' argument in \code{\link{filtersels}}).}
+
+\item{collevels}{Numeric. Set of levels used to partition the amplitude range (see 
+\code{\link[seewave]{spectro}}).}
+
+\item{title}{Character vector with the names of the columns to be included in the title for each
+selection.}
+
 \item{...}{Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments.}
 }
 \value{
-.csv file saved in the working directory with start and end time of 
+data frame similar to X with the and a .csv file saved in the working directory with start and end time of 
   selections.
 }
 \description{
 \code{seltailor} produces an interactive spectrographic view (similar to \code{\link{manualoc}}) in 
-which the start and end times of acoustic signals listed in a data frame can be adjusted.
+which the start/end times and frequency range of acoustic signals listed in a data frame can be adjusted.
 }
 \details{
-This function produces an interactive spectrographic view (similar to \code{\link{manualoc}}) 
-in which users can select a new start and end of a vocalization unit (e.g. elements)
- by clicking at the end and at the start of the signal (in any order). In addition, 2
-  "buttons" are provided at the upper right side of the spectrogram that
-  allow to stop the analysis ("Stop") or go to the next sound file ("next sel"). When a unit 
-  has been selected, the function plots red dotted lines in the start and end of the 
-  selection in the spectrogram. The  lines "disappear" when a new selections is made.
-  Only the last selection is kept for each selection that is adjusted.
-  The function produces a .csv file (seltailor_output.csv) with the same information than the input 
-  data frame, except for the new time coordinates, plus a new column (X$tailored) indicating if the selection 
+This function produces an interactive spectrographic
+ view in which users can select new time/frequency 
+ coordinates the selections. 4 "buttons" are provided at the upper right side of the spectrogram that
+  allow to stop the analysis ("stop"), go to the next sound file ("next"), return to the 
+  previous selection ("previous") or delete 
+  the current selection ("delete"). When a unit has been selected, the function plots 
+  dotted lines in the start and end of the selection in the spectrogram (or a box if 
+  \code{frange = TRUE}). Only the last selection is kept for each
+   selection that is adjusted. The function produces a .csv file (seltailor_output.csv) 
+   with the same information than the input data frame, except for the new time 
+   coordinates, plus a new column (X$tailored) indicating if the selection 
   has been tailored. The file is saved in the working directory  and is updated every time the user
    moves into the next sound file (next sel "button") or stop the process 
- (Stop "button").  If no selection (by clicking on the 'next' buttom) the 
- original time coordinates are kept. When resuming the process (after "stop" and re-running 
+ (Stop "button"). It also return the same data frame as and object in the R environment.
+   If no selection is made (by clicking on the 'next' button) the 
+ original time/frequency coordinates are kept. When resuming the process (after "stop" and re-running 
  the function in the same working directory), the function will continue working on the
- selections that have not been analyzed.
-  
-  Windows length (wl) controls the temporal and frequency precision of the spectrogram. 
-  A high "wl" value increases the frequency resolution but reduces the temporal resolution, and vice versa. Any
-  color palette that comes with the seewave package can be used: temp.colors,
-  reverse.gray.colors.1, reverse.gray.colors.2, reverse.heat.colors, reverse.terrain.colors,
-  reverse.topo.colors, reverse.cm.colors, heat.colors, terrain.colors, topo.colors,
-  cm.colors. Note that, unlike \code{\link{manualoc}}, you cannot zoom in the spectrogram \code{\link{seltailor}}. 
+ selections that have not been analyzed. The function also displays a progress bar right on
+ top of the sepctrogram.
   The zoom can be adjusted by setting the \code{mar} argument.
 }
 \examples{

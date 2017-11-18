@@ -7,7 +7,7 @@
 #' res = 100, cexlab = 1, title = TRUE, 
 #'   propwidth= FALSE, xl=1, osci = FALSE, gr = FALSE, sc = FALSE, mar = 0.2,
 #'    snrmar = 0.1, it = "jpeg", parallel = 1, path = NULL, pb = TRUE)
-#' @param  X Data frame with results from \code{\link{manualoc}} or any data frame with columns
+#' @param  X 'selection.table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
@@ -71,7 +71,7 @@
 #'   Title font size, inner.mar and outer.mar (from \code{mar} and \code{oma} in \code{par}) don't work well
 #'   when osci or sc = \code{TRUE}, this may take some optimization by the user.
 #' @examples
-#' \dontrun{
+#' {
 #' # Set temporary working directory
 #' setwd(tempdir())
 #'  
@@ -105,14 +105,19 @@ snrspecs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
                      gr = FALSE, sc = FALSE, mar = 0.2, snrmar = 0.1, it = "jpeg", parallel = 1,
                      path = NULL, pb = TRUE){
  
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
+  
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
   
   #if X is not a data frame
-  if(!class(X) == "data.frame") stop("X is not a data frame")
+  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  
+  
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -306,6 +311,5 @@ snrspecs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
         a1 <- lapply(1:nrow(X), function(i) snrspeFUN(X = X, i = i, wl = wl, flim = flim, ovlp = ovlp, inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab, xl = xl, mar = mar, snrmar = snrmar))
     }
     
-    if(!is.null(path)) setwd(wd)
     }
 

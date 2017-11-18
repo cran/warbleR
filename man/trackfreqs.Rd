@@ -4,23 +4,28 @@
 \alias{trackfreqs}
 \title{Spectrograms with frequency measurements}
 \usage{
-trackfreqs(X, wl = 512, flim = c(0, 22), wn = "hanning", pal =
+trackfreqs(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hanning", pal =
   reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = 
   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
   xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = c(0.6, 1), 
-  threshold = 15, contour = "both", col = c("skyblue", "red2"),
-   pch = c(21, 24),  mar = 0.05, lpos = "topright", it = "jpeg", parallel = 1, 
-   path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE, type = "p", 
-   leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, 
-   fast.spec = FALSE, ff.method = "seewave", ...)
+  threshold = 15, threshold.time = NULL, threshold.freq = NULL, contour = "both", 
+  col = c("skyblue", "red2"), pch = c(21, 24),  mar = 0.05, lpos = "topright", 
+  it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, 
+  pb = TRUE, type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, 
+   fast.spec = FALSE, ff.method = "seewave", frange.detec = FALSE, 
+   fsmooth = 0.1, widths = c(2, 1), freq.continuity = NULL, clip.edges = 2, ...)
 }
 \arguments{
-\item{X}{Data frame with results containing columns for sound file name (sound.files), 
+\item{X}{'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
 selection number (selec), and start and end time of signal (start and end).
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame.}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
 is 512.}
+
+\item{wl.freq}{A numeric vector of length 1 specifying the window length of the spectrogram
+for measurements on the frecuency spectrum. Default is 512. Higher values would provide 
+more accurate measurements.}
 
 \item{flim}{A numeric vector of length 2 for the frequency limit of 
 the spectrogram (in kHz), as in \code{\link[seewave]{spectro}}. Default is c(0, 22).}
@@ -70,15 +75,19 @@ in \code{\link[seewave]{spectro}}. Default is \code{FALSE}.}
 \code{FALSE}.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
-frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f 
-and high.f columns will be used as bandpass limits. Default is c(0, 22).}
+frequency bandpass filter (in kHz) or "frange" to indicate that values in bottom.freq 
+and top.freq columns will be used as bandpass limits. Default is c(0, 22).}
 
 \item{cex}{Numeric vector of length 2, specifies relative size of points 
 plotted for frequency measurements and legend font/points, respectively. 
 See \code{\link[seewave]{spectro}}.}
 
-\item{threshold}{amplitude threshold (\%) for fundamental frequency and 
-dominant frequency detection. Default is 15.}
+\item{threshold}{amplitude threshold (\%) for fundamental and dominant frequency detection as well as frequency range from the spectrum (see 'frange.detec'). Default is 15. WILL BE DEPRECATED. Use 'threshold.time' and 'threshold.time' instead.}
+
+\item{threshold.time}{amplitude threshold (\%) for the time domain. Use for fundamental and dominant frequency detection. If \code{NULL} (default) then the 'threshold' value is used.}
+
+\item{threshold.freq}{amplitude threshold (\%) for the frequency domain. Use for frequency range detection from the spectrum (see 'frange.detec'). If \code{NULL} (default) then the
+'threshold' value is used.}
 
 \item{contour}{Character vector, one of "df", "ff" or "both", specifying whether the
 dominant or fundamental frequencies or both should be plotted. Default is "both".}
@@ -127,7 +136,7 @@ in the output image.}
 
 \item{col.alpha}{A numeric vector of length 1  within [0,1] indicating how transparent the lines/points should be.}
 
-\item{line}{Logical argument to add red lines (or box if low.f and high.f columns are provided) at start and end times of selection. Default is \code{TRUE}.}
+\item{line}{Logical argument to add red lines (or box if bottom.freq and top.freq columns are provided) at start and end times of selection. Default is \code{TRUE}.}
 
 \item{fast.spec}{Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
 increases performance (much faster), although some options become unavailable, as collevels, and sc (amplitude scale).
@@ -141,6 +150,22 @@ decreasing darkness levels. THIS IS STILL BEING TESTED.}
 frequency. Either 'tuneR' (using \code{\link[tuneR]{FF}}) or 'seewave' (using 
 \code{\link[seewave]{fund}}). Default is 'seewave'. 'tuneR' performs faster (and seems to be more accurate) than 'seewave'.}
 
+\item{frange.detec}{Logical. Controls whether frequency range of signal is automatically 
+detected  using the \code{\link{frange.detec}} function. If so, the range is used as the 
+bandpass filter (overwriting 'bp' argument). Default is \code{FALSE}.}
+
+\item{fsmooth}{A numeric vector of length 1 to smooth the frequency spectrum with a mean
+sliding window (in kHz) used for frequency range detection (when \code{frange.detec = TRUE}). This help to average amplitude "hills" to minimize the effect of
+amplitude modulation. Default is 0.1.}
+
+\item{widths}{Numeric vector of length 2 to control the relative widths of the spectro (first element) and spectrum (second element,  (when \code{frange.detec = TRUE})).}
+
+\item{freq.continuity}{Numeric vector of length 1 to control whether dominant frequency detections
+outliers(i.e that differ from the frequency of the detections right before and after) would be removed. Should be given in kHz. Default is \code{NULL}.}
+
+\item{clip.edges}{Integer vector of length 1 to control if how many 'frequency-wise discontinuous' detection would be remove at the start and end of signals (see 
+'freq.continuity' argument). Default is 2. Ignored if \code{freq.continuity = NULL}.}
+
 \item{...}{Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments.}
 }
 \value{
@@ -153,17 +178,12 @@ of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
 }
 \details{
 This function provides visualization of frequency measurements as the ones 
-  made by \code{\link{specan}}. Frequency measures can be made by the function or input by the 
-  user (see 'custom.contour' argument)  Arguments that are accepted by xy.coords and can be 
-  used for 'lpos' are: "bottomright", "bottom", "bottomleft", "left", 
-  "topleft", "top", "topright", "right" and "center". Setting inner.mar to 
-  c(4,4.5,2,1) and outer.mar to c(4,2,2,1) works well when picsize = 2 or 3. 
-  Title font size, inner.mar and outer.mar (from mar and oma) don't work well
-  when osci or sc = TRUE, this may take some optimization by the user. Note that if no amplitude was detected
-  for a particular time bin, then the image will show a dark dot at the bottom of the time bin.
+  made by \code{\link{specan}}, \code{\link{dfts}}, \code{\link{ffts}}, \code{\link{dfDTW}} and \code{\link{ffDTW}}. Frequency measures can be made by the function or input by the 
+  user (see 'custom.contour' argument). If \code{frange = TRUE} the function uses \code{\link{frange.detec}} to detect the frequency range. In this case the graphical output includes a
+  frequency spectrum showing the detection threshold.
 }
 \examples{
-\dontrun{
+{
 #Set temporary working directory
 setwd(tempdir())
 
@@ -175,9 +195,9 @@ writeWave(Cryp.soui, "Cryp.soui.wav") #save sound files
 ad <- autodetec(threshold = 6, bp = c(1, 3), mindur = 1.2,
 maxdur = 3, img = FALSE, ssmooth = 600, wl = 300, flist = "Cryp.soui.wav")
 
-#track dominant frequency graphs
+#track dominant frequency graphs with freq reange detection
 trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
-bp = c(1, 3), contour = "df", wl = 300)
+bp = c(1, 3), contour = "df", wl = 300, frange = TRUE)
 
 #using users frequency data (custom.contour argument) 
 #first get contours using dfts
@@ -204,9 +224,10 @@ Grace Smith Vidaurre and Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
  \code{\link{snrspecs}} for creating spectrograms to 
   optimize noise margins used in \code{\link{sig2noise}}
 
-Other spectrogram.creators: \code{\link{dfDTW}},
-  \code{\link{dfts}}, \code{\link{ffDTW}},
-  \code{\link{ffts}}, \code{\link{snrspecs}},
-  \code{\link{sp.en.ts}}, \code{\link{specreator}}
+Other spectrogram creators: \code{\link{color.spectro}},
+  \code{\link{dfDTW}}, \code{\link{dfts}},
+  \code{\link{ffDTW}}, \code{\link{ffts}},
+  \code{\link{snrspecs}}, \code{\link{sp.en.ts}},
+  \code{\link{specreator}}
 }
 

@@ -3,7 +3,7 @@
 #' \code{filtersels} subsets selection data frames based on image files that have been manually filtered.
 #' @usage filtersels(X, path = NULL, lspec = FALSE, img.suffix = NULL, it = "jpeg",
 #'  incl.wav = TRUE, missing = FALSE, index = FALSE)
-#' @param X data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @param X 'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "sel": number of the selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 #' be used as the input data frame.
 #' @param path Character string containing the directory path where the sound files are located. 
@@ -31,8 +31,7 @@
 #'  image files should be in the working directory (or the directory provided in 'path').
 #' @export
 #' @name filtersels
-#' @examples
-#' \dontrun{ 
+#' @examples{ 
 #' # First set temporary folder
 #' setwd(tempdir())
 #' 
@@ -48,7 +47,7 @@
 #' #go to the working directory and delete some images
 #' 
 #' #filter selection data frame
-# fmloc <- filtersels(X = selec.table)
+#' fmloc <- filtersels(X = selec.table)
 #' 
 #' #this data frame does not have the selections corresponding to the images that were deleted
 #' fmloc
@@ -69,14 +68,20 @@ filtersels <- function(X, path = NULL, lspec = FALSE, img.suffix = NULL, it = "j
                        incl.wav = TRUE, missing = FALSE, index = FALSE)
   {
 
-    #check path to working directory
-  if(!is.null(path))
-  {if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    {wd <- getwd()
-      setwd(path)}} #set working directory
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
+  
+  #check path to working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
 
-  #if X is not a data frame
-  if(!class(X) == "data.frame") stop("X is not a data frame")
+    #if X is not a data frame
+    if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+    
+    
+
 
   #if it argument is not "jpeg" or "tiff" 
   if(!any(it == "jpeg", it == "tiff", it == "pdf")) stop(paste("Image type", it, "not allowed"))  
@@ -144,7 +149,7 @@ if(it != "pdf")
   
   if(!index)
   {
-    if(missing) Y <- X[miss.index, ] else Y <- X[!miss.index, ]
+    if(missing) Y <- droplevels(X[miss.index, ]) else Y <- droplevels(X[!miss.index, ])
     
   } else if(missing)  Y <- which(!miss.index) else  Y <- which(miss.index)
   
@@ -157,5 +162,5 @@ if(!index)
     if(length(Y) == 0) message("Index vector is of length 0")
  return(Y)
     }
-  if(!is.null(path)) setwd(wd)
+
 }

@@ -9,14 +9,14 @@ ffts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = c(0, 22),
   clip.edges = FALSE, leglab = "ffts", ff.method = "seewave", ...)
 }
 \arguments{
-\item{X}{Data frame with results containing columns for sound file name (sound.files), 
+\item{X}{'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
 selection number (selec), and start and end time of signal (start and end).
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame.}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
 is 512.}
 
-\item{length.out}{A character vector of length 1 giving the number of measurements of fundamental 
+\item{length.out}{A numeric vector of length 1 giving the number of measurements of fundamental 
 frequency desired (the length of the time series).}
 
 \item{wn}{Character vector of length 1 specifying window name. Default is 
@@ -82,7 +82,7 @@ The function uses the \code{\link[stats]{approx}} function to interpolate values
  to fill out the missing values (e.g. no NAs in between detected amplitude segments).
 }
 \examples{
-\dontrun{
+{
 # set the temp directory
 setwd(tempdir())
 
@@ -94,7 +94,7 @@ writeWave(Phae.long2, "Phae.long2.wav") #save sound files
 # run function 
 ffts(selec.table, length.out = 50, flim = c(1, 12), bp = c(2, 9), wl = 300)
 
-Note that fundamental frequency is not accurate for noisy signals, works better with pure tones
+# Fundamental frequency is not accurate for noisy signals, works better with pure tones
 
 }
 }
@@ -104,9 +104,10 @@ Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 \seealso{
 \code{\link{sig2noise}}, \code{\link{trackfreqs}}, \code{\link{dfts}}, \code{\link{ffDTW}}, \code{\link{dfDTW}}
 
-Other spectrogram.creators: \code{\link{dfDTW}},
-  \code{\link{dfts}}, \code{\link{ffDTW}},
-  \code{\link{snrspecs}}, \code{\link{sp.en.ts}},
-  \code{\link{specreator}}, \code{\link{trackfreqs}}
+Other spectrogram creators: \code{\link{color.spectro}},
+  \code{\link{dfDTW}}, \code{\link{dfts}},
+  \code{\link{ffDTW}}, \code{\link{snrspecs}},
+  \code{\link{sp.en.ts}}, \code{\link{specreator}},
+  \code{\link{trackfreqs}}
 }
 

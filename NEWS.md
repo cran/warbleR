@@ -1,5 +1,41 @@
 # NEWS
 
+# warbleR 1.1.9
+##### (Release date: XXXXXXXXXXX)
+
+## Changes and additions:
+
+* "low.freq" and "high.freq" column names in default table format are now "bottom.freq" and "top.freq" respectively
+* Moved 'imp.syrinx' and 'imp.raven' functions to new R package Rraven
+* Added a new object class 'selection.table' 
+* Split vignette into a series of three with new functions added to the workflow
+* New arguments "title", "by.row", "prop.mar", "box" and "rm.axes" in "catalog" function to further customize catalog setup
+* New arguments "spec.mar", "lab.mar" and "group.tag" in "catalog" function to color groups of selections
+* "trackfreqs", "dfts", and "dfDTW"  functions can use "frange.detec" internally to set bandpass limits (see "frange.detec" argument)
+* New argument "index" in "seltailor" function to indicate which selection should be tailored
+* New argument "wl.freq" in "specan" function to set windows length independently for time and frequency domain measurements
+* New measurement "meanpeakf" in specan
+* "imp.raven" and "imp.syrinx" now import low and high frequency in kHz (if all.data == FALSE)
+* Mew argument "bp" (bandpass) and "wl" in "sig2noise" function to calculate signal-to-noise ratio within a frequency range
+
+## New functions:
+
+* is.selection.table: checks if an object is of class 'selection.table'
+* make.selection.table: creates an object of class 'selection.table'
+* frange.detec: detects the frequency range of signals in wave objects
+* frange: applies 'frange.detec' function iteratively on signals listed in a selection table
+* move.imgs: copy/cut image files to folders
+* ovlp_sels: find overlapping/duplicated selections
+* cut_sels: generates individual sound files (.wav) for each selection in a selection table
+* color_spectro: produces spectrograms in which signals are highlighted with colors
+* exp.raven: exports selection tables to a .txt file that can be opened in Raven
+
+## Bug fixes:
+
+* Reading wave files with no stereo slot in "specan" and "checksels"
+
+===============================================================================================
+
 # warbleR 1.1.8
 ##### (Release date: 2017-04-26)
 
@@ -27,8 +63,9 @@
 
 ## New functions:
 
-* "catalog" function to create song catalogs (i.e. images with multiple spectrograms in several rows/columns that can be color-labeled)
-* "fixwavs" function to convert corrupted files to a format that can be imported into R
+* catalog: create song catalogs (i.e. images with multiple spectrograms in several rows/columns that can be color-labeled)
+* catalog2pdf: convert several catalog jpeg's images into single pdf files
+* fixwavs: convert corrupted files to a format that can be imported into R
 
 ## Changes and additions:
 

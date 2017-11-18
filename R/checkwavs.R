@@ -2,7 +2,7 @@
 #' 
 #' \code{checkwavs} checks whether .wav files can be read by subsequent functions.
 #' @usage checkwavs(X = NULL, path = NULL)
-#' @param X Optional. Data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @param X Optional. 'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 #' be used as the input data frame. If provided the function also returns the
@@ -23,8 +23,7 @@
 #' @export
 #' @seealso \code{\link{checksels}} \code{\link{seltailor}}
 #' @name checkwavs
-#' @examples
-#' \dontrun{
+#' @examples{
 #' # First set temporary folder
 #' setwd(tempdir())
 #' 
@@ -46,11 +45,14 @@
 
 checkwavs <- function(X = NULL, path = NULL) { 
   
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
+  
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
   
   #return warning if not all sound files were found
   files <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
@@ -60,9 +62,9 @@ checkwavs <- function(X = NULL, path = NULL) {
   if(!is.null(X))
   {
     #if X is not a data frame
-    if(!class(X) == "data.frame") stop("X is not a data frame")
+    if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
     
-    if(!all(c("sound.files", "selec", 
+   if(!all(c("sound.files", "selec", 
               "start", "end") %in% colnames(X))) 
       stop(paste(paste(c("sound.files", "selec", "start", "end")[!(c("sound.files", "selec", 
                                                                      "start", "end") %in% colnames(X))], collapse=", "), "column(s) not found in data frame"))
@@ -89,7 +91,6 @@ checkwavs <- function(X = NULL, path = NULL) {
     files <- files[files %in% X$sound.files]
   }
   
-  
   a <- sapply(files, function(x) {
     r <- try(suppressWarnings(tuneR::readWave(as.character(x), header = TRUE)), silent = TRUE)
     if(class(r) == "try-error") return (NA) else
@@ -104,5 +105,4 @@ checkwavs <- function(X = NULL, path = NULL) {
       message("  smallest number of samples: ", floor(min((df$end - df$start)*df$f)), " (sound file:", as.character(df$sound.files[which.min((df$end - df$start)*df$f)]),"; selection label: ", df$selec[which.min((df$end - df$start)*df$f)], ")", sep = "")
     }
   }
-  if(!is.null(path)) setwd(wd)
 }

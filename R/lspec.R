@@ -6,7 +6,7 @@
 #' ovlp = 50, parallel = 1, wl = 512, gr = FALSE, pal = reverse.gray.colors.2, 
 #' cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL, pb = TRUE, 
 #' fast.spec = FALSE) 
-#' @param X Data frame with results from \code{\link{manualoc}} or any data frame with columns
+#' @param X 'selection.table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). If given, two red dotted lines are plotted at the 
 #' start and end of a selection and the selections are labeled with the selection number 
@@ -61,10 +61,12 @@
 #'   supplied (or an equivalent data frame), the function delimits and labels the selections. 
 #'   This function aims to facilitate visual inspection of multiple files as well as visual classification 
 #'   of vocalization units and the analysis of animal vocal sequences.
-#' @examples
-#' \dontrun{
+#' @seealso \code{\link{lspec2pdf}}, \code{\link{catalog2pdf}}, 
+#' https://marce10.github.io/2017-01-07-Create_pdf_files_with_spectrograms_of_full_recordings/
+#' @examples{
 #' # Set temporary working directory
 #' setwd(tempdir())
+#' 
 #' # save sound file examples
 #' data(list = c("Phae.long1", "Phae.long2","selec.table"))
 #' writeWave(Phae.long1,"Phae.long1.wav") 
@@ -75,7 +77,7 @@
 #' # including selections
 #' lspec(sxrow = 2, rows = 8, X = selec.table, pal = reverse.heat.colors, redo = TRUE, wl = 300)
 #' 
-#' check this floder
+#' #check this floder
 #' getwd()
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
@@ -84,11 +86,16 @@
 lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(-40, 0, 1),  ovlp = 50, parallel = 1, 
                   wl = 512, gr = FALSE, pal = reverse.gray.colors.2, cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL, pb = TRUE, fast.spec = FALSE) {
   
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
+  
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
+  
+  
   
   #if sel.comment column not found create it
   if(is.null(X$sel.comment) & !is.null(X)) X<-data.frame(X,sel.comment="")
@@ -111,15 +118,18 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
   
   if(!is.null(X)) {
   
+    #if X is not a data frame
+    if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+    
+    
+    
+    
   #stop if files are not in working directory
   if(length(files) == 0) stop(".wav files in X are not in working directory")
   
   
   #if there are NAs in start or end stop
   if(any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end columns")  
-  
-  #Check class of X
-  if(!class(X) == "data.frame" & !is.null(X)) stop("X is not a data frame")
   
   #check if all columns are found
   if(any(!(c("sound.files", "selec", "start", "end") %in% colnames(X)))) 
@@ -192,11 +202,11 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
     f <- rec@samp.rate #set sampling rate
     frli<- fl #in case flim is higher than can be due to sampling rate
     if(frli[2] > ceiling(f/2000) - 1) frli[2] <- ceiling(f/2000) - 1 
-    dur <- length(rec@left)/rec@samp.rate #set duration    
+    dur <- seewave::duration(rec) #set duration    
     
     if(!length(grep("[^[:digit:]]", as.character(dur/sl))))  #if duration is multiple of sl
       rec <- seewave::cutw(wave = rec, f = f, from = 0, to = dur-0.001, output = "Wave") #cut a 0.001 segment of rec     
-    dur <- length(rec@left)/rec@samp.rate #set duration    
+    dur <- seewave::duration(rec) #set duration    
     
     if(!is.null(malo)) ml <- ml[ml$sound.files == z,] #subset X data
     
@@ -213,7 +223,7 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
       while(x <= li-1){
         x <- x + 1
         if(all(((x)*sl+li*(sl)*(j-1))-sl<dur & (x)*sl+li*(sl)*(j-1)<dur)){  #for rows with complete spectro
-          spectroW(rec, f = f, wl = wl, flim = frli, tlim = c(((x)*sl+li*(sl)*(j-1))-sl, (x)*sl+li*(sl)*(j-1)), 
+          spectro.INTFUN(rec, f = f, wl = wl, flim = frli, tlim = c(((x)*sl+li*(sl)*(j-1))-sl, (x)*sl+li*(sl)*(j-1)), 
                   ovlp = ovlp, collevels = collev, grid = gr, scale = FALSE, palette = pal, axisX = TRUE, fast.spec = fast.spec)
           if(x == 1) text((sl-0.01*sl) + (li*sl)*(j - 1), frli[2] - (frli[2]-frli[1])/10, paste(substring(z, first = 1, 
                                                                                                           last = nchar(z)-4), "-p", j, sep = ""), pos = 2, font = 2, cex = cex)
@@ -225,7 +235,7 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
                                  text((s + e)/2,  fli[2] - 2*((fli[2] - fli[1])/12), labels = labels, font = 4)},
                                  s = ml$start, e = ml$end,labels = l)} } else {
                                    if(all(((x)*sl+li*(sl)*(j-1))-sl < dur & (x)*sl+li*(sl)*(j-1)>dur)){ #for rows with incomplete spectro (final row)
-                                     spectroW(seewave::pastew(seewave::noisew(f = f,  d = (x)*sl+li*(sl)*(j-1)-dur+1,  type = "unif",   
+                                     spectro.INTFUN(seewave::pastew(seewave::noisew(f = f,  d = (x)*sl+li*(sl)*(j-1)-dur+1,  type = "unif",   
                                                            listen = FALSE,  output = "Wave"), seewave::cutw(wave = rec, f = f, from = ((x)*sl+li*(sl)*(j-1))-sl,
                                                                                                    to = dur, output = "Wave"), f =f,  output = "Wave"), f = f, wl = wl, flim = frli, 
                                              tlim = c(0, sl), ovlp = ovlp, collevels = collev, grid = gr, scale = FALSE, palette = pal, axisX = FALSE, fast.spec = fast.spec)
@@ -314,6 +324,5 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collev = seq(
          sp <- lapply(files, function(z) 
            lspecFUN(z = z, fl = flim, sl = sxrow, li = rows, ml = manloc, malo = X))
    }
-   if(!is.null(path)) setwd(wd)       
 }
 

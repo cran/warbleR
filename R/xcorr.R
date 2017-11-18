@@ -4,7 +4,7 @@
 #' @usage xcorr(X, wl =512, frange= NULL, ovlp=90, dens=0.9, bp= NULL, wn='hanning', 
 #' cor.method = "pearson", parallel = 1, path = NULL, pb = TRUE, na.rm = FALSE,
 #'  dfrange = FALSE, cor.mat = TRUE)
-#' @param  X Data frame containing columns for sound files (sound.files), 
+#' @param  X 'selection.table' object or data frame containing columns for sound files (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #' is 512.
@@ -28,7 +28,8 @@
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
 #' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
-#' when parallel = 1.
+#' when parallel = 1. Note that progress bar is not completely accurate as the number of pairwise comparisons decreases on each iteration 
+#' decreases. The first iteration runs n-1 comparisons while the last one only 1 (\code{n = nrow(X)}).
 #' @param na.rm Logical. If \code{TRUE} all NAs produced when pairwise cross-correlations failed are removed from the 
 #' results. This means that all selections with at least 1 cross-correlation that failed are excluded.
 #' @param cor.mat Logical. If \code{TRUE} only the correlation matrix is returned. Default is \code{TRUE}.
@@ -46,7 +47,7 @@
 #' This function is a modified version of the \code{\link[monitoR]{corMatch}} and \code{\link[monitoR]{makeTemplate}} 
 #' from the awesome R package `monitoR`.   
 #' @examples
-#' \dontrun{
+#' {
 #' #First set temporary working directory
 #' setwd(tempdir())
 #' 
@@ -72,13 +73,19 @@ xcorr <- function(X = NULL, wl = 512, frange = NULL, ovlp = 90, dens = 0.9, bp =
                   pb = TRUE, na.rm = FALSE, dfrange = FALSE, cor.mat = TRUE)
 {
   
-  #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
   
-  if(!is.data.frame(X))  stop("X is not a data frame")
+  #check path to working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
+  
+  #if X is not a data frame
+  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  
+  
   
   #if there are NAs in start or end stop
   if(any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end") 
@@ -142,7 +149,7 @@ ltemp <- lapp(1:nrow(X), function(x)
   samp.rate <- clip@samp.rate
    
    # Fourier transform
-   t.survey <- length(clip@left)/clip@samp.rate
+   t.survey <- seewave::duration(clip)
    fspec <- seewave::spectro(wave = clip, wl = wl, ovlp = ovlp, wn = wn, plot = FALSE)
    
    # Filter amplitudes 
@@ -212,7 +219,7 @@ FUNXC <- function(i, cor.mat, survey ,wl, ovlp, wn, j, X)
   survey.spec$amp[is.infinite(survey.spec$amp)] <- min(survey.spec$amp[!is.infinite(survey.spec$amp)]) - 10
   frq.bins <- survey.spec$freq
   t.bins <- survey.spec$time
-  t.survey <- length(survey@left)/survey@samp.rate
+  t.survey <- seewave::duration(survey)
   t.step <- t.bins[2] - t.bins[1]
   frq.step <- frq.bins[2] - frq.bins[1]
   
@@ -274,7 +281,7 @@ a<-lapp(1:(nrow(X)-1), function(j)
   margin <-(max(with(X, end[j:nrow(X)] - start[j:nrow(X)])))/2
   start <-X$start[j] - margin
   if(start < 0) {
-    end <-X$end[j] + margin -start[j]
+    end <-X$end[j] + margin -start
     start <- 0} else
   end <-X$end[j] + margin
   if(end > a$samples/a$sample.rate) end <- a$samples/a$sample.rate - 0.001
@@ -378,5 +385,4 @@ names(c) <- c("correlation.data", "max.xcorr.matrix", "frq.lim")
  
 return(c)}
 
-if(!is.null(path)) setwd(wd)
 }

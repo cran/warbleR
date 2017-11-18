@@ -6,8 +6,9 @@
 #'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE,
 #'   propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE,  sc = FALSE, line = TRUE,
 #'   mar = 0.05, it = "jpeg", parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, ...)
-#' @param  X Data frame with results containing columns for sound file name (sound.files), 
-#' selection number (selec), and start and end time of signals (start and end).
+#' @param  X 'selection.table' or data frame containing columns for sound file name (sound.files), 
+#' selection number (selec), and start and end time of signals (start and end). 
+#' Low and high frequency columns are optional.
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
@@ -44,7 +45,7 @@
 #' @param sc Logical argument to add amplitude scale to spectrogram, default is 
 #'   \code{FALSE}.
 #' @param line Logical argument to add red lines at start and end times of selection 
-#' (or box if low.f and high.f columns are provided). Default is \code{TRUE}.
+#' (or box if bottom.freq and top.freq columns are provided). Default is \code{TRUE}.
 #' @param mar Numeric vector of length 1. Specifies the margins adjacent to the start and end points of selections,
 #' dealineating spectrogram limits. Default is 0.05.
 #' @param it A character vector of length 1 giving the image type to be used. Currently only
@@ -77,7 +78,7 @@
 #' some options become unavailable, as collevels, and sc (amplitude scale). This option is indicated for signals with 
 #' high background noise levels. 
 #' @examples
-#' \dontrun{ 
+#' { 
 #' # First set empty folder
 #' setwd(tempdir())
 
@@ -89,7 +90,7 @@
 #' 
 #' specreator(selec.table, flim = c(0, 11), res = 300, mar = 0.05, wl = 300)
 #'  
-#'  #' #check this folder!!
+#'  #check this folder
 #' getwd()
 #' }
 #' 
@@ -102,14 +103,19 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
                         gr = FALSE, sc = FALSE, line = TRUE, mar = 0.05, it = "jpeg", parallel = 1, 
                        path = NULL, pb = TRUE, fast.spec = FALSE, ...){
   
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
+  
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
   
   #if X is not a data frame
-  if(!class(X) == "data.frame") stop("X is not a data frame")
+  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  
+  
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -205,7 +211,7 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     par(oma = outer.mar)
     
     # Generate spectrogram using seewave 
-  spectroW(tuneR::readWave(as.character(X$sound.files[i]), from = t[1], to = t[2], units = "seconds") , f = f, wl = wl, ovlp = ovlp, collevels = seq(-40, 0, 0.5), heights = hts, wn = "hanning", 
+  spectro.INTFUN(tuneR::readWave(as.character(X$sound.files[i]), from = t[1], to = t[2], units = "seconds") , f = f, wl = wl, ovlp = ovlp, heights = hts, wn = "hanning", 
                      widths = wts, palette = pal, osc = osci, grid = gr, scale = sc, collab = "black", 
                      cexlab = cexlab, cex.axis = 1, flim = fl, tlab = "Time (s)", 
                      flab = "Frequency (kHz)", alab = "", trel = FALSE, fast.spec = fast.spec, ...)
@@ -217,9 +223,9 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     
     # Plot lines to visualize selections (start and end of signal)
     if(line){  
-      if(any(names(X) == "low.f") & any(names(X) == "high.f"))
-      {   if(!is.na(X$low.f[i]) & !is.na(X$high.f[i]))
-        polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$low.f[i], X$high.f[i], X$high.f[i], X$low.f[i]), lty = 3, border = "blue", lwd = 1.2) else
+      if(any(names(X) == "bottom.freq") & any(names(X) == "top.freq"))
+      {   if(!is.na(X$bottom.freq[i]) & !is.na(X$top.freq[i]))
+        polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$bottom.freq[i], X$top.freq[i], X$top.freq[i], X$bottom.freq[i]), lty = 3, border = "blue", lwd = 1.2) else
           abline(v = c(mar1, mar2), col= "red", lty = "dashed")
       } else abline(v = c(mar1, mar2), col= "red", lty = "dashed")
     }  
@@ -273,5 +279,4 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
       sp <- lapply(1:nrow(X), function(i) specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab))
   }
   
-  if(!is.null(path)) setwd(wd)
 }

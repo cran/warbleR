@@ -8,7 +8,7 @@ filtersels(X, path = NULL, lspec = FALSE, img.suffix = NULL, it = "jpeg",
  incl.wav = TRUE, missing = FALSE, index = FALSE)
 }
 \arguments{
-\item{X}{data frame with the following columns: 1) "sound.files": name of the .wav 
+\item{X}{'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "sel": number of the selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 be used as the input data frame.}
 
@@ -50,7 +50,7 @@ This function subsets selections (or sound files if \code{lspec} is \code{TRUE})
  image files should be in the working directory (or the directory provided in 'path').
 }
 \examples{
-\dontrun{ 
+{ 
 # First set temporary folder
 setwd(tempdir())
 
@@ -66,6 +66,7 @@ picsize = 2, res = 300, cexlab = 2, mar = 0.05, wl = 300)
 #go to the working directory and delete some images
 
 #filter selection data frame
+fmloc <- filtersels(X = selec.table)
 
 #this data frame does not have the selections corresponding to the images that were deleted
 fmloc

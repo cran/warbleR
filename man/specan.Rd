@@ -4,28 +4,32 @@
 \alias{specan}
 \title{Measure acoustic parameters in batches of sound files}
 \usage{
-specan(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast = TRUE, path = NULL, 
-pb = TRUE, ovlp = 50, ff.method = "seewave", wn = "hanning")
+specan(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
+ parallel = 1, fast = TRUE, path = NULL, pb = TRUE, ovlp = 50, ff.method = "seewave", 
+wn = "hanning", fsmooth = 0.1)
 }
 \arguments{
-\item{X}{Data frame with the following columns: 1) "sound.files": name of the .wav 
+\item{X}{'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can
 be used as the input data frame.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
-frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f
-and high.f columns will be used as bandpass limits. Default is c(0, 22). 
-Lower limit of bandpass is not applied to fundamental frequencies.}
+frequency bandpass filter (in kHz) or "frange" to indicate that values in bottom.freq
+and top.freq columns will be used as bandpass limits. Default is c(0, 22).Lower limit of
+ bandpass is not applied to fundamental frequencies.}
 
-\item{wl}{A numeric vector of length 1 specifying the spectrogram window length. Default is 512.}
+\item{wl}{A numeric vector of length 1 specifying the spectrogram window length. Default is 512. See 'wl.freq' for setting windows length independenlty in the frequency domain.}
+
+\item{wl.freq}{A numeric vector of length 1 specifying the window length of the spectrogram
+for measurements on the frecuency spectrum. Default is 512. Higher values would provide 
+more accurate measurements. Note that this allows to increase measurement precision independently in the time and frequency domain. If \code{NULL} (default) then the 'wl' value is used.}
 
 \item{threshold}{amplitude threshold (\%) for fundamental frequency and 
 dominant frequency detection. Default is 15.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
-It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
-For windows OS the \code{parallelsugar} package should be installed.}
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
 
 \item{fast}{Logical. If \code{TRUE} (default) then the peakf acoustic parameter (see below) is not computed, which 
 substantially increases performance (~9 times faster).}
@@ -47,6 +51,10 @@ frequency. Either 'tuneR' (using \code{\link[tuneR]{FF}}) or 'seewave' (using
 
 \item{wn}{Character vector of length 1 specifying window name. Default is hanning'. 
 See function \code{\link[seewave]{ftwindow}} for more options.}
+
+\item{fsmooth}{A numeric vector of length 1 to smooth the frequency spectrum with a mean
+sliding window (in kHz) used for mean peak frequency detection. This help to average 
+amplitude "hills" to minimize the effect of amplitude modulation. Default is 0.1.}
 }
 \value{
 Data frame with 'sound.files' and 'selec' as in the input data frame, plus the following acoustic parameters: 
@@ -80,7 +88,6 @@ time intervals of 25\% and 75\% energy respectively (in s). See \code{\link[seew
    See \code{\link[seewave]{H}}
    \item \code{sfm}: spectral flatness. Similar to sp.ent (Pure tone ~ 0; 
    noisy ~ 1). See \code{\link[seewave]{sfm}}
-   \item \code{peakf}: peak frequency. Frequency with highest energy
    \item \code{meanfun}: average of fundamental frequency measured across the acoustic signal 
    \item \code{minfun}: minimum fundamental frequency measured across the acoustic signal 
    \item \code{maxfun}: maximum fundamental frequency measured across the acoustic signal 
@@ -94,6 +101,11 @@ time intervals of 25\% and 75\% energy respectively (in s). See \code{\link[seew
    \item \code{startdom}:  dominant frequency measurement at the start of the signal 
    \item \code{enddom}: dominant frequency measurement at the end of the signal 
    \item \code{dfslope}: slope of the change in dominant through time ((enddom-startdom)/duration). Units are kHz/s.  
+   \item \code{peakf}: peak frequency. Frequency with highest energy (only generated if \code{fast = FALSE})
+   \item \code{meanpeakf}: Mean peak frequency. Frequency with highest energy from the 
+   mean spectrum (see \code{\link[seewave]{meanspec}}). Typically more consistent than peakf.
+   \item \code{bottom.freq}: low frequency. Low limit of frequency range (only generated if \code{frange.detec = TRUE})
+   \item \code{top.freq}: high frequency. High limit of frequency range (only generated if \code{frange.detec = TRUE})
 }
 }
 \description{
@@ -110,7 +122,7 @@ The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used
  frequency measures when there are no amplitude values above the threshold.
 }
 \examples{
-\dontrun{
+{
 # First set temporary folder
 setwd(tempdir())
 

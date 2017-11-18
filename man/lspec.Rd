@@ -10,7 +10,7 @@ cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL, pb = TRUE,
 fast.spec = FALSE)
 }
 \arguments{
-\item{X}{Data frame with results from \code{\link{manualoc}} or any data frame with columns
+\item{X}{'selection.table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
 for sound file name (sound.files), selection number (selec), and start and end time of signal
 (start and end). If given, two red dotted lines are plotted at the 
 start and end of a selection and the selections are labeled with the selection number 
@@ -89,9 +89,10 @@ The function creates spectrograms for complete sound files, printing
   of vocalization units and the analysis of animal vocal sequences.
 }
 \examples{
-\dontrun{
+{
 # Set temporary working directory
 setwd(tempdir())
+
 # save sound file examples
 data(list = c("Phae.long1", "Phae.long2","selec.table"))
 writeWave(Phae.long1,"Phae.long1.wav") 
@@ -102,11 +103,15 @@ lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors, wl = 300)
 # including selections
 lspec(sxrow = 2, rows = 8, X = selec.table, pal = reverse.heat.colors, redo = TRUE, wl = 300)
 
-check this floder
+#check this floder
 getwd()
 }
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}
+\seealso{
+\code{\link{lspec2pdf}}, \code{\link{catalog2pdf}}, 
+https://marce10.github.io/2017-01-07-Create_pdf_files_with_spectrograms_of_full_recordings/
 }
 

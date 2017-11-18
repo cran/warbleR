@@ -3,10 +3,10 @@
 #' @description \code{compare.methods} creates graphs to visually assess performance of acoustic distance measurements 
 #' @usage compare.methods(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1, wl = 512, ovlp = 90, 
 #' res = 150, n = 10, length.out = 30, methods = c("XCORR", "dfDTW", "ffDTW", "SP"), 
-#' it = "jpeg", parallel = 1, path = NULL, sp = NULL, pb = TRUE, gr = TRUE, 
+#' it = "jpeg", parallel = 1, path = NULL, sp = NULL, pb = TRUE, grid = TRUE, 
 #' clip.edges = TRUE, threshold = 15, na.rm = FALSE, scale = FALSE,
 #'  pal = reverse.gray.colors.2, img = TRUE, ...)
-#' @param X Data frame with results from \code{\link{manualoc}} function, \code{\link{autodetec}} 
+#' @param X 'selection.table' object or data frame with results from \code{\link{manualoc}} function, \code{\link{autodetec}} 
 #' function, or any data frame with columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' Default \code{NULL}. 
@@ -43,7 +43,7 @@
 #' and "selec' columns and the same selections as in 'X'.
 #' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
 #' when parallel = 1.
-#' @param gr Logical argument to control the presence of a grid on the spectrograms (default is \code{TRUE}).
+#' @param grid Logical argument to control the presence of a grid on the spectrograms (default is \code{TRUE}).
 #' @param clip.edges Logical argument to control whether edges (start or end of signal) in
 #' which amplitude values above the threshold were not detected will be removed when using dfDTW and 
 #' ffDTW methods. If \code{TRUE} this edges will be excluded and signal contour will be calculated on the
@@ -89,9 +89,8 @@
 #' working directory. The file name contains the methods being compared and the 
 #' rownumber of the selections. This function uses internally a modified version
 #' of the \code{\link[seewave]{spectro}} function from seewave package to create spectrograms.
-#' @seealso \url{https://marce10.github.io/2017-02-17-Choosing_the_right_method_for_measuring_acoustic_signal_structure/}
-#' @examples
-#' \dontrun{
+#' @seealso \url{https://marce10.github.io/2017/02/17/Choosing_the_right_method_for_measuring_acoustic_signal_structure.html}
+#' @examples{
 #' # Set temporary working directory
 #' setwd(tempdir())
 #' 
@@ -153,15 +152,22 @@
 
 compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1, wl = 512, ovlp = 90, 
     res = 150, n = 10, length.out = 30, methods = c("XCORR","dfDTW", "ffDTW", "SP"),
-    it = "jpeg", parallel = 1, path = NULL, sp = NULL, pb = TRUE, gr = TRUE, 
+    it = "jpeg", parallel = 1, path = NULL, sp = NULL, pb = TRUE, grid = TRUE, 
     clip.edges = TRUE, threshold = 15, na.rm = FALSE, scale = FALSE, 
     pal = reverse.gray.colors.2, img = TRUE, ...){  
  
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
+  
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-  setwd(path)} #set working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
+  
+  #if X is not a data frame
+  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+
   
   #check basic columns in X
   if(!all(c("sound.files", "selec", 
@@ -358,7 +364,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
        if(img)
   imgfun(filename = paste("comp.meth-", names(disim.mats)[1],"-",names(disim.mats)[2], "-", paste(X$labels, collapse = "-"), paste0(".", it), sep = ""), width = 16.25, height =  16.25, units = "cm", res = res)
   
-  split.screen(m)
+  graphics::split.screen(m)
   
   mxdur<-max(X$end - X$start) + mar*2
   
@@ -400,12 +406,12 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
       
       r <- tuneR::readWave(as.character(X$sound.files[x]), from = tlim[1], to = tlim[2], units = "seconds")
       
-      spectro2(wave = r, f = r@samp.rate,flim = flim, wl = wl, ovlp = ovlp, axisX = FALSE, axisY = FALSE, tlab = FALSE, flab = FALSE, palette = pal, grid = gr, ...)
+      spectro.INTFUN.2(wave = r, f = r@samp.rate,flim = flim, wl = wl, ovlp = ovlp, axisX = FALSE, axisY = FALSE, tlab = FALSE, flab = FALSE, palette = pal, grid = grid, ...)
       box(lwd = 2)
       if(x == 1 | x == 3) 
         text(tlim[2] - tlim[1], ((flim[2] - flim[1])*0.86) + flim[1], labels = X$labels[x], col = col[rs[x]], cex = 1.5, font = 2, pos = 2) else 
           text(0, ((flim[2] - flim[1])*0.86) + flim[1], labels = X$labels[x], col = col[rs[x]], cex = 1.5, font = 2, pos = 4)  
-      if(gr)
+      if(grid)
       abline(v=c(mar1, mar2),lty = 4, col = "gray")
     }
     
@@ -435,7 +441,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
     if(x == 8){
       plot(0.5, xlim = c(0,1), ylim = c(0,1), type = "n", axes = FALSE, xlab = "", ylab = "", xaxt = "n", yaxt = "n")
       lim <- par("usr")
-      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = "#FFFFCC", col = "#FFFFCC")
+      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = adjustcolor("#EFAA7B", alpha.f = 0), col = adjustcolor("#EFAA7B", alpha.f = 0.15))
       arrows(0, 5.5/7, 1, 5.5/7, code = 3, length = 0.09, lwd = 2)
       text(0.5, 5.36/7,labels =round(stats::dist(disim.mats[[1]][rs[c(1,2)],])/maxdist[[1]],2), col = "black", font = 2, pos = 3)
       text(0.5, 5.545/7,labels =round(stats::dist(disim.mats[[2]][rs[c(1,2)],])/maxdist[[2]],2), col = "gray50", font = 2, pos = 1)
@@ -454,7 +460,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
     if(x == 7){
       plot(0.5, xlim = c(0,1), ylim = c(0,1), type = "n", axes = FALSE, xlab = "", ylab = "", xaxt = "n", yaxt = "n")
       lim <- par("usr")
-      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = "#FFFFCC", col = "#FFFFCC")
+      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = adjustcolor("#EFAA7B", alpha.f = 0.15), col = adjustcolor("#EFAA7B", alpha.f = 0.15))
       arrows(0.5, 0, 0.5, 1, code = 3, length = 0.09, lwd = 2)
       text(0.53, 0.5, labels =round(stats::dist(disim.mats[[1]][rs[c(1,3)],])/maxdist[[1]],2), col = "black", font = 2, pos = 2)
       text(0.47, 0.5, labels =round(stats::dist(disim.mats[[2]][rs[c(1,3)],])/maxdist[[2]],2), col = "gray50", font = 2, pos = 4)
@@ -464,7 +470,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
     if(x == 9){
       plot(0.5, xlim = c(0,1), ylim = c(0,1), type = "n", axes = FALSE, xlab = "", ylab = "", xaxt = "n", yaxt = "n")
       lim <- par("usr")
-      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = "#FFFFCC", col = "#FFFFCC")
+      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = adjustcolor("#EFAA7B", alpha.f = 0.15), col = adjustcolor("#EFAA7B", alpha.f = 0.15))
       arrows(0.5, 0, 0.5, 1, code = 3, length = 0.09, lwd = 2)
       text(0.53, 0.5,labels =round(stats::dist(disim.mats[[1]][rs[c(2,4)],])/maxdist[[1]],2), col = "black", font = 2, pos = 2)
       text(0.47, 0.5,labels =round(stats::dist(disim.mats[[2]][rs[c(2,4)],])/maxdist[[2]],2), col = "gray50", font = 2, pos = 4)
@@ -475,7 +481,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
     if(x == 10){
       plot(0.5, xlim = c(0,1), ylim = c(0,1), type = "n", axes = FALSE, xlab = "", ylab = "", xaxt = "n", yaxt = "n")
       lim <- par("usr")
-      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = "black", col = "#CCFFCC")
+      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = "black", col = adjustcolor("#4ABDAC", alpha.f = 0.3))
         text(0.5, 0.5, labels = names(disim.mats)[1], col = 'black', font = 2, cex = 1.2)
         box(lwd = 4)
         }
@@ -483,7 +489,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
     if(x == 11){
       plot(0.5, xlim = c(0,1), ylim = c(0,1), type = "n", axes = FALSE, xlab = "", ylab = "", xaxt = "n", yaxt = "n")
       lim <- par("usr")
-      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = "black", col = "#CCFFCC")
+      rect(lim[1], lim[3]-1, lim[2], lim[4]+1, border = "black", col = adjustcolor("#4ABDAC", alpha.f = 0.3))
       text(0.5, 0.5, labels = names(disim.mats)[2], col = 'gray50', font = 2, cex = 1.2)      
       box(lwd = 4)
     }
@@ -556,7 +562,5 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
       })
       
       }
-      
-      #reset wd
-      if(!is.null(path)) setwd(wd) 
+
       }

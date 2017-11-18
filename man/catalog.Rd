@@ -5,15 +5,18 @@
 \title{Create catalog of vocal signals}
 \usage{
 catalog(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TRUE, 
-collev = seq(-40, 0, 1), ovlp = 50, parallel = 1, mar = 0.05, wl = 512, gr = FALSE, 
-pal = reverse.gray.colors.2, it = "jpeg", path = NULL, pb = TRUE, fast.spec = FALSE, 
-res = 100, orientation = "v", labels = c("sound.files", "selec"), height = NULL, 
-width = NULL, tags = NULL, tag.pal = list(temp.colors, heat.colors), legend = 3, 
-cex = 1, leg.wd = 1, img.suffix = NULL, tag.widths = c(1, 1), hatching = 0, 
-breaks = c(5, 5))
+collev = seq(-40, 0, 1), ovlp = 50, parallel = 1, mar = 0.05, prop.mar = NULL, 
+lab.mar = 1, wl = 512, gr = FALSE, pal = reverse.gray.colors.2, it = "jpeg", path = NULL, 
+pb = TRUE, fast.spec = FALSE, res = 100, orientation = "v", 
+labels = c("sound.files", "selec"), height = NULL, width = NULL, tags = NULL, 
+tag.pal = list(temp.colors, heat.colors, topo.colors), legend = 3, 
+cex = 1, leg.wd = 1, img.suffix = NULL, img.prefix = NULL, tag.widths = c(1, 1), 
+hatching = 0, breaks = c(5, 5), group.tag = NULL, spec.mar = 0, spec.bg = "white", 
+max.group.cols = NULL, sub.legend = FALSE, rm.axes = FALSE, title = NULL,
+by.row = TRUE, box = TRUE)
 }
 \arguments{
-\item{X}{Data frame with columns for sound file name (sound.files), selection number (selec), 
+\item{X}{'selection.table' object or data frame with columns for sound file name (sound.files), selection number (selec), 
 and start and end time of signal (start and end). Default is \code{NULL}.}
 
 \item{flim}{A numeric vector of length 2 indicating the highest and lowest 
@@ -42,13 +45,20 @@ It specifies the number of cores to be used. Default is 1 (i.e. no parallel comp
 \item{mar}{Numeric vector of length 1. Specifies the margins adjacent to the start and end points of selections,
 dealineating spectrogram limits. Default is 0.05.}
 
+\item{prop.mar}{Numeric vector of length 1. Specifies the margins adjacent to the 
+start and end points of selections as a proportion of the duration of the signal. If
+provided 'mar' argument is ignored. Default is \code{NULL}. Useful when having high 
+variation in signal duration. Ignored if \code{same.time.scale = FALSE}.}
+
+\item{lab.mar}{Numeric vector of length 1. Specifies the space allocated to labels and tags (the upper margin). Default is 1.}
+
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
 is 512.}
 
 \item{gr}{Logical argument to add grid to spectrogram. Default is \code{FALSE}.}
 
 \item{pal}{Color palette function for spectrogram. Default is reverse.gray.colors.2. See 
-\code{\link[seewave]{spectro}} for more palettes. Palettes as \code{\link[monitoR]{gray.2}} may work better when fast.spec = T.}
+\code{\link[seewave]{spectro}} for more palettes. Palettes as \code{\link[monitoR]{gray.2}} may work better when \code{fast.spec = TRUE}.}
 
 \item{it}{A character vector of length 1 giving the image type to be used. Currently only
 "tiff" and "jpeg" are admitted. Default is "jpeg".}
@@ -86,7 +96,7 @@ for vertical orientation.}
 \item{tags}{String vector. Provides the column names that will be used for the color tagging legend above. Tags can also be numeric. Continuous variables would be break down in 10 color classes.
 spectrograms.}
 
-\item{tag.pal}{List of color palette function for tags. Should be of length 1 or 2.  Default is list(temp.colors, heat.colors).}
+\item{tag.pal}{List of color palette function for tags. Should be of length 1, 2.  Default is \code{list(temp.colors, heat.colors, topo.colors)}.}
 
 \item{legend}{A numeric vector of length 1 controling a legend for color tags is added.
 Ignored if no tags are provided. Four values are allowed: 
@@ -96,7 +106,7 @@ Ignored if no tags are provided. Four values are allowed:
    \item \code{2}: Label for the second color tag
    \item \code{3}: Labels both color tags
    }
- Default is 3.}
+ Default is 3. Currently no legend can be set for group tags. Use labels instead.}
 
 \item{cex}{A numeric vector of length 1 giving the amount by which text 
 (including labels and axis) should be magnified. Default is 1.}
@@ -104,8 +114,12 @@ Ignored if no tags are provided. Four values are allowed:
 \item{leg.wd}{Numeric. Controls the width of the legend column. Default is 1.}
 
 \item{img.suffix}{A character vector of length 1 with a suffix (label) to add at the end of the names of 
-image files. Default is \code{NULL} (no suffix). Can be useful to label catalogs from different individuals, 
+image files. Default is \code{NULL} (no suffix). Useful to label catalogs from different individuals, 
 species or sites.}
+
+\item{img.prefix}{A character vector of length 1 with a prefix (label) to add at the beginning of the names of 
+image files. Default is \code{NULL} (no prefix). Useful to label catalogs from different individuals, 
+species or sites and ensure they will be grouped together when sorted by file name.}
 
 \item{tag.widths}{A numeric vector of length 2 to control de relative width of the color tags (when 2 tags are provided).}
 
@@ -120,7 +134,37 @@ patterns are used to make tags with similar colors more distinguishable. Four va
 
 \item{breaks}{Numeric vector of length 1 or 2 controling the number of intervals in which a 
 numeric tag will be divided. The numbers control the first and second tags respectively. 
-Ignored if tags are not numeric. Default is c(5, 5).}
+Ignored if tags are not numeric. Default is \code{c(5, 5)}.}
+
+\item{group.tag}{Character vector of length 1 indicating the column name to be used to color
+the empty plot areas around the spectrograms. If provided selections that belong to the same
+tag level are clumped together in the catalog (the 'X' data frame is sorted by that column).
+This tags cannot be included in the legend so it would be better to use the label field to identify the different levels.}
+
+\item{spec.mar}{Numeric vector of length 1 to add space at the top, left and right sides of
+the spectrogram. Useful to better display the grouping of selections when 'group.tag' is 
+provided. Internally applied for setting 'mar' using \code{\link[graphics]{par}}.}
+
+\item{spec.bg}{Character vector of length 1 to control the background color of the spectrogram. Default is 'white'. Ignored if \code{group.tag = NULL}.}
+
+\item{max.group.cols}{Numeric vector of length 1 indicating the number of different colors 
+that will be used for group tags (see 'group.tag' argument). If provided (and the number is 
+smaller than the number of levels in the 'group.tag' column) the colors will be recycled, 
+athough ensuring that adjacent groups do not share the same color. Useful when the 
+'group.tag' has many levels and the colors assigned become very similar. Default is \code{NULL}.}
+
+\item{sub.legend}{Logical. If \code{TRUE} then only the levels present on each
+page are shown in the legend. Default is \code{FALSE}.}
+
+\item{rm.axes}{Logical. If \code{TRUE} frequency and time axes are excluded. Default is \code{FALSE}.}
+
+\item{title}{Character vector of length 1 to set the tile of catalogs.}
+
+\item{by.row}{Logical. If \code{TRUE} (default) catalogs are filled by rows.}
+
+\item{box}{Logical. If \code{TRUE} (default) a box is drawn around spectrograms and 
+corresponding labels and tags. 
+are}
 }
 \value{
 Image files with spectrograms of whole sound files in the working directory. Multiple pages
@@ -204,7 +248,8 @@ getwd()
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
 \seealso{
-\url{https://marce10.github.io/2017-03-17-Creating_song_catalogs/}
+\url{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}
+\url{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}
 \code{\link{catalog2pdf}}
 }
 

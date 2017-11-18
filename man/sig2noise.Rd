@@ -8,10 +8,10 @@
 }
 \usage{
 sig2noise(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq.dur = FALSE,
-in.dB = TRUE, before = FALSE, lim.dB = TRUE)
+in.dB = TRUE, before = FALSE, lim.dB = TRUE, bp = NULL, wl = 10)
 }
 \arguments{
-\item{X}{Data frame with results from \code{\link{manualoc}} or any data frame with columns
+\item{X}{'selection.table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
 for sound file name (sound.files), selection number (selec), and start and end time of signal
 (start and end).}
 
@@ -48,6 +48,11 @@ Default is \code{TRUE}.}
 
 \item{lim.dB}{Logical. If \code{TRUE} the lowest signal-to-noise would be limited to -40 dB (if \code{in.dB = TRUE}). This would remove NA's that can be produced when noise segments have a higher amplitude than the signal 
 itself. Default is \code{TRUE}.}
+
+\item{bp}{Numeric vector of length 2 giving the lower and upper limits of a frequency bandpass filter (in kHz). Default is \code{NULL}.}
+
+\item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram for applying bandpass. Default 
+is 10. Ignored if \code{bp = NULL}. Note that lower values will increase time resolution, which is more important for signal-to-noise ratio calculations.}
 }
 \value{
 Data frame similar to \code{\link{autodetec}} output, but also includes a new variable 
@@ -70,7 +75,7 @@ Signal-to-noise ratio (SNR) is a measure of the level of a desired signal compar
   \code{\link{snrspecs}} can be used to troubleshoot different noise margins.
 }
 \examples{
-\dontrun{
+{
 # First set temporary folder
 setwd(tempdir())
 

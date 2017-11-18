@@ -10,14 +10,14 @@ img.suffix = "ffDTW", pb = TRUE, clip.edges = TRUE, window.type = "none",
 open.end = FALSE, scale = FALSE, ...)
 }
 \arguments{
-\item{X}{Data frame with results containing columns for sound file name (sound.files), 
+\item{X}{'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
 selection number (selec), and start and end time of signal (start and end).
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame.}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
 is 512.}
 
-\item{length.out}{A character vector of length 1 giving the number of measurements of fundamental 
+\item{length.out}{A numeric vector of length 1 giving the number of measurements of fundamental 
 frequency desired (the length of the time series).}
 
 \item{wn}{Character vector of length 1 specifying window name. Default is 
@@ -82,7 +82,7 @@ The function uses the \code{\link[stats]{approx}} function to interpolate values
  segments in which amplitude was detected then the values of this adjacent segments will be interpolated to fill out the missing values (e.g. no NAs in between detected amplitude segments).
 }
 \examples{
-\dontrun{
+{
 # set the temp directory
 setwd(tempdir())
 
@@ -92,8 +92,7 @@ writeWave(Phae.long2, "Phae.long2.wav") #save sound files
 writeWave(Phae.long1, "Phae.long1.wav")
 
 # run function 
-ffDTW(selec.table, length.out = 30, flim = c(1, 12), img = T, bp = c(1, 9), wl = 300)
-
+ffDTW(selec.table[1:4,], length.out = 30, flim = c(1, 12), img = TRUE, bp = c(1, 9), wl = 300)
 }
 }
 \author{
@@ -106,9 +105,10 @@ Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 
 dfDTW \code{\link{dfts}}, \code{\link{ffts}}, \code{\link{dfDTW}}
 
-Other spectrogram.creators: \code{\link{dfDTW}},
-  \code{\link{dfts}}, \code{\link{ffts}},
-  \code{\link{snrspecs}}, \code{\link{sp.en.ts}},
-  \code{\link{specreator}}, \code{\link{trackfreqs}}
+Other spectrogram creators: \code{\link{color.spectro}},
+  \code{\link{dfDTW}}, \code{\link{dfts}},
+  \code{\link{ffts}}, \code{\link{snrspecs}},
+  \code{\link{sp.en.ts}}, \code{\link{specreator}},
+  \code{\link{trackfreqs}}
 }
 

@@ -109,11 +109,14 @@ manualoc <- function(wl = 512, flim = c(0,12), seltime = 1, tdisp = NULL, reccom
                      path = NULL, flist = NULL, fast.spec = FALSE)
 {
   
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
+  
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
   
   options(show.error.messages = TRUE) 
   files <- list.files(pattern = "\\.wav$", ignore.case = TRUE) #list .wav files in working director
@@ -154,7 +157,7 @@ manualoc <- function(wl = 512, flim = c(0,12), seltime = 1, tdisp = NULL, reccom
     f <- rec@samp.rate #for spectro display
     fl<- flim #in case flim its higher than can be due to sampling rate
     if(fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
-    len <- length(rec@left)/rec@samp.rate  #for spectro display 
+    len <- seewave::duration(rec) #for spectro display 
     if(!is.null(tdisp) && len > tdisp) len <- tdisp #to decide when to create hi resolution spectro
     tlim <- c(0, len) 
     start <- numeric() #save results
@@ -175,7 +178,7 @@ manualoc <- function(wl = 512, flim = c(0,12), seltime = 1, tdisp = NULL, reccom
       if(mean(par("mfrow")) != 1) par(mfrow = c(1, 1))
       
       #create spectrogram
-      spectroW(rec, f = f, wl = wl, ovlp = ovlp, wn = wn, collevels = seqs, heights = c(3, 2), osc = osc, palette =  pal, 
+      spectro.INTFUN(rec, f = f, wl = wl, ovlp = ovlp, wn = wn, collevels = seqs, heights = c(3, 2), osc = osc, palette =  pal, 
               main = main, tlim = tlim, axisX = TRUE, grid = FALSE, collab = "black", alab = "", fftw = TRUE, 
               flim = fl, scale = FALSE, axisY = TRUE, cexlab = 1, flab = "Frequency (kHz)", tlab = "Time (s)", fast.spec = fast.spec)
       
@@ -372,5 +375,5 @@ manualoc <- function(wl = 512, flim = c(0,12), seltime = 1, tdisp = NULL, reccom
      message("This was the last sound file")
      break}
   }
-  if(!is.null(path)) setwd(wd)
-  }
+  
+    }

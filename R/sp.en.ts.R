@@ -5,7 +5,7 @@
 #' @usage sp.en.ts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = NULL,
 #'   threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "sp.en.ts",
 #'    pb = TRUE, clip.edges = FALSE, leglab = "sp.en.ts", sp.en.range = c(2, 10), ...)
-#' @param  X Data frame with results containing columns for sound file name (sound.files), 
+#' @param  X 'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
@@ -61,7 +61,7 @@
 #'  of end can be removed with "clip.edges".
 #' 
 #' @examples
-#' \dontrun{
+#' {
 #' # set the temp directory
 #' setwd(tempdir())
 #' 
@@ -73,11 +73,11 @@
 #' writeWave(Phae.long4, "Phae.long4.wav")
 #' 
 #' # without clip edges
-#' sp.en.ts(X = selec.table, threshold = 10, bp = NULL, clip.edges = F, length.out = 10,
+#' sp.en.ts(X = selec.table, threshold = 10, bp = NULL, clip.edges = FALSE, length.out = 10,
 #'  type = "b", sp.en.range = c(-25, 10))
 #' 
 #' # with clip edges and length.out 10
-#' sp.en.ts(X = selec.table, threshold = 10, bp = c(2, 12), clip.edges = T, length.out = 10)
+#' sp.en.ts(X = selec.table, threshold = 10, bp = c(2, 12), clip.edges = TRUE, length.out = 10)
 #' 
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
@@ -88,16 +88,19 @@ sp.en.ts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
                   path = NULL, img.suffix = "sp.en.ts", pb = TRUE, clip.edges = FALSE,
                   leglab = "sp.en.ts", sp.en.range = c(2, 10), ...){     
 
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
   
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
-  
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
   
   #if X is not a data frame
-  if(!class(X) == "data.frame") stop("X is not a data frame")
+  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  
+  
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -158,8 +161,8 @@ sp.en.ts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   {message("parallel computing not availabe in Windows OS for this function")
     parallel <- 1}
 
- if(parallel == 1 & pb) {if(img) message("Creating spectrograms overlaid with dominant frequency measurements:") else
-    message("Measuring dominant frequency:")}  
+ if(pb) {if(img) message("Creating spectrograms overlaid with dominant frequency measurements:") else
+    message("Measuring spectral entropy:")}  
   
   sp.en.tsFUN <- function(X, i, bp, wl, threshold, sp.en.range){
     
@@ -264,8 +267,8 @@ sp.en.ts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   
   
   df <- data.frame(sound.files = X$sound.files, selec = X$selec, (as.data.frame(matrix(unlist(lst),nrow = length(X$sound.files), byrow = TRUE))))
-    colnames(df)[3:ncol(df)]<-paste("dfreq",1:(ncol(df)-2),sep = "-")
-                 return(df)
+    colnames(df)[3:ncol(df)]<-paste("sp.en",1:(ncol(df)-2),sep = "-")
+    df[ ,3:ncol(df)] <- round(df[ ,3:ncol(df)], 3)   
+              return(df)
 
-    if(!is.null(path)) setwd(wd)
     }

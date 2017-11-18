@@ -22,7 +22,7 @@
 #' (0 means perfectly centered signals). Note that large number of signals may not display well in the 
 #' default graphic device. In such cases saving the plot as and image file is adviced.   
 #' @examples
-#' \dontrun{
+#' {
 #' #load data
 #' #First set temporary working directory]
 #' setwd(tempdir())
@@ -47,7 +47,7 @@
 xcorr.graph<-function(X, cex.cor = 1, cex.lab = 1,  cex.axis.lab=1, rel.cex = FALSE, labs = NULL) {
   
   #if X is not provided or is not a list
-  if(!is.list(X))  stop("X is not a list. It should be the output of 'xcorr' function")
+  if(!is.list(X))  stop("X is not a list. It should be the output of 'xcorr' function (set argument 'cormat' in 'xcorr' to FALSE)")
   
   #if cex.cor is not vector or length!=1 stop
   if(!is.numeric(cex.cor)) stop("'cex.cor' must be a numeric vector of length 1") else {

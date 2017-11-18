@@ -6,12 +6,12 @@
 \usage{
 compare.methods(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1, wl = 512, ovlp = 90, 
 res = 150, n = 10, length.out = 30, methods = c("XCORR", "dfDTW", "ffDTW", "SP"), 
-it = "jpeg", parallel = 1, path = NULL, sp = NULL, pb = TRUE, gr = TRUE, 
+it = "jpeg", parallel = 1, path = NULL, sp = NULL, pb = TRUE, grid = TRUE, 
 clip.edges = TRUE, threshold = 15, na.rm = FALSE, scale = FALSE,
  pal = reverse.gray.colors.2, img = TRUE, ...)
 }
 \arguments{
-\item{X}{Data frame with results from \code{\link{manualoc}} function, \code{\link{autodetec}} 
+\item{X}{'selection.table' object or data frame with results from \code{\link{manualoc}} function, \code{\link{autodetec}} 
 function, or any data frame with columns for sound file name (sound.files), 
 selection number (selec), and start and end time of signal (start and end).
 Default \code{NULL}.}
@@ -63,7 +63,7 @@ and "selec' columns and the same selections as in 'X'.}
 \item{pb}{Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
 when parallel = 1.}
 
-\item{gr}{Logical argument to control the presence of a grid on the spectrograms (default is \code{TRUE}).}
+\item{grid}{Logical argument to control the presence of a grid on the spectrograms (default is \code{TRUE}).}
 
 \item{clip.edges}{Logical argument to control whether edges (start or end of signal) in
 which amplitude values above the threshold were not detected will be removed when using dfDTW and 
@@ -123,7 +123,7 @@ rownumber of the selections. This function uses internally a modified version
 of the \code{\link[seewave]{spectro}} function from seewave package to create spectrograms.
 }
 \examples{
-\dontrun{
+{
 # Set temporary working directory
 setwd(tempdir())
 
@@ -185,6 +185,6 @@ internally a modified version of the \code{\link[seewave]{spectro}} function fro
 seewave package to create spectrograms.
 }
 \seealso{
-\url{https://marce10.github.io/2017-02-17-Choosing_the_right_method_for_measuring_acoustic_signal_structure/}
+\url{https://marce10.github.io/2017/02/17/Choosing_the_right_method_for_measuring_acoustic_signal_structure.html}
 }
 

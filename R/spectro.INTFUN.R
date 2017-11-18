@@ -1,6 +1,6 @@
 #internal warbleR function, not to be called by users. It is a modified version of seewave::spectro 
 # that allows to plot spectrograms using image() which substantially increases speed (although makes some options unavailable)
-spectroW <- function (wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0, fast.spec = FALSE,
+spectro.INTFUN <- function (wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0, fast.spec = FALSE,
           complex = FALSE, norm = TRUE, correction = "none", fftw = FALSE, 
           dB = "max0", dBref = NULL, plot = TRUE, flog = FALSE, grid = TRUE, 
           osc = FALSE, scale = TRUE, cont = FALSE, collevels = NULL, 
@@ -10,7 +10,8 @@ spectroW <- function (wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0, fast.
           alab = "Amplitude", scalelab = "Amplitude\n(dB)", main = NULL, 
           scalefontlab = 1, scalecexlab = 0.75, axisX = TRUE, axisY = TRUE, 
           tlim = NULL, trel = TRUE, flim = NULL, flimd = NULL, widths = c(6, 
-                                                                          1), heights = c(3, 1), oma = rep(0, 4),
+                                                                          1), 
+          heights = c(3, 1), oma = rep(0, 4), rnd = NULL, rm.lwst = FALSE,
           ...) 
 {
  
@@ -53,6 +54,9 @@ spectroW <- function (wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0, fast.
   }
   n <- nrow(wave)
   step <- seq(1, n - wl, wl - (ovlp * wl/100))
+  
+  # to fix function name change in after version 2.0.5
+  # if(exists("stdft")) stft <- stdft
   z <- stft(wave = wave, f = f, wl = wl, zp = zp, step = step, 
             wn = wn, fftw = fftw, scale = norm, complex = complex, 
             correction = correction)
@@ -62,6 +66,7 @@ spectroW <- function (wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0, fast.
     X <- seq(0, n/f, length.out = length(step))
   }
   xat <- xlabel <- pretty(X)
+  if(!is.null(rnd)) xlabel <- round(xlabel, rnd)
   if (is.null(flim)) {
     Y <- seq(0, (f/2) - (f/(wl + zp)), by = f/(wl + zp))/1000
   } else {
@@ -71,7 +76,8 @@ spectroW <- function (wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0, fast.
     Y <- seq(flim[1], flim[2], length.out = nrow(z))
   }
   yat <- ylabel <- pretty(Y)
-  if (flog) {
+if(rm.lwst) ylabel[1] <- ""
+    if (flog) {
     Y <- log(Y + 1)
     yat <- log(yat + 1)
   }

@@ -14,7 +14,7 @@ res = 100, cexlab = 1, title = TRUE,
    snrmar = 0.1, it = "jpeg", parallel = 1, path = NULL, pb = TRUE)
 }
 \arguments{
-\item{X}{Data frame with results from \code{\link{manualoc}} or any data frame with columns
+\item{X}{'selection.table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
 for sound file name (sound.files), selection number (selec), and start and end time of signal
 (start and end).}
 
@@ -102,7 +102,7 @@ This function can be used to test different margins to facilitate
   when osci or sc = \code{TRUE}, this may take some optimization by the user.
 }
 \examples{
-\dontrun{
+{
 # Set temporary working directory
 setwd(tempdir())
  
@@ -135,9 +135,10 @@ Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
   frequency measurements by \code{\link{specan}}, \code{\link{specreator}} for 
   creating spectrograms after using \code{\link{manualoc}}
 
-Other spectrogram.creators: \code{\link{dfDTW}},
-  \code{\link{dfts}}, \code{\link{ffDTW}},
-  \code{\link{ffts}}, \code{\link{sp.en.ts}},
-  \code{\link{specreator}}, \code{\link{trackfreqs}}
+Other spectrogram creators: \code{\link{color.spectro}},
+  \code{\link{dfDTW}}, \code{\link{dfts}},
+  \code{\link{ffDTW}}, \code{\link{ffts}},
+  \code{\link{sp.en.ts}}, \code{\link{specreator}},
+  \code{\link{trackfreqs}}
 }
 

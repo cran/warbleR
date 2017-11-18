@@ -6,12 +6,12 @@
 #' bp = c(0, 22), threshold = 5, img = TRUE, parallel = 1, path = NULL, 
 #' img.suffix = "ffDTW", pb = TRUE, clip.edges = TRUE, window.type = "none", 
 #' open.end = FALSE, scale = FALSE, ...)
-#' @param  X Data frame with results containing columns for sound file name (sound.files), 
+#' @param  X 'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
-#' @param length.out A character vector of length 1 giving the number of measurements of fundamental 
+#' @param length.out A numeric vector of length 1 giving the number of measurements of fundamental 
 #' frequency desired (the length of the time series).
 #' @param wn Character vector of length 1 specifying window name. Default is 
 #'   "hanning". See function \code{\link[seewave]{ftwindow}} for more options.
@@ -60,7 +60,7 @@
 #'  segments in which amplitude was detected then the values of this adjacent segments will be interpolated to fill out the missing values (e.g. no NAs in between detected amplitude segments). 
 #' @seealso dfDTW \code{\link{dfts}}, \code{\link{ffts}}, \code{\link{dfDTW}}
 #' @examples
-#' \dontrun{
+#' {
 #' # set the temp directory
 #' setwd(tempdir())
 #' 
@@ -70,8 +70,7 @@
 #' writeWave(Phae.long1, "Phae.long1.wav")
 #' 
 #' # run function 
-#' ffDTW(selec.table, length.out = 30, flim = c(1, 12), img = T, bp = c(1, 9), wl = 300)
-#' 
+#' ffDTW(selec.table[1:4,], length.out = 30, flim = c(1, 12), img = TRUE, bp = c(1, 9), wl = 300)
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on oct-26-2016 (MAS)
@@ -80,7 +79,13 @@ ffDTW <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
                   bp = c(0, 22), threshold = 5, img = TRUE, parallel = 1, path = NULL, 
                   img.suffix = "ffDTW", pb = TRUE, clip.edges = TRUE,
                   window.type = "none", open.end = FALSE, scale = FALSE, ...){     
+  
+
+    #if X is not a data frame
+    if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
     
+    
+
   #stop if only 1 selection
   if(nrow(X) == 1) stop("you need more than one selection for ffDTW")
   

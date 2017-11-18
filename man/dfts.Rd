@@ -4,19 +4,24 @@
 \alias{dfts}
 \title{Extract the dominant frequency values as a time series}
 \usage{
-dfts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = c(0, 22),
-  threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "dfts", pb = TRUE, 
-  clip.edges = FALSE, leglab = "dfts", ...)
+dfts(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", ovlp = 70, 
+bp = c(0, 22), threshold = 15, threshold.time = NULL, threshold.freq = NULL, 
+img = TRUE, parallel = 1, path = NULL, img.suffix = "dfts", pb = TRUE, 
+clip.edges = FALSE, leglab = "dfts", frange.detec = FALSE, fsmooth = 0.1, ...)
 }
 \arguments{
-\item{X}{Data frame with results containing columns for sound file name (sound.files), 
+\item{X}{'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
 selection number (selec), and start and end time of signal (start and end).
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame.}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
 is 512.}
 
-\item{length.out}{A character vector of length 1 giving the number of measurements of dominant 
+\item{wl.freq}{A numeric vector of length 1 specifying the window length of the spectrogram
+for measurements on the frecuency spectrum. Default is 512. Higher values would provide 
+more accurate measurements.}
+
+\item{length.out}{A numeric vector of length 1 giving the number of measurements of dominant 
 frequency desired (the length of the time series).}
 
 \item{wn}{Character vector of length 1 specifying window name. Default is 
@@ -28,7 +33,14 @@ consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70.}
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
 frequency bandpass filter (in kHz). Default is c(0, 22).}
 
-\item{threshold}{amplitude threshold (\%) for dominant frequency detection. Default is 15.}
+\item{threshold}{amplitude threshold (\%) for dominant frequency detection. Default is 15. Note that amplitude 
+threshold for time and frequency domains can be defined independently. See "threshold.time" and "threshold.freq" 
+arguments.}
+
+\item{threshold.time}{amplitude threshold (\%) for the time domain. Use for dominant frequency detection. If \code{NULL} (default) then the 'threshold' value is used.}
+
+\item{threshold.freq}{amplitude threshold (\%) for the frequency domain. Use for frequency range detection from the spectrum (see 'frange.detec'). If \code{NULL} (default) then the
+'threshold' value is used.}
 
 \item{img}{Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.}
 
@@ -51,6 +63,14 @@ remainging values. Default is \code{FALSE}.}
 
 \item{leglab}{A character vector of length 1 or 2 containing the label(s) of the frequency contour legend 
 in the output image.}
+
+\item{frange.detec}{Logical. Controls whether frequency range of signal is automatically 
+detected  using the \code{\link{frange.detec}} function. If so, the range is used as the 
+bandpass filter (overwriting 'bp' argument). Default is \code{FALSE}.}
+
+\item{fsmooth}{A numeric vector of length 1 to smooth the frequency spectrum with a mean
+sliding window (in kHz) used for frequency range detection (when \code{frange.detec = TRUE}). This help to average amplitude "hills" to minimize the effect of
+amplitude modulation. Default is 0.1.}
 
 \item{...}{Additional arguments to be passed to \code{\link{trackfreqs}} for customizing
 graphical output.}
@@ -75,7 +95,7 @@ measures. If there are no frequencies above the amplitude theshold at the begini
  to fill out the missing values (e.g. no NAs in between detected amplitude segments).
 }
 \examples{
-\dontrun{
+{
 # set the temp directory
 setwd(tempdir())
 
@@ -93,11 +113,12 @@ dfts(X = selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300)
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
 \seealso{
-\code{\link{sig2noise}}, \code{\link{trackfreqs}}, \code{\link{ffts}}, \code{\link{ffDTW}}, \code{\link{dfDTW}}
+\code{\link{sig2noise}}, \code{\link{trackfreqs}}, \code{\link{sp.en.ts}}, \code{\link{ffts}}, \code{\link{ffDTW}}, \code{\link{dfDTW}}
 
-Other spectrogram.creators: \code{\link{dfDTW}},
-  \code{\link{ffDTW}}, \code{\link{ffts}},
-  \code{\link{snrspecs}}, \code{\link{sp.en.ts}},
-  \code{\link{specreator}}, \code{\link{trackfreqs}}
+Other spectrogram creators: \code{\link{color.spectro}},
+  \code{\link{dfDTW}}, \code{\link{ffDTW}},
+  \code{\link{ffts}}, \code{\link{snrspecs}},
+  \code{\link{sp.en.ts}}, \code{\link{specreator}},
+  \code{\link{trackfreqs}}
 }
 

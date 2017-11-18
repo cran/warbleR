@@ -11,8 +11,9 @@ specreator(X, wl = 512, flim = c(0, 22), wn = "hanning", pal
   mar = 0.05, it = "jpeg", parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, ...)
 }
 \arguments{
-\item{X}{Data frame with results containing columns for sound file name (sound.files), 
-selection number (selec), and start and end time of signals (start and end).
+\item{X}{'selection.table' or data frame containing columns for sound file name (sound.files), 
+selection number (selec), and start and end time of signals (start and end). 
+Low and high frequency columns are optional.
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame.}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
@@ -66,7 +67,7 @@ in \code{\link[seewave]{spectro}}. Default is \code{FALSE}.}
 \code{FALSE}.}
 
 \item{line}{Logical argument to add red lines at start and end times of selection 
-(or box if low.f and high.f columns are provided). Default is \code{TRUE}.}
+(or box if bottom.freq and top.freq columns are provided). Default is \code{TRUE}.}
 
 \item{mar}{Numeric vector of length 1. Specifies the margins adjacent to the start and end points of selections,
 dealineating spectrogram limits. Default is 0.05.}
@@ -108,7 +109,7 @@ some options become unavailable, as collevels, and sc (amplitude scale). This op
 high background noise levels.
 }
 \examples{
-\dontrun{ 
+{ 
 # First set empty folder
 setwd(tempdir())
 data(list = c("Phae.long1", "Phae.long2","selec.table"))
@@ -119,7 +120,7 @@ writeWave(Phae.long2, "Phae.long2.wav")
 
 specreator(selec.table, flim = c(0, 11), res = 300, mar = 0.05, wl = 300)
  
- #' #check this folder!!
+ #check this folder
 getwd()
 }
 
@@ -132,9 +133,10 @@ Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
   frequency measurements by \code{\link{specan}}, \code{\link{snrspecs}} for 
   creating spectrograms to optimize noise margins used in \code{\link{sig2noise}}
 
-Other spectrogram.creators: \code{\link{dfDTW}},
-  \code{\link{dfts}}, \code{\link{ffDTW}},
-  \code{\link{ffts}}, \code{\link{snrspecs}},
-  \code{\link{sp.en.ts}}, \code{\link{trackfreqs}}
+Other spectrogram creators: \code{\link{color.spectro}},
+  \code{\link{dfDTW}}, \code{\link{dfts}},
+  \code{\link{ffDTW}}, \code{\link{ffts}},
+  \code{\link{snrspecs}}, \code{\link{sp.en.ts}},
+  \code{\link{trackfreqs}}
 }
 

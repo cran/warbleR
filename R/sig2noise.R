@@ -2,8 +2,8 @@
 #' 
 #' \code{sig2noise} measures signal-to-noise ratio across multiple files.
 #' @usage sig2noise(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq.dur = FALSE,
-#' in.dB = TRUE, before = FALSE, lim.dB = TRUE)
-#' @param X Data frame with results from \code{\link{manualoc}} or any data frame with columns
+#' in.dB = TRUE, before = FALSE, lim.dB = TRUE, bp = NULL, wl = 10)
+#' @param X 'selection.table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). 
 #' @param mar numeric vector of length 1. Specifies the margins adjacent to
@@ -31,6 +31,9 @@
 #' @param before Logical. If \code{TRUE} noise is only measured right before the signal (instead of before and after). Default is \code{FALSE}.
 #' @param lim.dB Logical. If \code{TRUE} the lowest signal-to-noise would be limited to -40 dB (if \code{in.dB = TRUE}). This would remove NA's that can be produced when noise segments have a higher amplitude than the signal 
 #' itself. Default is \code{TRUE}.
+#' @param bp Numeric vector of length 2 giving the lower and upper limits of a frequency bandpass filter (in kHz). Default is \code{NULL}.
+#' @param wl A numeric vector of length 1 specifying the window length of the spectrogram for applying bandpass. Default 
+#'   is 10. Ignored if \code{bp = NULL}. Note that lower values will increase time resolution, which is more important for signal-to-noise ratio calculations.
 #' @return Data frame similar to \code{\link{autodetec}} output, but also includes a new variable 
 #' with the signal-to-noise values.
 #' @export
@@ -47,7 +50,7 @@
 #'   background noise is equal to or overpowering the acoustic signal.
 #'   \code{\link{snrspecs}} can be used to troubleshoot different noise margins.
 #' @examples
-#' \dontrun{
+#' {
 #' # First set temporary folder
 #' setwd(tempdir())
 #' 
@@ -67,16 +70,22 @@
 #last modification on jul-5-2016 (MAS)
 
 sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq.dur = FALSE,
-                      in.dB = TRUE, before = FALSE, lim.dB = TRUE){
+                      in.dB = TRUE, before = FALSE, lim.dB = TRUE, bp = NULL, wl = 10){
+  
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
   
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  } 
   
   #if X is not a data frame
-  if(!class(X) == "data.frame") stop("X is not a data frame")
+  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  
+  
+  
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -130,11 +139,12 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
     # Read sound files to get sample rate and length
       r <- tuneR::readWave(file.path(getwd(), X$sound.files[y]), header = TRUE)
       f <- r$sample.rate
-    
+  
+          
       # set margin to half of signal duration
       if(eq.dur) mar <- (X$end[y] - X$start[y])/2
         
-      #reset coordinates of signals 
+      #reset time coordinates of signals if lower than 0 o higher than duration
       stn <- X$start[y] - mar
       enn <- X$end[y] + mar
       mar1 <- mar
@@ -148,8 +158,15 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
       
       if(enn > r$samples/f) enn <- r$samples/f
       
-      r <- tuneR::readWave(file.path(getwd(), X$sound.files[y]), from = stn, to = enn, units = "seconds")
+      r <- tuneR::readWave(file.path(getwd(), X$sound.files[y]), from = stn, to = enn, units = "seconds", toWaveMC = TRUE)
       
+      # add band-pass frequnecy filter
+      if (!is.null(bp)) {
+        r <- seewave::ffilter(r, f = f, from = bp[1] * 1000, ovlp = 0,
+                              to = bp[2] * 1000, bandpass = TRUE, wl = wl, 
+                              output = "Wave")
+      }
+    
       # Identify the signal
       signal <- seewave::cutw(r, from =  mar1, to = mar2, f = f)
       
@@ -157,7 +174,8 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
       noise1 <- seewave::cutw(r, from =  0, 
                      to = mar1, f = f)
       
-      noise2 <- seewave::cutw(r, from = mar2, to = length(r@left)/r@samp.rate, f = f)
+
+      noise2 <- seewave::cutw(r, from = mar2, to = seewave::duration(r), f = f)
       
       if(type == 1)
   {    # Calculate mean noise amplitude 
@@ -192,7 +210,6 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
         }
       
       
-      
       # Calculate signal-to-noise ratio
       snr <- sigamp / noisamp
     
@@ -206,5 +223,4 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
     # Add SNR data to manualoc output
     z <- data.frame(X[d,], SNR = unlist(SNR))
   return(z)
-    if(!is.null(path)) setwd(wd)    
 }

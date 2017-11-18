@@ -2,22 +2,25 @@
 #'
 #' \code{specan} measures acoustic parameters on acoustic signals for which the start and end times 
 #' are provided. 
-#' @usage specan(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast = TRUE, path = NULL, 
-#' pb = TRUE, ovlp = 50, ff.method = "seewave", wn = "hanning")
-#' @param X Data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @usage specan(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
+#'  parallel = 1, fast = TRUE, path = NULL, pb = TRUE, ovlp = 50, ff.method = "seewave", 
+#' wn = "hanning", fsmooth = 0.1)
+#' @param X 'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can
 #' be used as the input data frame.
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
-#'   frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f
-#'   and high.f columns will be used as bandpass limits. Default is c(0, 22). 
-#'   Lower limit of bandpass is not applied to fundamental frequencies. 
-#' @param wl A numeric vector of length 1 specifying the spectrogram window length. Default is 512.
+#'   frequency bandpass filter (in kHz) or "frange" to indicate that values in bottom.freq
+#'   and top.freq columns will be used as bandpass limits. Default is c(0, 22).Lower limit of
+#'    bandpass is not applied to fundamental frequencies. 
+#' @param wl A numeric vector of length 1 specifying the spectrogram window length. Default is 512. See 'wl.freq' for setting windows length independenlty in the frequency domain.
+#' @param wl.freq A numeric vector of length 1 specifying the window length of the spectrogram
+#' for measurements on the frecuency spectrum. Default is 512. Higher values would provide 
+#' more accurate measurements. Note that this allows to increase measurement precision independently in the time and frequency domain. If \code{NULL} (default) then the 'wl' value is used. 
 #' @param threshold amplitude threshold (\%) for fundamental frequency and 
 #'   dominant frequency detection. Default is 15.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
-#' For windows OS the \code{parallelsugar} package should be installed. 
 #' @param fast Logical. If \code{TRUE} (default) then the peakf acoustic parameter (see below) is not computed, which 
 #' substantially increases performance (~9 times faster).
 #' @param path Character string containing the directory path where the sound files are located. 
@@ -33,6 +36,9 @@
 #' 'tuneR' performs faster (and seems to be more accurate) than 'seewave'.
 #' @param wn Character vector of length 1 specifying window name. Default is hanning'. 
 #' See function \code{\link[seewave]{ftwindow}} for more options.
+#' @param fsmooth A numeric vector of length 1 to smooth the frequency spectrum with a mean
+#'  sliding window (in kHz) used for mean peak frequency detection. This help to average 
+#'  amplitude "hills" to minimize the effect of amplitude modulation. Default is 0.1.
 #' @return Data frame with 'sound.files' and 'selec' as in the input data frame, plus the following acoustic parameters: 
 #' \itemize{
 #'    \item \code{duration}: length of signal (in s)
@@ -64,7 +70,6 @@
 #'    See \code{\link[seewave]{H}}
 #'    \item \code{sfm}: spectral flatness. Similar to sp.ent (Pure tone ~ 0; 
 #'    noisy ~ 1). See \code{\link[seewave]{sfm}}
-#'    \item \code{peakf}: peak frequency. Frequency with highest energy
 #'    \item \code{meanfun}: average of fundamental frequency measured across the acoustic signal 
 #'    \item \code{minfun}: minimum fundamental frequency measured across the acoustic signal 
 #'    \item \code{maxfun}: maximum fundamental frequency measured across the acoustic signal 
@@ -78,6 +83,12 @@
 #'    \item \code{startdom}:  dominant frequency measurement at the start of the signal 
 #'    \item \code{enddom}: dominant frequency measurement at the end of the signal 
 #'    \item \code{dfslope}: slope of the change in dominant through time ((enddom-startdom)/duration). Units are kHz/s.  
+#'    \item \code{peakf}: peak frequency. Frequency with highest energy (only generated if \code{fast = FALSE})
+#'    \item \code{meanpeakf}: Mean peak frequency. Frequency with highest energy from the 
+#'    mean spectrum (see \code{\link[seewave]{meanspec}}). Typically more consistent than peakf.
+#'    \item \code{bottom.freq}: low frequency. Low limit of frequency range (only generated if \code{frange.detec = TRUE})
+#'    \item \code{top.freq}: high frequency. High limit of frequency range (only generated if \code{frange.detec = TRUE})
+
 #' }
 #' @export
 #' @name specan
@@ -90,7 +101,7 @@
 #'  frequency measures when there are no amplitude values above the threshold.
 
 #' @examples
-#' \dontrun{
+#' {
 #' # First set temporary folder
 #' setwd(tempdir())
 #' 
@@ -110,17 +121,23 @@
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
 #last modification on jul-5-2016 (MAS)
 
-specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast = TRUE, 
-                   path = NULL, pb = TRUE, ovlp = 50, ff.method = "seewave", wn = "hanning"){
+specan <- function(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
+                   parallel = 1, fast = TRUE, path = NULL, pb = TRUE, ovlp = 50, 
+                   ff.method = "seewave", wn = "hanning", fsmooth = 0.1){
+  
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
   
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
   
   #if X is not a data frame
-  if(!class(X) == "data.frame") stop("X is not a data frame")
+  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  
+  
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -147,10 +164,10 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
   {if(!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
     if(!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")} 
   } else
-  {if(!any(names(X) == "low.f") & !any(names(X) == "high.f")) stop("'bp' = frange requires low.f and high.f columns in X")
-    if(any(is.na(c(X$low.f, X$high.f)))) stop("NAs found in low.f and/or high.f") 
-    if(any(c(X$low.f, X$high.f) < 0)) stop("Negative values found in low.f and/or high.f") 
-    if(any(X$high.f - X$low.f < 0)) stop("high.f should be higher than low.f")
+  {if(!any(names(X) == "bottom.freq") & !any(names(X) == "top.freq")) stop("'bp' = frange requires bottom.freq and top.freq columns in X")
+    if(any(is.na(c(X$bottom.freq, X$top.freq)))) stop("NAs found in bottom.freq and/or top.freq") 
+    if(any(c(X$bottom.freq, X$top.freq) < 0)) stop("Negative values found in bottom.freq and/or top.freq") 
+    if(any(X$top.freq - X$bottom.freq < 0)) stop("top.freq should be higher than bottom.freq")
   }
   
   #return warning if not all sound files were found
@@ -167,6 +184,9 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
     X <- X[d, ]
   }
   
+  # wl adjustment
+  if(is.null(wl.freq)) wl.freq <- wl
+  
   # If parallel is not numeric
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
@@ -180,16 +200,22 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
   
   #create function to run within Xapply functions downstream
   spFUN <- function(i, X, bp, wl, threshold) { 
-    r <- tuneR::readWave(as.character(X$sound.files[i]), from = X$start[i], to = X$end[i], units = "seconds") 
+    r <- tuneR::readWave(as.character(X$sound.files[i]), from = X$start[i], to = X$end[i], units = "seconds", toWaveMC = TRUE) 
     
-    if(bp[1] == "frange") bp <- c(X$low.f[i], X$high.f[i])
+    if(bp[1] == "frange") b <- c(X$bottom.freq[i], X$top.freq[i]) else b <- bp
 
-    b<- bp #in case bp its higher than can be due to sampling rate
+     #in case bp its higher than can be due to sampling rate
     if(b[2] > ceiling(r@samp.rate/2000) - 1) b[2] <- ceiling(r@samp.rate/2000) - 1 
     
+    bpfr <- b
+    bpfr <- bpfr + c(-0.2, 0.2)  
+    if(bpfr[1] < 0) bpfr[1] <- 0
+    if(bpfr[2] > ceiling(r@samp.rate/2000) - 1) bpfr[2] <- ceiling(r@samp.rate/2000) - 1 
     
+  frng <- frd.INTFUN(wave = r, wl = wl.freq, fsmooth = fsmooth, threshold = threshold, wn = wn, flim = b, bp = bpfr, ovlp = ovlp)
+  
     #frequency spectrum analysis
-    songspec <- seewave::spec(r, f = r@samp.rate, plot = FALSE, wl = wl, wn = wn, flim = b)
+    songspec <- seewave::spec(r, f = r@samp.rate, plot = FALSE, wl = wl.freq, wn = wn, flim = b)
     analysis <- seewave::specprop(songspec, f = r@samp.rate, flim = b, plot = FALSE)
 
     #acoustat
@@ -224,24 +250,23 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
     
     #Frequency with amplitude peaks 
     if(!fast) #only if fast is TRUE
-      peakf <- seewave::fpeaks(songspec, f = r@samp.rate, wl = wl, nmax = 3, plot = FALSE)[1, 1] else peakf <- NA
+      peakf <- seewave::fpeaks(songspec, f = r@samp.rate, wl = wl.freq, nmax = 3, plot = FALSE)[1, 1] else peakf <- NA
     
+    options(warn = -1)
     #Fundamental frequency parameters
     if(ff.method == "seewave")
     ff <- seewave::fund(r, f = r@samp.rate, ovlp = ovlp, threshold = threshold, 
                         fmax = b[2] * 1000, plot = FALSE)[, 2] else {
-                          if(!r@stereo)
-                            ff <- tuneR::FF(tuneR::periodogram(r, width = wl, 
-                                                               overlap = wl*ovlp/100), peakheight = (100 - threshold) / 100)/1000
-                          else
-                            ff <- tuneR::FF(tuneR::periodogram(mono(r, "left"), width = wl, 
-                                                               overlap = wl*ovlp/100), peakheight = (100 - threshold) / 100)/1000
-                        }
+                        if(!any(methods::slotNames(r) == "stereo")) r <- Wave(r) 
+      ff <- tuneR::FF(tuneR::periodogram(mono(r, "left"), width = wl, 
+        overlap = wl*ovlp/100), peakheight = (100 - threshold) / 100)/1000
+                                     }
     
   ff <- ff[!is.na(ff)]
     
   if(length(ff) > 0)
-   { meanfun<-mean(ff, na.rm = TRUE)
+   { 
+    meanfun<-mean(ff, na.rm = TRUE)
     minfun<-min(ff, na.rm = TRUE)
     maxfun<-max(ff, na.rm = TRUE)} else meanfun <- minfun <- maxfun <- NA
     
@@ -269,13 +294,24 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
     duration <- (X$end[i] - X$start[i])
     if(!is.na(enddom) && !is.na(startdom))
     dfslope <- (enddom -startdom)/duration else dfslope <- NA
-  
+    meanpeakf <- frng$meanpeakf 
+    
 
     #save results
-    if(fast) return(data.frame(sound.files = X$sound.files[i], selec = X$selec[i], duration, meanfreq, sd, freq.median, freq.Q25, freq.Q75, freq.IQR, time.median, time.Q25, time.Q75, time.IQR, skew, kurt, sp.ent, time.ent, entropy, sfm, 
-                               meanfun, minfun, maxfun, meandom, mindom, maxdom, dfrange, modindx, startdom, enddom, dfslope)) else
-                                 return(data.frame(sound.files = X$sound.files[i], selec = X$selec[i], duration, meanfreq, sd, freq.median, freq.Q25, freq.Q75, freq.IQR, time.median, time.Q25, time.Q75, time.IQR, skew, kurt, sp.ent, time.ent, entropy, sfm, 
-                                                 peakf, meanfun, minfun, maxfun, meandom, mindom, maxdom, dfrange, modindx, startdom, enddom, dfslope))
+    dfres <- data.frame(sound.files = X$sound.files[i], selec = X$selec[i], duration, meanfreq, sd, freq.median, freq.Q25, freq.Q75, freq.IQR, time.median, time.Q25, time.Q75, time.IQR, skew, kurt, sp.ent, time.ent, entropy, sfm, 
+                        meanfun, minfun, maxfun, meandom, mindom, maxdom, dfrange, modindx, startdom, enddom, dfslope, meanpeakf)
+    
+    # add peak freq
+    if(!fast) dfres$peakf <- peakf
+    
+    # add low high freq
+    if(bp[1] == "frange") {
+      dfres$bottom.freq <- b[1]
+     dfres$top.freq <- b[2]
+     }
+    
+    return(dfres)
+    
   }
   
   if(any(parallel == 1, Sys.info()[1] == "Linux") & pb) message("measuring acoustic parameters:")
@@ -287,6 +323,7 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
     
     cl <- parallel::makeCluster(parallel)
     
+    parallel::clusterExport(cl=cl, varlist=c("FFT")) 
     doParallel::registerDoParallel(cl)
     
     sp <- parallel::parLapply(cl, 1:nrow(X), function(i)
@@ -320,5 +357,4 @@ specan <- function(X, bp = c(0,22), wl = 512, threshold = 15, parallel = 1, fast
   row.names(sp) <- 1:nrow(sp)
   
   return(sp)
-  if(!is.null(path)) setwd(wd)
   }

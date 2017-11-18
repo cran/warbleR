@@ -4,14 +4,14 @@
 #' @usage fixwavs(checksels = NULL, files = NULL, samp.rate = NULL, bit.rate = NULL,
 #'  path = NULL, ...)
 #' @param checksels Data frame with results from \code{\link{checksels}}. 
-#' @param files Character vector with the names of the wav files to fix. Default is \code{NULL}. Default is \code{NULL}.
-#' @param samp.rate Numeric vector of length 1 with the sampling rate (in khz) for output files. Default is \code{NULL}.
+#' @param files Character vector with the names of the wav files to fix. Default is \code{NULL}.
+#' @param samp.rate Numeric vector of length 1 with the sampling rate (in kHz) for output files. Default is \code{NULL}.
 #' @param bit.rate Numeric vector of length 1 with the dynamic interval (i.e. bit rate) for output files.
-#' Default is \code{NULL}.
+#' Default is \code{NULL}. Currently not available.
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
 #' @param ... Additional arguments to be passed to \code{\link[seewave]{sox}}.
-#' @return  A folder inside the working directory (or path provided) all 'converted sound files', containing 
+#' @return  A folder inside the working directory (or path provided) all 'converted_sound_files', containing 
 #' sound files in a format that can be imported in R. 
 #' @export
 #' @name fixwavs
@@ -45,6 +45,15 @@
 fixwavs <- function(checksels = NULL, files = NULL, samp.rate = NULL, bit.rate = NULL, path = NULL, ...)
 {
 
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
+  
+  #check path to working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
+  
   if(is.null(checksels) & is.null(files)) stop("either 'checksels' or 'files' shoud be provided")
   
   if(!is.null(checksels))
@@ -56,14 +65,8 @@ fixwavs <- function(checksels = NULL, files = NULL, samp.rate = NULL, bit.rate =
   
   if(!all(c("sound.files", "check.res") %in% colnames(checksels))) 
     stop(paste(paste(c("sound.files", "check.res")[!(c("sound.files", "check.res") %in% colnames(checksels))], collapse=", "), "column(s) not found in data frame (does not seem to be the output of checksels)"))
-  }
-  else fls <- unique(files)
+  } else fls <- unique(files)
 
-  #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
   
   if(length(list.files(pattern = "\\.wav$", ignore.case = TRUE)) == 0) if(is.null(path)) stop("No .wav files in working directory") else stop("No .wav files in 'path' provided") 
   
@@ -78,20 +81,20 @@ fixwavs <- function(checksels = NULL, files = NULL, samp.rate = NULL, bit.rate =
     
 if(!is.null(samp.rate) & is.null(bit.rate)) bit.rate <- 16
 
-dir.create(file.path(getwd(), "converted sound files"))
+dir.create(file.path(getwd(), "converted_sound_files"))
   
   out <- pbapply::pblapply(fls, function(x)
     {
    
     #name  and path of original file
-    filin <- file.path(getwd(), x)
+    # filin <- file.path(getwd(), x)
     
     #name  and path of converted file
-    filout <- file.path(getwd(), "converted sound files", x)
-    
+    filout <- file.path("converted_sound_files", x)
+
     if(!is.null(samp.rate))
-seewave::sox(paste(paste0(" -r ", samp.rate, "k ", "-b ", bit.rate), ' "', filin,'" ','"', filout,'"', sep = ""), ...) else
-    seewave::sox((paste(' "', filin,'" ','"', filout,'"', sep = "")), ...)
-  })
-  if(!is.null(path)) setwd(wd)
+       out <- system(paste("sox", x, " -t wavpcm", filout, "rate", samp.rate * 1000), ignore.stdout = FALSE, intern = TRUE) else
+        out <- system(paste("sox", x, "-t wavpcm", filout), ignore.stdout = FALSE, intern = TRUE) 
+     })
+
   }

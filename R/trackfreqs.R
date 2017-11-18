@@ -2,20 +2,24 @@
 #' 
 #' \code{trackfreqs} creates spectrograms to visualize dominant and fundametal frequency measurements (contours)
 #' of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
-#' @usage trackfreqs(X, wl = 512, flim = c(0, 22), wn = "hanning", pal =
+#' @usage trackfreqs(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hanning", pal =
 #'   reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = 
 #'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
 #'   xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = c(0.6, 1), 
-#'   threshold = 15, contour = "both", col = c("skyblue", "red2"),
-#'    pch = c(21, 24),  mar = 0.05, lpos = "topright", it = "jpeg", parallel = 1, 
-#'    path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE, type = "p", 
-#'    leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, 
-#'    fast.spec = FALSE, ff.method = "seewave", ...)
-#' @param  X Data frame with results containing columns for sound file name (sound.files), 
+#'   threshold = 15, threshold.time = NULL, threshold.freq = NULL, contour = "both", 
+#'   col = c("skyblue", "red2"), pch = c(21, 24),  mar = 0.05, lpos = "topright", 
+#'   it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, 
+#'   pb = TRUE, type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, 
+#'    fast.spec = FALSE, ff.method = "seewave", frange.detec = FALSE, 
+#'    fsmooth = 0.1, widths = c(2, 1), freq.continuity = NULL, clip.edges = 2, ...)
+#' @param  X 'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
+#' @param wl.freq A numeric vector of length 1 specifying the window length of the spectrogram
+#' for measurements on the frecuency spectrum. Default is 512. Higher values would provide 
+#' more accurate measurements.
 #' @param flim A numeric vector of length 2 for the frequency limit of 
 #'   the spectrogram (in kHz), as in \code{\link[seewave]{spectro}}. Default is c(0, 22).
 #' @param wn Character vector of length 1 specifying window name. Default is 
@@ -49,13 +53,15 @@
 #' @param sc Logical argument to add amplitude scale to spectrogram, default is 
 #'   \code{FALSE}.
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
-#'   frequency bandpass filter (in kHz) or "frange" to indicate that values in low.f 
-#'   and high.f columns will be used as bandpass limits. Default is c(0, 22).
+#'   frequency bandpass filter (in kHz) or "frange" to indicate that values in bottom.freq 
+#'   and top.freq columns will be used as bandpass limits. Default is c(0, 22).
 #' @param cex Numeric vector of length 2, specifies relative size of points 
 #'   plotted for frequency measurements and legend font/points, respectively. 
 #'   See \code{\link[seewave]{spectro}}.
-#' @param threshold amplitude threshold (\%) for fundamental frequency and 
-#'   dominant frequency detection. Default is 15.
+#' @param threshold amplitude threshold (\%) for fundamental and dominant frequency detection as well as frequency range from the spectrum (see 'frange.detec'). Default is 15. WILL BE DEPRECATED. Use 'threshold.time' and 'threshold.time' instead.
+#' @param threshold.time amplitude threshold (\%) for the time domain. Use for fundamental and dominant frequency detection. If \code{NULL} (default) then the 'threshold' value is used.
+#' @param threshold.freq amplitude threshold (\%) for the frequency domain. Use for frequency range detection from the spectrum (see 'frange.detec'). If \code{NULL} (default) then the
+#'  'threshold' value is used.
 #' @param contour Character vector, one of "df", "ff" or "both", specifying whether the
 #'  dominant or fundamental frequencies or both should be plotted. Default is "both". 
 #' @param col Vector of length 1 or 2 specifying colors of points plotted to mark 
@@ -89,7 +95,7 @@
 #' @param leglab A character vector of length 1 or 2 containing the label(s) of the frequency contour legend 
 #' in the output image.
 #' @param col.alpha A numeric vector of length 1  within [0,1] indicating how transparent the lines/points should be.
-#' @param line Logical argument to add red lines (or box if low.f and high.f columns are provided) at start and end times of selection. Default is \code{TRUE}.
+#' @param line Logical argument to add red lines (or box if bottom.freq and top.freq columns are provided) at start and end times of selection. Default is \code{TRUE}.
 #' @param fast.spec Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
 #' increases performance (much faster), although some options become unavailable, as collevels, and sc (amplitude scale).
 #' This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
@@ -100,6 +106,17 @@
 #' @param ff.method Character. Selects the method used to calculate the fundamental
 #' frequency. Either 'tuneR' (using \code{\link[tuneR]{FF}}) or 'seewave' (using 
 #' \code{\link[seewave]{fund}}). Default is 'seewave'. 'tuneR' performs faster (and seems to be more accurate) than 'seewave'.
+#' @param frange.detec Logical. Controls whether frequency range of signal is automatically 
+#' detected  using the \code{\link{frange.detec}} function. If so, the range is used as the 
+#' bandpass filter (overwriting 'bp' argument). Default is \code{FALSE}.
+#' @param fsmooth A numeric vector of length 1 to smooth the frequency spectrum with a mean
+#'  sliding window (in kHz) used for frequency range detection (when \code{frange.detec = TRUE}). This help to average amplitude "hills" to minimize the effect of
+#'  amplitude modulation. Default is 0.1. 
+#' @param widths Numeric vector of length 2 to control the relative widths of the spectro (first element) and spectrum (second element,  (when \code{frange.detec = TRUE})).
+#' @param freq.continuity Numeric vector of length 1 to control whether dominant frequency detections
+#'  outliers(i.e that differ from the frequency of the detections right before and after) would be removed. Should be given in kHz. Default is \code{NULL}. 
+#' @param clip.edges Integer vector of length 1 to control if how many 'frequency-wise discontinuous' detection would be remove at the start and end of signals (see 
+#' 'freq.continuity' argument). Default is 2. Ignored if \code{freq.continuity = NULL}. 
 #' @param ... Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments.
 #' @return Spectrograms of the signals listed in the input data frame showing the location of 
 #' the dominant and fundamental frequencies.
@@ -110,16 +127,11 @@
 #' @export
 #' @name trackfreqs
 #' @details This function provides visualization of frequency measurements as the ones 
-#'   made by \code{\link{specan}}. Frequency measures can be made by the function or input by the 
-#'   user (see 'custom.contour' argument)  Arguments that are accepted by xy.coords and can be 
-#'   used for 'lpos' are: "bottomright", "bottom", "bottomleft", "left", 
-#'   "topleft", "top", "topright", "right" and "center". Setting inner.mar to 
-#'   c(4,4.5,2,1) and outer.mar to c(4,2,2,1) works well when picsize = 2 or 3. 
-#'   Title font size, inner.mar and outer.mar (from mar and oma) don't work well
-#'   when osci or sc = TRUE, this may take some optimization by the user. Note that if no amplitude was detected
-#'   for a particular time bin, then the image will show a dark dot at the bottom of the time bin.
+#'   made by \code{\link{specan}}, \code{\link{dfts}}, \code{\link{ffts}}, \code{\link{dfDTW}} and \code{\link{ffDTW}}. Frequency measures can be made by the function or input by the 
+#'   user (see 'custom.contour' argument). If \code{frange = TRUE} the function uses \code{\link{frange.detec}} to detect the frequency range. In this case the graphical output includes a
+#'   frequency spectrum showing the detection threshold.
 #' @examples
-#' \dontrun{
+#' {
 #' #Set temporary working directory
 #' setwd(tempdir())
 #' 
@@ -131,9 +143,9 @@
 #' ad <- autodetec(threshold = 6, bp = c(1, 3), mindur = 1.2,
 #' maxdur = 3, img = FALSE, ssmooth = 600, wl = 300, flist = "Cryp.soui.wav")
 #' 
-#' #track dominant frequency graphs
+#' #track dominant frequency graphs with freq reange detection
 #' trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
-#' bp = c(1, 3), contour = "df", wl = 300)
+#' bp = c(1, 3), contour = "df", wl = 300, frange = TRUE)
 #'
 #' #using users frequency data (custom.contour argument) 
 #' #first get contours using dfts
@@ -154,22 +166,28 @@
 #' @author Grace Smith Vidaurre and Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on jul-25-2016 (MAS)
 
-trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
+trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
                        inner.mar = c(5,4,4,2), outer.mar = c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1,
                        title = TRUE, propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, 
-                       bp = c(0, 22), cex = c(0.6, 1), threshold = 15, contour = "both", 
+                       bp = c(0, 22), cex = c(0.6, 1), threshold = 15, threshold.time = NULL, threshold.freq = NULL, 
+                       contour = "both", 
                        col = c("skyblue", "red2"),  pch = c(21, 24), mar = 0.05, lpos = "topright", 
                        it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE,
-                       type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, fast.spec = FALSE, ff.method = "seewave", ...){     
+                       type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, fast.spec = FALSE, ff.method = "seewave", frange.detec = FALSE, fsmooth = 0.1, widths = c(2, 1), freq.continuity = NULL, clip.edges = 2, ...){     
+  
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
   
   #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
   
   #if X is not a data frame
-  if(!class(X) == "data.frame") stop("X is not a data frame")
+  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  
+  
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -193,10 +211,10 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   {if(!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
     if(!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")} 
   } else
-  {if(!any(names(X) == "low.f") & !any(names(X) == "high.f")) stop("'bp' = frange requires low.f and high.f columns in X")
-    if(any(is.na(c(X$low.f, X$high.f)))) stop("NAs found in low.f and/or high.f") 
-    if(any(c(X$low.f, X$high.f) < 0)) stop("Negative values found in low.f and/or high.f") 
-    if(any(X$high.f - X$low.f < 0)) stop("high.f should be higher than low.f")
+  {if(!any(names(X) == "bottom.freq") & !any(names(X) == "top.freq")) stop("'bp' = frange requires bottom.freq and top.freq columns in X")
+    if(any(is.na(c(X$bottom.freq, X$top.freq)))) stop("NAs found in bottom.freq and/or top.freq") 
+    if(any(c(X$bottom.freq, X$top.freq) < 0)) stop("Negative values found in bottom.freq and/or top.freq") 
+    if(any(X$top.freq - X$bottom.freq < 0)) stop("top.freq should be higher than low.f")
   }
   
   #if it argument is not "jpeg" or "tiff" 
@@ -210,9 +228,16 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   #if type not l b or p
   if(!any(type %in% c("p", "l", "b"))) stop(paste("Type", type, "not allowed"))  
   
+  # if frange.detec oscillo false
+  if(frange.detec) osc <- FALSE
+  
   #join img.suffix and it
   if(is.null(img.suffix))
     img.suffix2 <- paste("trackfreqs", it, sep = ".") else   img.suffix2 <- paste(img.suffix, it, sep = ".")
+    
+    # threshold adjustment
+    if(is.null(threshold.time)) threshold.time <- threshold
+    if(is.null(threshold.freq)) threshold.freq <- threshold
     
     #return warning if not all sound files were found
     recs.wd <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
@@ -244,7 +269,9 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
       
       #order custom.contour as in X
       custom.contour <- custom.contour[match(paste(custom.contour[,c("sound.files")], custom.contour[,c("selec")]), paste(X[,c("sound.files")], X[,c("selec")])),]      
-    }
+    
+      # frange.detec <- FALSE
+      }
     
     # adjust if only 1 pch was specfified
     if(length(pch) == 1) pch <- c(pch, pch)
@@ -258,7 +285,7 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     #make colors transparent
     col <- adjustcolor(c(col, "yellow", "black", "white", "red"), alpha.f = col.alpha)
     
-    trackfreFUN <- function(X, i, mar, flim, xl, picsize, wl, cexlab, inner.mar, outer.mar, res, bp, cex, threshold, pch, custom.contour){
+    trackfreFUN <- function(X, i, mar, flim, xl, picsize, wl, wl.freq, cexlab, inner.mar, outer.mar, res, bp, cex, threshold.time, threshold.freq, pch, custom.contour){
       
       # Read sound files, initialize frequency and time limits for spectrogram
       r <- tuneR::readWave(as.character(X$sound.files[i]), header = TRUE)
@@ -282,8 +309,8 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
       r <- tuneR::readWave(as.character(X$sound.files[i]), from = t[1], to = t[2], units = "seconds")
       
       #in case bp its higher than can be due to sampling rate
-      if(bp[1] == "frange") bp <- c(X$low.f[i], X$high.f[i])
-      b<- bp 
+      if(bp[1] == "frange") bp <- c(X$bottom.freq[i], X$top.freq[i])
+      b <- bp 
       
       if(b[2] > ceiling(r@samp.rate/2000) - 1) b[2] <- ceiling(r@samp.rate/2000) - 1 
       
@@ -309,9 +336,10 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
       par(mar = inner.mar)
       par(oma = outer.mar)
       
-      # Generate spectrogram using seewave
-      suppressWarnings(spectroW(r, f = f, wl = wl, ovlp = ovlp, collevels = seq(-40, 0, 0.5), heights = hts,
-                                wn = "hanning", widths = wts, palette = pal, osc = osci, grid = gr, scale = sc, collab = "black", 
+      # Generate spectrograms
+if(!frange.detec){
+            suppressWarnings(spectro.INTFUN(r, f = f, wl = wl, ovlp = ovlp, heights = hts,
+                                wn = "hanning", widths = wts, palette = pal, osc = osci, grid = gr, scale = sc, collab = "black",
                                 cexlab = cexlab, cex.axis = 0.5*picsize, flim = fl, tlab = "Time (s)", 
                                 flab = "Frequency (kHz)", alab = "", fast.spec = fast.spec, ...))
       
@@ -322,14 +350,48 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
             title(paste(X$sound.files[i], X$selec[i], img.suffix, sep = "-"), cex.main = cexlab)  
         
       }
-      
+} else {
+  frng <- frd.INTFUN(wave = seewave::cutw(r, from = mar1, to = mar2, output = "Wave"), wl = wl.freq, fsmooth = fsmooth, threshold = threshold.freq, wn = wn, flim = fl, bp = b, ovlp = ovlp)
+  
+  if(!all(is.na(frng$frange))) b <- as.numeric(frng$frange) 
+  
+  # set limits for color rectangles down
+  if(is.null(bp)) lims <- flim else lims <- bp
+  b[is.na(b)] <- lims[is.na(b)]
+  b <- sort(b)
+  
+    # split screen
+    m <- rbind(c(0, widths[1]/sum(widths), 0, 0.93), #1
+               c(widths[1]/sum(widths), 1, 0 , 0.93),
+               c(0, 1,  0.93 , 1)) #3
+
+    invisible(close.screen(all.screens = TRUE))
+    split.screen(m)
+    screen(1)
+    par(mar = c(3.4, 3.4, 0.5, 0))
+
+    # create spectro
+    spectro.INTFUN.2(wave = r, f = f, flim = fl, fast.spec = fast.spec, palette = pal, ovlp = ovlp, wl = wl, grid = F, tlab = "", flab = "")
+
+    #add green polygon on detected frequency bands
+      rect(xleft = 0, ybottom = b[1], xright = seewave::duration(r), ytop = b[2], col = adjustcolor("green3", 0.1), border = adjustcolor("gray", 0.2)) 
+
+    #add line highlighting freq range
+    abline(h = b, col = "#80C3FF", lty = 3, lwd = 2) 
+
+    # add axis labels
+    mtext(side = 1, text = "Time (s)", line = 2.3)
+    mtext(side = 2, text = "Frequency (kHz)", line = 2.3)
+}
+  
+      options(warn = -1)
       # Calculate fundamental frequencies at each time point
       if(contour %in% c("both", "ff") & is.null(custom.contour))
       {
         if(ff.method == "seewave")
           ffreq1 <- seewave::fund(wave = r, wl = wl, from = mar1, to = mar2,
-                                  fmax= b[2]*1000, f = f, ovlp = ovlp, threshold = threshold, plot = FALSE) else
-                                  {ff1 <- tuneR::FF(tuneR::periodogram(seewave::cutw(r, f = f, from = mar1, to = mar2, output = "Wave"), width = wl, overlap = wl*ovlp/100), peakheight = (100 - threshold) / 100)/1000
+                                  fmax= b[2]*1000, f = f, ovlp = ovlp, threshold = threshold.time, plot = FALSE) else
+                                  {ff1 <- tuneR::FF(tuneR::periodogram(seewave::cutw(r, f = f, from = mar1, to = mar2, output = "Wave"), width = wl, overlap = wl*ovlp/100), peakheight = (100 - threshold.time) / 100)/1000
                                   ff2 <- seq(0, X$end[i] - X$start[i], length.out = length(ff1))
                                   
                                   ffreq1 <- cbind(ff2, ff1)}
@@ -338,6 +400,8 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
         ffreq <- matrix(ffreq1[!is.na(ffreq1[,2]),], ncol = 2)  
         ffreq <- matrix(ffreq[ffreq[,2] > b[1],], ncol = 2)
     
+        if(!is.null(freq.continuity)) ffreq <- ffreq[c(0,abs(diff(ffreq[,2]))) <= freq.continuity, ]
+        
     # Plot extreme values fundamental frequency
       points(c(ffreq[c(which.max(ffreq[,2]),which.min(ffreq[,2])),1]) + mar1, c(ffreq[c(which.max(ffreq[,2]), 
         which.min(ffreq[,2])),2]), col = col[3], cex = cex[1] * 1.6, pch = pch[1], lwd = 2)  
@@ -356,13 +420,50 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     points(c(ffreq1[!ffreq1[,1] %in% ffreq[,1], 1]) + mar1, rep(fl[1] + (fl[2] - fl[1]) * 0.04, nrow(ffreq1) - nrow(ffreq)), col = col[4], cex = cex[1] * 0.7, pch = pch[1])
 }
      
-  
     # Calculate dominant frequency at each time point     
     if(contour %in% c("both", "df") & is.null(custom.contour))
 {    
       dfreq1 <- seewave::dfreq(r, f = f, wl = wl, ovlp = 70, plot = FALSE, bandpass = b * 1000, fftw = TRUE, 
-                   threshold = threshold, tlim = c(mar1, mar2)) 
+                   threshold = threshold.time, tlim = c(mar1, mar2)) 
       dfreq <- matrix(dfreq1[!is.na(dfreq1[,2]),], ncol = 2)  
+
+ 
+      #freq continuity
+      if(nrow(dfreq > 2) & !is.null(freq.continuity))
+      {
+        indx <- sapply(1:nrow(dfreq), function(x)
+        {
+        # if first one
+        if(x == 1)
+        {if(abs(dfreq[x, 2] - dfreq[x + 1, 2]) > freq.continuity & abs(dfreq[x + 1, 2] - dfreq[x + 2, 2]) < freq.continuity) return(FALSE) else return(TRUE)
+          
+        } else {
+          # if last one
+          if(x == nrow(dfreq))  
+          {
+            if(abs(dfreq[x, 2] - dfreq[x - 1, 2]) > freq.continuity & abs(dfreq[x - 2, 2] - dfreq[x - 1, 2]) < freq.continuity) return(FALSE) else return(TRUE)
+            
+            } else
+              {
+            if(abs(dfreq[x, 2] - dfreq[x + 1, 2]) > freq.continuity & abs(dfreq[x, 2] - dfreq[x - 1, 2]) > freq.continuity) return(FALSE) else return(TRUE)
+              }
+            }
+          })
+      
+        if(nrow(dfreq) > 3 * clip.edges & any(!indx[2:clip.edges])) indx[1:(which(!indx[2:clip.edges]))] <- FALSE
+      # turn around  
+      indx <- indx[nrow(dfreq):1]
+      
+      if(nrow(dfreq) > 3 * clip.edges & any(!indx[2:clip.edges])) indx[1:(which(!indx[2:clip.edges]))] <- FALSE
+
+      # turn around again
+      indx <- indx[nrow(dfreq):1]
+        
+        dfreq <- dfreq[indx, ]
+        
+        }
+      
+      dfreq <- as.matrix(dfreq, nrow = 2)
 
     # Plot extreme values dominant frequency
         points(c(dfreq[c(which.max(dfreq[,2]),which.min(dfreq[,2])),1])+mar1, c(dfreq[c(which.max(dfreq[,2]),
@@ -397,7 +498,6 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
       if(type %in% c("p", "b"))
         points(freq[,1] + mar1, freq[,2], col = col[2], cex = cex[1], pch = pch[2], bg = col[2]) 
       
-      
       # plot lines      
       if(type %in% c("l", "b"))
         lines(freq[,1] + mar1, freq[,2], col = col[2], lwd = 3) 
@@ -409,9 +509,9 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     }
     
   if(line){  
-    if(any(names(X) == "low.f") & any(names(X) == "high.f"))
-  {   if(!is.na(X$low.f[i]) & !is.na(X$high.f[i]))
-      polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$low.f[i], X$high.f[i], X$high.f[i], X$low.f[i]), lty = 3, border = "blue", lwd = 1.2) else
+    if(any(names(X) == "bottom.freq") & any(names(X) == "top.freq"))
+  {   if(!is.na(X$bottom.freq[i]) & !is.na(X$top.freq[i]))
+     if(!frange.detec) polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$bottom.freq[i], X$top.freq[i], X$top.freq[i], X$bottom.freq[i]), lty = 3, border = "blue", lwd = 1.2) else
           abline(v = c(mar1, mar2), col= col[6], lty = "dashed")
     } else abline(v = c(mar1, mar2), col= col[6], lty = "dashed")
     }
@@ -441,6 +541,67 @@ trackfreqs <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
 legend(lpos, legend = leglab[1],
              pch = pch[2], col = col[2], bty = "o", cex = cex[2], bg = col[5], pt.bg = col[2], lwd = lwd)}
     
+      if(frange.detec)
+      {
+        #second plot
+        screen(2)
+        
+        z <- frng$af.mat[,1]
+        zf <- frng$af.mat[,2]
+        
+        par(mar = c(3.4, 0, 0.5, 0.8))
+        
+        plot(z, zf, type = "l", ylim = fl, yaxs = "i", xaxs = "i", yaxt = "n", xlab = "", col = "white", xaxt = "n")
+        
+        # add axis& labels
+        axis(1, at = seq(0.2, 1, by = 0.4))
+        mtext(side = 1, text = "Amplitude (%)", line = 2.3)
+        
+        # fix amplitude values to close polygon (just for ploting)
+        z3 <- c(0, z, 0)
+        
+        if(!is.null(bp)) zf3 <- c(b[1], zf, b[2]) else zf3 <- c(fl[1], zf, fl[2])
+        
+        #addd  extremes to make polygon close fine
+        zf3 <- c(lims[1], zf, lims[2])
+        
+        # plot amplitude values curve
+        polygon(cbind(z3, zf3), col= adjustcolor("#4D69FF", 0.9))
+        
+        # add border line
+        points(z3, zf3, type = "l", col = adjustcolor("black", 0.5))
+        
+        # add background color
+        rect(xleft = 0, ybottom = fl[1], xright = 1, ytop = fl[2], col = adjustcolor("#4D69FF", 0.05))
+        
+        #add green polygon on detected frequency bands
+        rect(xleft = 0, ybottom = b[1], xright = 1, ytop = b[2], col = adjustcolor("green3", 0.1), border = adjustcolor("gray", 0.2))
+        
+        # add gray boxes in filtered out freq bands
+        if(!is.null(bp))
+        {  rect(xleft = 0, ybottom = bp[2], xright = 1, ytop = fl[2], col = adjustcolor("gray", 0.5)) 
+          rect(xleft = 0, ybottom = fl[1], xright = 1, ytop = bp[1], col = adjustcolor("gray", 0.5))
+        }
+        
+        # add line to highligh freq range
+        abline(v = threshold.freq/100, col = adjustcolor("blue4", 0.7), lty = 3, lwd = 2.3)
+        abline(h = b, col = "#80C3FF", lty = 3, lwd = 3.3)
+        
+         if(title)
+         {
+           screen(3)
+           par( mar = rep(0, 4))
+           plot(0.5, xlim = c(0, 1), ylim = c(0, 1), type = "n", axes = FALSE, xlab = "", ylab = "", xaxt = "n", yaxt = "n")
+           
+                      if(is.null(img.suffix))
+             text(x = 0.5, y = 0.35, labels = paste(X$sound.files[i], X$selec[i], sep = "-"), cex = cexlab, font = 2) else
+               text(x = 0.5, y = 0.35, labels = paste(X$sound.files[i], X$selec[i], img.suffix, sep = "-"), cex = cexlab, font = 2)
+         }
+        
+      }
+      
+      
+      
     invisible() 
     dev.off()
     return(NULL)
@@ -458,7 +619,7 @@ legend(lpos, legend = leglab[1],
               doParallel::registerDoParallel(cl)
               
               sp <- foreach::foreach(i = 1:nrow(X)) %dopar% {
-                trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold = threshold, pch = pch,
+                trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, wl.freq = wl.freq, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold.time = threshold.time, threshold.freq = threshold.freq, pch = pch,
                             custom.contour)
               }
               
@@ -467,12 +628,12 @@ legend(lpos, legend = leglab[1],
             } 
             if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
               if(pb)
-                sp <- parallel::mclapply(1:nrow(X), mc.cores = parallel, function (i) {
-                  trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold = threshold, pch = pch,
+                sp <- pbmcapply::pbmclapply(1:nrow(X), mc.cores = parallel, function (i) {
+                  trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, wl.freq = wl.freq, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold.time = threshold.time, threshold.freq = threshold.freq, pch = pch,
                               custom.contour)
                 }) else
               sp <- parallel::mclapply(1:nrow(X), mc.cores = parallel, function (i) {
-                trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold = threshold, pch = pch,
+                trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, wl.freq = wl.freq, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold.time = threshold.time, threshold.freq = threshold.freq, pch = pch,
                             custom.contour)
               })
             }
@@ -483,7 +644,7 @@ legend(lpos, legend = leglab[1],
               doParallel::registerDoParallel(cl)
               
               sp <- foreach::foreach(i = 1:nrow(X)) %dopar% {
-                trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold = threshold, pch = pch,
+                trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, wl.freq = wl.freq, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold.time = threshold.time, threshold.freq = threshold.freq, pch = pch,
                             custom.contour)
               }
               
@@ -494,14 +655,12 @@ legend(lpos, legend = leglab[1],
           else {
             if(pb)
             sp <- pbapply::pblapply(1:nrow(X), function(i) 
-              trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold = threshold, pch = pch,
+              trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, wl.freq = wl.freq, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold.time = threshold.time, threshold.freq = threshold.freq, pch = pch,
                           custom.contour)) else
                   sp <- lapply(1:nrow(X), function(i) 
-                    trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold = threshold, pch = pch,
+                    trackfreFUN(X = X, i = i, mar = mar, flim = flim, xl = xl, picsize = picsize, res = res, wl = wl, wl.freq = wl.freq, cexlab = cexlab, inner.mar = inner.mar, outer.mar = outer.mar, bp = bp, cex = cex, threshold.time = threshold.time, threshold.freq = threshold.freq, pch = pch,
                       custom.contour))
             
           }
-          
-  if(!is.null(path)) setwd(wd)
           
 }

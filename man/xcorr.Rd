@@ -13,7 +13,7 @@ cor.method = "pearson", parallel = 1, path = NULL, pb = TRUE, na.rm = FALSE,
  dfrange = FALSE, cor.mat = TRUE)
 }
 \arguments{
-\item{X}{Data frame containing columns for sound files (sound.files), 
+\item{X}{'selection.table' object or data frame containing columns for sound files (sound.files), 
 selection number (selec), and start and end time of signal (start and end).}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
@@ -46,7 +46,8 @@ It specifies the number of cores to be used. Default is 1 (i.e. no parallel comp
 If \code{NULL} (default) then the current working directory is used.}
 
 \item{pb}{Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
-when parallel = 1.}
+when parallel = 1. Note that progress bar is not completely accurate as the number of pairwise comparisons decreases on each iteration 
+decreases. The first iteration runs n-1 comparisons while the last one only 1 (\code{n = nrow(X)}).}
 
 \item{na.rm}{Logical. If \code{TRUE} all NAs produced when pairwise cross-correlations failed are removed from the 
 results. This means that all selections with at least 1 cross-correlation that failed are excluded.}
@@ -74,7 +75,7 @@ This function is a modified version of the \code{\link[monitoR]{corMatch}} and \
 from the awesome R package `monitoR`.
 }
 \examples{
-\dontrun{
+{
 #First set temporary working directory
 setwd(tempdir())
 

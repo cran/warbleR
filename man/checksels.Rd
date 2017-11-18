@@ -7,9 +7,9 @@
 checksels(X, parallel =  1, path = NULL, check.header = FALSE)
 }
 \arguments{
-\item{X}{data frame with the following columns: 1) "sound.files": name of the .wav 
+\item{X}{'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
-end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
+end time of selections. Alternatively, a 'selection.table' class object can be input to double check selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 be used as the input data frame.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
@@ -40,7 +40,7 @@ This is useful for avoiding errors in dowstream functions (e.g. \code{\link{spec
 fixed using \code{\link{fixwavs}}) ('sox' must be installed to be able to run this function).
 }
 \examples{
-\dontrun{
+{
 # First set temporary folder
 setwd(tempdir())
 

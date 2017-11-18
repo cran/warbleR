@@ -5,12 +5,12 @@
 #' @usage ffts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = c(0, 22),
 #'   threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "ffts", pb = TRUE, 
 #'   clip.edges = FALSE, leglab = "ffts", ff.method = "seewave", ...)
-#' @param  X Data frame with results containing columns for sound file name (sound.files), 
+#' @param  X 'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
-#' @param length.out A character vector of length 1 giving the number of measurements of fundamental 
+#' @param length.out A numeric vector of length 1 giving the number of measurements of fundamental 
 #' frequency desired (the length of the time series).
 #' @param wn Character vector of length 1 specifying window name. Default is 
 #'   "hanning". See function \code{\link[seewave]{ftwindow}} for more options.
@@ -57,8 +57,7 @@
 #'  above the amplitude theshold in between signal segments in which amplitude was 
 #'  detected then the values of this adjacent segments will be interpolated 
 #'  to fill out the missing values (e.g. no NAs in between detected amplitude segments). 
-#' @examples
-#' \dontrun{
+#' @examples{
 #' # set the temp directory
 #' setwd(tempdir())
 #' 
@@ -70,7 +69,7 @@
 #' # run function 
 #' ffts(selec.table, length.out = 50, flim = c(1, 12), bp = c(2, 9), wl = 300)
 #' 
-#' Note that fundamental frequency is not accurate for noisy signals, works better with pure tones
+#' # Fundamental frequency is not accurate for noisy signals, works better with pure tones
 #' 
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
@@ -81,14 +80,19 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
                  path = NULL, img.suffix = "ffts", pb = TRUE, clip.edges = FALSE,
                  leglab = "ffts", ff.method = "seewave", ...){     
   
-  #check path to working directory
-  if(!is.null(path))
-  {wd <- getwd()
-  if(class(try(setwd(path), silent = TRUE)) == "try-error") stop("'path' provided does not exist") else 
-    setwd(path)} #set working directory
+  # reset working directory 
+  wd <- getwd()
+  on.exit(setwd(wd))
   
-  #if X is not a data frame
-  if(!class(X) == "data.frame") stop("X is not a data frame")
+  #check path to working directory
+  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
+  
+    #if X is not a data frame
+    if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+    
+    
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -158,6 +162,7 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
     if(ff.method == "seewave")
       ffreq1 <- seewave::fund(r, fmax= b[2], f = f, ovlp = ovlp, threshold = threshold, plot = FALSE) else
       {
+        if(any(slotNames(r) == "stereo")) if(r@stereo) r <- mono(r, which = "both")
         suppressWarnings(ff1 <- tuneR::FF(tuneR::periodogram(r, width = wl, overlap = wl*ovlp / 100), peakheight = (100 - threshold) / 100)/1000)
         ff2 <- seq(0, X$end[i] - X$start[i], length.out = length(ff1))
         
@@ -263,6 +268,7 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   
   df <- data.frame(sound.files = X$sound.files, selec = X$selec, as.data.frame(matrix(unlist(lst),nrow = length(X$sound.files), byrow = TRUE)))
   colnames(df)[3:ncol(df)]<-paste("ffreq",1:(ncol(df)-2),sep = "-")
-  return(df)
-  if(!is.null(path)) setwd(wd)
+  df[ ,3:ncol(df)] <- round(df[ ,3:ncol(df)], 3)
+   return(df)
+  
 }

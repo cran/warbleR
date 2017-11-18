@@ -9,7 +9,7 @@ sp.en.ts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = NULL,
    pb = TRUE, clip.edges = FALSE, leglab = "sp.en.ts", sp.en.range = c(2, 10), ...)
 }
 \arguments{
-\item{X}{Data frame with results containing columns for sound file name (sound.files), 
+\item{X}{'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
 selection number (selec), and start and end time of signal (start and end).
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame.}
 
@@ -82,7 +82,7 @@ if there are no frequenciesabove the amplitude theshold in between signal segmen
  of end can be removed with "clip.edges".
 }
 \examples{
-\dontrun{
+{
 # set the temp directory
 setwd(tempdir())
 
@@ -94,11 +94,11 @@ writeWave(Phae.long3, "Phae.long3.wav") #save sound files
 writeWave(Phae.long4, "Phae.long4.wav")
 
 # without clip edges
-sp.en.ts(X = selec.table, threshold = 10, bp = NULL, clip.edges = F, length.out = 10,
+sp.en.ts(X = selec.table, threshold = 10, bp = NULL, clip.edges = FALSE, length.out = 10,
  type = "b", sp.en.range = c(-25, 10))
 
 # with clip edges and length.out 10
-sp.en.ts(X = selec.table, threshold = 10, bp = c(2, 12), clip.edges = T, length.out = 10)
+sp.en.ts(X = selec.table, threshold = 10, bp = c(2, 12), clip.edges = TRUE, length.out = 10)
 
 }
 }
@@ -110,9 +110,10 @@ Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
  \code{\link{snrspecs}} for creating spectrograms to 
   optimize noise margins used in \code{\link{sig2noise}}
 
-Other spectrogram.creators: \code{\link{dfDTW}},
-  \code{\link{dfts}}, \code{\link{ffDTW}},
-  \code{\link{ffts}}, \code{\link{snrspecs}},
-  \code{\link{specreator}}, \code{\link{trackfreqs}}
+Other spectrogram creators: \code{\link{color.spectro}},
+  \code{\link{dfDTW}}, \code{\link{dfts}},
+  \code{\link{ffDTW}}, \code{\link{ffts}},
+  \code{\link{snrspecs}}, \code{\link{specreator}},
+  \code{\link{trackfreqs}}
 }
 
