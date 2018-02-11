@@ -49,7 +49,7 @@ listed in a selection table as in \code{\link{selec.table}}.
 \examples{
 { 
 # First set empty folder
-setwd(tempdir())
+# setwd(tempdir())
 
 # save wav file examples
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
@@ -69,11 +69,12 @@ getwd()
 }
 
 }
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
-}
 \seealso{
 \code{\link{seltailor}} for tailoring selections 
  \url{https://marce10.github.io/2017/06/06/Individual_sound_files_for_each_selection.html}
-}
 
+Other selection manipulation, sound file manipulation: \code{\link{consolidate}}
+}
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
+}

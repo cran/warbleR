@@ -24,7 +24,7 @@ This function returns the duration (in seconds) of sound files.
 \examples{
 {
 # Set temporary working directory
-setwd(tempdir())
+# setwd(tempdir())
 
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3"))
 writeWave(Phae.long1,"Phae.long1.wav")
@@ -38,4 +38,3 @@ wavdur()
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
-

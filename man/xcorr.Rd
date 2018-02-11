@@ -77,7 +77,7 @@ from the awesome R package `monitoR`.
 \examples{
 {
 #First set temporary working directory
-setwd(tempdir())
+# setwd(tempdir())
 
 #load data
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4","selec.table"))
@@ -91,10 +91,9 @@ dens = 1, wn = 'hanning', cor.method = "pearson")
 
 }
 }
-\author{
-Marcelo Araya-Salas \email{araya-salas@cornell.edu})
-}
 \seealso{
 \code{\link{xcorr.graph}}
 }
-
+\author{
+Marcelo Araya-Salas \email{araya-salas@cornell.edu})
+}

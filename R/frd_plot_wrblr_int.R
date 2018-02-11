@@ -1,6 +1,6 @@
 #internal warbleR function, not to be called by users. Plots detected frequency range.
 
-frd.plot.INTFUN <- function(wave, detections, wl = 512, threshold = 10, wn = "hanning", flim = c(0, 22), bp = NULL, fast.spec = FALSE, ovlp = 50, pal = reverse.gray.colors.2, widths = c(2, 1), main = NULL, all.detec = F) {
+frd_plot_wrblr_int <- function(wave, detections, wl = 512, threshold = 10, wn = "hanning", flim = c(0, 22), bp = NULL, fast.spec = FALSE, ovlp = 50, pal = reverse.gray.colors.2, widths = c(2, 1), main = NULL, all.detec = F) {
   
   # attach freq and amplitude values
   z <- detections$af.mat[,1]
@@ -37,7 +37,7 @@ frd.plot.INTFUN <- function(wave, detections, wl = 512, threshold = 10, wn = "ha
     par(mar = c(3.4, 3.4, 0.5, 0))
     
     # create spectro
-    spectro.INTFUN.2(wave = wave, f = f, flim = flim, fast.spec = fast.spec, palette = pal, ovlp = ovlp, wl = wl, grid = F, tlab = "", flab = "", wn = wn)
+    spectro_wrblr_int2(wave = wave, f = f, flim = flim, fast.spec = fast.spec, palette = pal, ovlp = ovlp, wl = wl, grid = F, tlab = "", flab = "", wn = wn)
   
     #add gray polygon on detected frequency bands
     lapply(seq_len(length(min.start)), function(e)

@@ -102,9 +102,9 @@ This function can be used to test different margins to facilitate
   when osci or sc = \code{TRUE}, this may take some optimization by the user.
 }
 \examples{
-{
+\dontrun{
 # Set temporary working directory
-setwd(tempdir())
+# setwd(tempdir())
  
 data(list = c("Phae.long1", "Phae.long2", "selec.table"))
 writeWave(Phae.long1, "Phae.long1.wav") #save sound.files
@@ -127,9 +127,6 @@ mar = 0.2, snrmar = 0.01, wl = 300)
 getwd()
 }
 }
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
-}
 \seealso{
 \code{\link{trackfreqs}} for creating spectrograms to visualize 
   frequency measurements by \code{\link{specan}}, \code{\link{specreator}} for 
@@ -141,4 +138,6 @@ Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{sp.en.ts}}, \code{\link{specreator}},
   \code{\link{trackfreqs}}
 }
-
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
+}

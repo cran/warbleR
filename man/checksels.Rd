@@ -42,7 +42,7 @@ fixed using \code{\link{fixwavs}}) ('sox' must be installed to be able to run th
 \examples{
 {
 # First set temporary folder
-setwd(tempdir())
+# setwd(tempdir())
 
 # save wav file examples
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "selec.table"))
@@ -53,10 +53,9 @@ writeWave(Phae.long3,"Phae.long3.wav")
 checksels(X = selec.table)
 }
 }
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
-}
 \seealso{
 \code{\link{checkwavs}}
 }
-
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}

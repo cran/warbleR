@@ -1,6 +1,6 @@
 #internal warbleR function called by catalog
 
-rectw.INTFUN <- function(xl, yb, xr, yt, bor, cl, ang = NULL, den = NULL, pattern = "no.pattern", lw = 2, lt = 1)
+rectw_wrblr_int <- function(xl, yb, xr, yt, bor, cl, ang = NULL, den = NULL, pattern = "no.pattern", lw = 2, lt = 1)
 {
   if(pattern == "no.pattern")
     rect(xleft = xl, ybottom = yb, xright = xr, ytop = yt, border = bor, col = cl, angle = ang, density = den, lwd = lw, lty = lt) 

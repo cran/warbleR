@@ -1,7 +1,22 @@
 # NEWS
 
+# warbleR 1.1.10
+##### (Release date: 2018-08-28)
+
+## Changes and additions:
+
+* Example sound files have been moved to the new R package 'NatureSounds' (which is now a dependency)
+
+## Bug fixes:
+
+* Problem with multiple tags in 'catalog'
+
+## New functions:
+
+* rm_sil: removes silence segments (i.e. segments with very low amplitude values) from wave files
+* consolidate: copies (sound) files scattered in several directories into a single folder
 # warbleR 1.1.9
-##### (Release date: XXXXXXXXXXX)
+##### (Release date: 2017-11-18)
 
 ## Changes and additions:
 

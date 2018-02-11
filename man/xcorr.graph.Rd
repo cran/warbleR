@@ -39,7 +39,7 @@ default graphic device. In such cases saving the plot as and image file is advic
 {
 #load data
 #First set temporary working directory]
-setwd(tempdir())
+# setwd(tempdir())
 
 #load data
 data(list = c("Phae.long1", "Phae.long2", "selec.table"))
@@ -54,10 +54,9 @@ writeWave(Phae.long2, "Phae.long2.wav")
   xcorr.graph(X = xcor, cex.cor = 2, cex.lab = 1, rel.cex = FALSE)
 }
 }
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
-}
 \seealso{
 \code{\link{xcorr}}
 }
-
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}

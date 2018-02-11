@@ -50,9 +50,9 @@ This function subsets selections (or sound files if \code{lspec} is \code{TRUE})
  image files should be in the working directory (or the directory provided in 'path').
 }
 \examples{
-{ 
+\dontrun{ 
 # First set temporary folder
-setwd(tempdir())
+# setwd(tempdir())
 
 # save wav file examples
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "selec.table"))
@@ -83,4 +83,3 @@ lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors, wl = 300, ovlp = 10)
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
-

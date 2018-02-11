@@ -61,7 +61,7 @@ or download the associated sound files. Complex queries can be done by using sea
 \examples{
 \dontrun{
 # Set temporary working directory
-setwd(tempdir())
+# setwd(tempdir())
 
 # search without downloading
 df1 <- querxc(qword = 'Phaethornis anthophilus', download = FALSE)
@@ -89,11 +89,10 @@ phae.cr <- querxc(qword = 'gen:phaeochroa cnt:"costa rica"', download = FALSE)
 femsong <- querxc(qword = 'type:song type:female', download = FALSE)
 }
 }
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
-}
 \seealso{
 \code{\link{xcmaps}}, 
 \url{https://marce10.github.io/2016/12/22/Download_a_single_recording_for_each_species_in_a_site_from_Xeno-Canto.html}
 }
-
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}

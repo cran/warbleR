@@ -1,7 +1,8 @@
 #internal warbleR function, not to be called by users. It is a modified version of seewave::spectro 
 # that allows to plot spectrograms without resetting the graphic device.It also allow using image() 
 # which substantially increases speed (although makes some options unavailable)
-spectro.INTFUN.2 <- function(wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0, 
+#last modification on feb-09-2017 (MAS)
+spectro_wrblr_int2 <- function(wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0, 
                              complex = FALSE, norm = TRUE, fftw = FALSE, dB = "max0", 
                              dBref = NULL, plot = TRUE, grid = TRUE, 
                              cont = FALSE, collevels = NULL, palette = spectro.colors, 
@@ -27,7 +28,7 @@ spectro.INTFUN.2 <- function(wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0
     dB <- NULL
     warning("\n'dB' was turned to 'NULL'")
   }
-  input <- inputw(wave = wave, f = f)
+  input <- seewave::inputw(wave = wave, f = f)
   
   wave <- input$w
   
@@ -48,7 +49,7 @@ spectro.INTFUN.2 <- function(wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0
   
   # to fix function name change in after version 2.0.5
   # if(exists("stdft")) stft <- stdft
-  z <- stft(wave = wave, f = f, wl = wl, zp = zp, step = step, 
+  z <- stft_wrblr_int(wave = wave, f = f, wl = wl, zp = zp, step = step, 
             wn = wn, fftw = fftw, scale = norm, complex = complex)
   if (!is.null(tlim) && trel) {
     X <- seq(tlim[1], tlim[2], length.out = length(step))
@@ -99,7 +100,7 @@ spectro.INTFUN.2 <- function(wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0
   if(!is.null(amp.cutoff)) Z[Z >= (diff(range(Z)) * amp.cutoff) + min(Z)] <- 0 
   
   if(!fast.spec)
-    filled.contour.INTFUN(x = X, y = Y, z = Z, levels = collevels, 
+    filled_contour_wrblr_int(x = X, y = Y, z = Z, levels = collevels, 
                           nlevels = 20, plot.title = title(main = main, 
                                                            xlab = tlab, ylab = flab), color.palette = palette, 
                           axisX = FALSE, axisY = axisY, col.lab = collab, 

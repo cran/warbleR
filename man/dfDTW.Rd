@@ -101,7 +101,7 @@ The function uses the \code{\link[stats]{approx}} function to interpolate values
 \examples{
 {
 # set the temp directory
-setwd(tempdir())
+# setwd(tempdir())
 
 #load data
 data(list = c("Phae.long1", "Phae.long2","selec.table"))
@@ -112,9 +112,6 @@ writeWave(Phae.long1, "Phae.long1.wav")
 dfDTW(selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300)
 
 }
-}
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
 \seealso{
 \code{\link{specreator}} for creating spectrograms from selections,
@@ -128,4 +125,6 @@ Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{sp.en.ts}}, \code{\link{specreator}},
   \code{\link{trackfreqs}}
 }
-
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}

@@ -38,7 +38,7 @@ convert all .mp3 files in working directory to .wav format. Function used intern
 \examples{
 \dontrun{
 # First set temporary folder
-setwd(tempdir())
+# setwd(tempdir())
  
 #Then download mp3 files from xeno-canto
 querxc(qword = "Phaethornis aethopygus", download = TRUE)
@@ -53,4 +53,3 @@ getwd()
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
 }
-

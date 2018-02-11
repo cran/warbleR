@@ -77,7 +77,7 @@ Signal-to-noise ratio (SNR) is a measure of the level of a desired signal compar
 \examples{
 {
 # First set temporary folder
-setwd(tempdir())
+# setwd(tempdir())
 
 data(list = c("Phae.long1","selec.table"))
 writeWave(Phae.long1, "Phae.long1.wav") #save sound files 
@@ -94,4 +94,3 @@ sig2noise(selec.table[grep("Phae.long1", selec.table$sound.files), ], mar = 0.1)
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
 }
-

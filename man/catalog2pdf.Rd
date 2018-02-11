@@ -38,7 +38,7 @@ The function combines catalog images in .jpeg format from the \code{\link{catalo
 \examples{
 \dontrun{
 # Set temporary working directory
-setwd(tempdir())
+# setwd(tempdir())
 
 # save sound file examples
 data(list = c("Phae.long1", "Phae.long2"))
@@ -54,11 +54,10 @@ catalog2pdf(keep.img = FALSE)
 getwd()
 }
 }
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
-}
 \seealso{
 \code{\link{catalog2pdf}}, 
 \url{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}
 }
-
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}

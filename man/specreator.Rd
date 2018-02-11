@@ -90,7 +90,7 @@ This option is indicated for signals with high background noise levels. Palette 
 \code{\link[monitoR]{gray.3}}, \code{\link[monitoR]{topo.1}} and \code{\link[monitoR]{rainbow.1}} (which should be imported from the package monitoR) seem
 to work better with 'fast' spectograms. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
 \code{\link[monitoR]{gray.3}} offer 
-decreasing darkness levels. THIS IS STILL BEING TESTED.}
+decreasing darkness levels.}
 
 \item{...}{Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments.}
 }
@@ -101,7 +101,7 @@ Image files containing spectrograms of the signals listed in the input data fram
 \code{specreator} creates spectrograms of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
 }
 \details{
-This function provides access to bath process of (a modified version of) the \code{\link[seewave]{spectro}} function from the 'seewave' package. The function creates spectrograms for visualization of vocalizations. 
+This function provides access to batch process of (a modified version of) the \code{\link[seewave]{spectro}} function from the 'seewave' package. The function creates spectrograms for visualization of vocalizations. 
 Setting inner.mar to c(4,4.5,2,1) and outer.mar to c(4,2,2,1) works well when picsize = 2 or 3. 
 Title font size, inner.mar and outer.mar (from mar and oma) don't work well when osci or sc = TRUE,
 this may take some optimization by the user. Setting 'fast' argument to TRUE significantly increases speed, although 
@@ -111,7 +111,7 @@ high background noise levels.
 \examples{
 { 
 # First set empty folder
-setwd(tempdir())
+# setwd(tempdir())
 data(list = c("Phae.long1", "Phae.long2","selec.table"))
 writeWave(Phae.long1, "Phae.long1.wav") #save sound files 
 writeWave(Phae.long2, "Phae.long2.wav")
@@ -125,9 +125,6 @@ getwd()
 }
 
 }
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
-}
 \seealso{
 \code{\link{trackfreqs}} for creating spectrograms to visualize 
   frequency measurements by \code{\link{specan}}, \code{\link{snrspecs}} for 
@@ -139,4 +136,6 @@ Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{snrspecs}}, \code{\link{sp.en.ts}},
   \code{\link{trackfreqs}}
 }
-
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
+}

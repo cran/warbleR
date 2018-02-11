@@ -29,7 +29,7 @@ should be overwritten. Default is \code{FALSE}.}
 copied to. Ignored if 'to' is provided. Default is \code{"image_files"}.}
 }
 \description{
-\code{move.imgs} Move/copy image files created by \code{\link{warbleR}} between 
+\code{move.imgs} moves/copies image files created by \code{\link{warbleR}} between 
 directories (folders).
 }
 \details{
@@ -39,7 +39,7 @@ of the \code{\link{warbleR}} function. It copies/cuts files between directories.
 \examples{
 {
 #Set temporary working directory
-setwd(tempdir())
+# setwd(tempdir())
 
 #load data
 data("Cryp.soui")
@@ -63,10 +63,9 @@ move.imgs(cut = TRUE, to = "image_files")
 getwd()
 }
 }
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
-}
 \seealso{
 \code{\link{filtersels}}
 }
-
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}

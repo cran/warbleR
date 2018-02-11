@@ -37,7 +37,7 @@ The function is intended for a "quick and dirty" check of the .wav files in a se
 \examples{
 {
 # First set temporary folder
-setwd(tempdir())
+# setwd(tempdir())
 
 # save wav file examples
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
@@ -53,10 +53,9 @@ checkwavs()
 checkwavs(X = selec.table)
 }
 }
-\author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
-}
 \seealso{
 \code{\link{checksels}} \code{\link{seltailor}}
 }
-
+\author{
+Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+}

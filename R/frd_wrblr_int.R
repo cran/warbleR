@@ -1,6 +1,6 @@
 #internal warbleR function, not to be called by users. Detects frequency range.
 
-frd.INTFUN <- function(wave, wl = 512, fsmooth = 0.1, threshold = 10, wn = "hanning", flim = c(0, 22), bp = NULL, ovlp = 50)
+frd_wrblr_int <- function(wave, wl = 512, fsmooth = 0.1, threshold = 10, wn = "hanning", flim = c(0, 22), bp = NULL, ovlp = 50)
 {
   # get sampling rate
   f <-  wave@samp.rate
