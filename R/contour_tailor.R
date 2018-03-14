@@ -1,16 +1,16 @@
 #' Interactive view of spectrograms to tailor selections 
 #' 
-#' \code{seltailor} produces an interactive spectrographic view (similar to \code{\link{manualoc}}) in 
+#' \code{contour_tailor} produces an interactive spectrographic view (similar to \code{\link{manualoc}}) in 
 #' which the start/end times and frequency range of acoustic signals listed in a data frame can be adjusted.
-#' @usage seltailor(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
+#' @usage contour_tailor(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
 #'  osci = TRUE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE, pause = 1,
 #'   comments = TRUE, path = NULL, frange = FALSE, fast.spec = FALSE, ext.window = TRUE,
 #'   width = 15, height = 5, index = NULL, collevels = NULL, 
-#'   title = c("sound.files", "selec"), ts.df = NULL, col = "#E37222", alpha = 0.7, ...)
+#'   title = c("sound.files", "selec"),...)
 #' @param X 'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
-#' be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above. Notice that, if an output file ("seltailor_output.csv") is found in the working directory it will be given priority over an input data frame.
+#' be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above. Notice that, if an output file ("contour_tailor_output.csv") is found in the working directory it will be given priority over an input data frame.
 #' @param wl A numeric vector of length 1 specifying the spectrogram window length. Default is 512.
 #' @param flim A numeric vector of length 2 specifying the frequency limit (in kHz) of 
 #'   the spectrogram, as in the function \code{\link[seewave]{spectro}}. 
@@ -56,16 +56,11 @@
 #'  \code{\link[seewave]{spectro}}).
 #' @param title Character vector with the names of the columns to be included in the title for each
 #' selection.
-#' @param ts.df Optional. Data frame with frequency contour time series of signals to be tailored. If provided then 
-#' 'autonext' is set to \code{FALSE}. Default is \code{NULL}. The data frame must include the 'sound.files' and 'selec' 
-#' columns for the same selections included in 'X'.
-#' @param col Character vector defining the color of the points when 'ts.df' is provided. Default is "#E37222" (orange).
-#' @param alpha Numeric of length one to adjust transparency of points when adjusting frequency contours. 
 #' @param ... Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments. 
 #' @return data frame similar to X with the and a .csv file saved in the working directory with start and end time of 
 #'   selections.
 #' @export
-#' @name seltailor
+#' @name contour_tailor
 #' @examples
 #' \dontrun{
 #' #Set temporary working directory
@@ -77,11 +72,11 @@
 #' writeWave(Phae.long3,"Phae.long3.wav")
 #' writeWave(Phae.long4,"Phae.long4.wav")
 #' 
-#' seltailor(X =  selec.table, flim = c(1,12), wl = 300, auto.next = TRUE)
+#' contour_tailor(X =  selec.table, flim = c(1,12), wl = 300, auto.next = TRUE)
 #' 
 #' # Read output .csv file
-#' seltailor.df <- read.csv("seltailor_output.csv")
-#' seltailor.df
+#' contour_tailor.df <- read.csv("contour_tailor_output.csv")
+#' contour_tailor.df
 #' 
 #' # check this directory for .csv file after stopping function
 #' getwd()
@@ -91,11 +86,10 @@
 #'  coordinates the selections. 4 "buttons" are provided at the upper right side of the spectrogram that
 #'   allow to stop the analysis ("stop"), go to the next sound file ("next"), return to the 
 #'   previous selection ("previous") or delete 
-#'   the current selection ("delete"). An additional "button" ("contour") to tailored frequency contour is shown
-#'   when 'ts.df' is provided. When a unit has been selected, the function plots 
+#'   the current selection ("delete"). When a unit has been selected, the function plots 
 #'   dotted lines in the start and end of the selection in the spectrogram (or a box if 
 #'   \code{frange = TRUE}). Only the last selection is kept for each
-#'    selection that is adjusted. The function produces a .csv file (seltailor_output.csv) 
+#'    selection that is adjusted. The function produces a .csv file (contour_tailor_output.csv) 
 #'    with the same information than the input data frame, except for the new time 
 #'    coordinates, plus a new column (X$tailored) indicating if the selection 
 #'   has been tailored. The file is saved in the working directory  and is updated every time the user
@@ -105,23 +99,18 @@
 #'  original time/frequency coordinates are kept. When resuming the process (after "stop" and re-running 
 #'  the function in the same working directory), the function will continue working on the
 #'  selections that have not been analyzed. The function also displays a progress bar right on
-#'  top of the sepctrogram. The zoom can be adjusted by setting the \code{mar} argument.
-#'  To fix contours a data.frame containing the 'sound.files' and 'selec' columns as in 'X' as well 
-#'  as the frequency values at each contour step must be provided. The function plots points correponding to the 
-#'  time/frequency coordinates of each element of the contour. Cliking on the spectrogram will substitute the 
-#'  frequency value of the points. The contour point closest in time to the "click" will be replaced by the 
-#'  frequency value of the "click". 
-#'  
+#'  top of the sepctrogram.
+
+#'   The zoom can be adjusted by setting the \code{mar} argument.
 #' @seealso  \code{\link{manualoc}}
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on jul-5-2016 (MAS)
 
-seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
-                       osci = TRUE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE,
-                       pause = 1, comments = TRUE, path = NULL, frange = FALSE, fast.spec = FALSE,
-                       ext.window = TRUE, width = 15, height = 5, index = NULL,
-                       collevels = NULL, title = c("sound.files", "selec"), 
-                       ts.df = NULL, col = "#E37222", alpha = 0.7, ...)
+contour_tailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
+                      osci = TRUE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE,
+                      pause = 1, comments = TRUE, path = NULL, frange = FALSE, fast.spec = FALSE,
+                      ext.window = TRUE, width = 15, height = 5, index = NULL,
+                      collevels = NULL, title = c("sound.files", "selec"), ...)
 {
   
   # reset working directory 
@@ -133,24 +122,10 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     setwd(path)
   }  
   
-  # no autonext if ts.df provided
-  if(auto.next & !is.null(ts.df)) {
-    cat("'auto.next' not available when 'ts.df' is provided") 
-    auto.next <- FALSE
-  }
-  
-  
-  # merge ts.df and X
-  if(!is.null(ts.df))
-  {  
-    if(nrow(X) != ts.df) stop("number of rows in 'ts.df' and 'X' do not match")
-    
-      ncl <- names(ts.df)[-c(1:2)]
-    X <- merge(X, ts.df, by = c("sound.files", "selec"))
-  }
-  
   #if X is not a data frame
   if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  
+  
   
   #if there are NAs in start or end stop
   if(any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
@@ -173,12 +148,12 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
   if(frange & !all(any(names(X) == "bottom.freq"), any(names(X) == "top.freq")))
     X$top.freq <- X$bottom.freq <- NA
   
-  if(!file.exists(file.path(getwd(), "seltailor_output.csv")))
+  if(!file.exists(file.path(getwd(), "contour_tailor_output.csv")))
   {X$tailored <- ""
   X$tailored <- as.character(X$tailored)
   if(!is.null(index))   X$tailored[!1:nrow(X) %in% index] <- "y"
-  write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)  
-  } else {X <- read.csv("seltailor_output.csv", stringsAsFactors = FALSE)  
+  write.csv(droplevels(X[X$tailored != "delete", ]), "contour_tailor_output.csv", row.names =  FALSE)  
+  } else {X <- read.csv("contour_tailor_output.csv", stringsAsFactors = FALSE)  
   if(any(is.na(X$tailored))) X$tailored[is.na(X$tailored)] <-""
   if(all(any(!is.na(X$tailored)),nrow(X[X$tailored %in% c("y", "delete"),]) == nrow(X))) {
     options(show.error.messages=FALSE)
@@ -199,6 +174,7 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
   
   #set original number of sels to tailor
   org.sel.n <- nrow(X)
+  
   
   #this first loop runs over selections
   h <- 1
@@ -256,10 +232,9 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     xs <- grconvertX(x = c(0.92, 0.92, 0.99, 0.99), from = "npc", to = "user")
     
     labels <- c("stop", "next", "previous", "delete")
-    if(!is.null(ts.df)) labels <- c(labels, "contour")
-    
     mrg <- 0.05
     cpy <- sapply(0:(length(labels)- 1), function(x) {0.95 - (x * 3 * mrg)})
+    
     
     #mid position ofbuttons in c(0, 1) range
     ys <- c(-mrg, mrg, mrg, -mrg)
@@ -272,7 +247,6 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
       return(grY)   
     })
     
-    
     #ask users to select what to do next (1 click)
     xy2 <- xy <- locator(n = 1, type = "n")
     
@@ -282,26 +256,13 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     xy2$x[xy2$x < 0] <- 0  
     xy2$y[xy2$y < 0] <- 0 
     
-    # fix freq
-    if(!is.null(ts.df))
-      if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[5]]) & xy$y < max(ys[[5]]))
-      {
-        
-        Y <- fix_cntr_wrblr_int(X, j, ending.buttons = 1:4, ncl, tlim, xs, ys, flim = fl, col, alpha)
-        X[, ncl] <- Y$ts.df
-        xy <- Y$xy
-        rm(Y)
-        
-        if(selcount > 0) X$tailored[j] <- "y"
-        write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)
-      }
     
     #if delete
     if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[4]]) & xy$y < max(ys[[4]]))
     {    
       # delete row
       X$tailored[j] <- "delete"
-      write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)  
+      write.csv(droplevels(X[X$tailored != "delete", ]), "contour_tailor_output.csv", row.names =  FALSE)  
       if(nrow(X[X$tailored %in% c("y", "delete") ,]) == nrow(X)) {
         dev.off()
         #return X
@@ -327,7 +288,7 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[2]]) & xy$y < max(ys[[2]]))
     {    
       X$tailored[j] <- "y"
-      write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)  
+      write.csv(droplevels(X[X$tailored != "delete", ]), "contour_tailor_output.csv", row.names =  FALSE)  
       
       if(nrow(X[X$tailored %in% c("y", "delete"),]) == nrow(X)) {
         dev.off()
@@ -346,7 +307,7 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     {
       dev.off()
       if(selcount > 0) X$tailored[j] <- "y"
-      write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)
+      write.csv(droplevels(X[X$tailored != "delete", ]), "contour_tailor_output.csv", row.names =  FALSE)
       #return X
       return(droplevels(X[X$tailored != "delete", ]))
       
@@ -368,26 +329,12 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
       xy$x[xy$x < 0] <- 0  
       xy$y[xy$y < 0] <- 0 
       
-      # fix freq
-      if(!is.null(ts.df))
-        if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[5]]) & xy$y < max(ys[[5]]))
-        {
-          
-          Y <- fix_cntr_wrblr_int(X, j, ending.buttons = 1:4, ncl, tlim, xs, ys, flim = fl, col, alpha)
-          X[, ncl] <- Y$ts.df
-          xy <- Y$xy
-          rm(Y)
-          
-          if(selcount > 0) X$tailored[j] <- "y"
-          write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)
-        }
-      
       #if delete
       if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[4]]) & xy$y < max(ys[[4]]))
       {    
         # delete row
         X$tailored[j] <- "delete"
-        write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)  
+        write.csv(droplevels(X[X$tailored != "delete", ]), "contour_tailor_output.csv", row.names =  FALSE)  
         if(nrow(X[X$tailored %in% c("y", "delete") ,]) == nrow(X)) {
           dev.off()
           
@@ -406,10 +353,8 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
       if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[3]]) & xy$y < max(ys[[3]]))
       {    
         h <- h - 1
-        if(h == 0) {
-          h <- 1
-          cat("These selection was the first one during the selection procedure (can't go further back)")
-        }
+        if(h == 0) {h <- 1
+        cat("These selection was the first one during the selection procedure (can't go further back)")}
         break
       }
       
@@ -417,7 +362,7 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
       if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[2]]) & xy$y < max(ys[[2]]))
       {    
         X$tailored[j] <- "y"
-        write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)  
+        write.csv(droplevels(X[X$tailored != "delete", ]), "contour_tailor_output.csv", row.names =  FALSE)  
         
         if(nrow(X[X$tailored %in% c("y", "delete"),]) == nrow(X)) {
           dev.off()
@@ -437,7 +382,7 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
       if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[1]]) & xy$y < max(ys[[1]]))
       {dev.off()
         if(selcount > 0) X$tailored[j] <- "y"
-        write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)
+        write.csv(droplevels(X[X$tailored != "delete", ]), "contour_tailor_output.csv", row.names =  FALSE)
         options(show.error.messages=FALSE)
         
         #return X
@@ -479,7 +424,7 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
         }
         
         # save selections
-        write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)
+        write.csv(droplevels(X[X$tailored != "delete", ]), "contour_tailor_output.csv", row.names =  FALSE)
         
         if(nrow(X[X$tailored %in% c("y", "delete"),]) == nrow(X)) { 
           dev.off()

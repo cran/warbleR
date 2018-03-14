@@ -5,7 +5,8 @@
 \title{Find overlapping selections}
 \usage{
 ovlp_sels(X, index = FALSE, pb = TRUE, max.ovlp = 0, relabel = FALSE, 
-drop = FALSE, priority = NULL, priority.col = NULL)
+drop = FALSE, priority = NULL, priority.col = NULL, unique.labs = TRUE, 
+indx.row = FALSE, parallel = 1)
 }
 \arguments{
 \item{X}{'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
@@ -31,14 +32,24 @@ all but one of the overlapping selection. Default is \code{FALSE}.}
 must list the levels of the column used to determine priority (argument priority.col) in the desired 
 priority order. Default is \code{NULL}.}
 
-\item{priority.col}{Character vector of length with the name of the column use to determine the priority of
+\item{priority.col}{Character vector of length 1 with the name of the column use to determine the priority of
 overlapped selections. Default is \code{NULL}.}
+
+\item{unique.labs}{Logical to control if labels are reused across different sound files (if \code{TRUE}, default).}
+
+\item{indx.row}{Logical. If \code{TRUE} then a character column with the indices of all selections that overlapped with
+each selection is added to the ouput data frame (if \code{index = TRUE}). For instance, if the selections in rows 1,2 
+and 3 all overlapped with each other, the 'indx.row' value would be "1/2/3" for all. However, if selection 3 only overlaps
+ with 2 but not with 1, then it returns, "1/2" for row 1, "1/2/3" for row 2, and "2/3" for row 3. Default is \code{FALSE}.}
+
+\item{parallel}{Numeric. Controls whether parallel computing is applied.
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
 }
 \value{
 A data frame with the columns in X plus an additional column ('ovlp_sels') indicating 
 which selections overlap. The ones with the same number overlap with each other. If 
 \code{drop = TRUE} only the non-overlapping selections are return. If 2 or more selections 
-overlap only the first is kept.
+overlap only the first one is kept.
 }
 \description{
 \code{ovlp_sels} finds which selections overlap in time within a given sound file.

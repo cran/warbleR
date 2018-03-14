@@ -33,6 +33,8 @@ License: GPL (>= 2)
 
   
   \code{\link{querxc}}: Download recordings and metadata from 'Xeno-Canto'
+  
+  \code{\link{sim_songs}}: Simulate animal vocalizations
 }
 
 \section{Managing sound files}{
@@ -107,7 +109,11 @@ License: GPL (>= 2)
   
   \code{\link{ovlp_sels}}: Find selections that overlap in time within a given sound file
   
-  @section Graphical outputs:
+  \code{\link{track_harm}}:  Track harmonic frequency contour
+}
+
+\section{Graphical outputs}{
+
   
   \code{\link{xcmaps}}: Create maps to visualize the geographic spread of 'Xeno-Canto' recordings
   

@@ -5,7 +5,8 @@
 #'   = reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar =
 #'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE,
 #'   propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE,  sc = FALSE, line = TRUE,
-#'   mar = 0.05, it = "jpeg", parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, ...)
+#'   col = adjustcolor("red2", 0.6), lty = 3, mar = 0.05, it = "jpeg", 
+#'   parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, ...)
 #' @param  X 'selection.table' or data frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signals (start and end). 
 #' Low and high frequency columns are optional.
@@ -46,6 +47,8 @@
 #'   \code{FALSE}.
 #' @param line Logical argument to add red lines at start and end times of selection 
 #' (or box if bottom.freq and top.freq columns are provided). Default is \code{TRUE}.
+#' @param col Color of 'line'. Default is `adjustcolor("red2", alpha.f = 0.7)`.`
+#' @param lty Type of 'line' as in \code{\link[graphics]{par}}. Default is 1. 
 #' @param mar Numeric vector of length 1. Specifies the margins adjacent to the start and end points of selections,
 #' dealineating spectrogram limits. Default is 0.05.
 #' @param it A character vector of length 1 giving the image type to be used. Currently only
@@ -54,8 +57,7 @@
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
-#' @param pb Logical argument to control progress bar. Default is \code{TRUE}. Note that progress bar is only used
-#' when parallel = 1.
+#' @param pb Logical argument to control progress bar. Default is \code{TRUE}.
 #' @param fast.spec Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
 #' increases performance (much faster), although some options become unavailable, as collevels, and sc (amplitude scale).
 #' This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
@@ -95,13 +97,13 @@
 #' }
 #' 
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
-#last modification on jul-5-2016 (MAS)
+#last modification on mar-13-2018 (MAS)
 
 specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
                         inner.mar = c(5,4,4,2), outer.mar = c(0,0,0,0), picsize = 1, res = 100, 
-                        cexlab = 1, title = TRUE, propwidth = FALSE, xl=1, osci = FALSE, 
-                        gr = FALSE, sc = FALSE, line = TRUE, mar = 0.05, it = "jpeg", parallel = 1, 
-                       path = NULL, pb = TRUE, fast.spec = FALSE, ...){
+                        cexlab = 1, title = TRUE, propwidth = FALSE, xl=1, osci = FALSE,  gr = FALSE,
+                       sc = FALSE, line = TRUE, col = adjustcolor("red2", 0.6), lty = 3, mar = 0.05, 
+                       it = "jpeg", parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, ...){
   
   # reset working directory 
   wd <- getwd()
@@ -161,13 +163,6 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
-  #if parallel and pb in windows
-  if(parallel > 1 &  pb & Sys.info()[1] == "Windows") {
-    message("parallel with progress bar is currently not available for windows OS")
-    message("running parallel without progress bar")
-    pb <- FALSE
-  } 
-  
   #create function to run within Xapply functions downstream     
   specreFUN <- function(X, i, mar, flim, xl, picsize, res, wl, ovlp, cexlab){
     
@@ -225,58 +220,23 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
     if(line){  
       if(any(names(X) == "bottom.freq") & any(names(X) == "top.freq"))
       {   if(!is.na(X$bottom.freq[i]) & !is.na(X$top.freq[i]))
-        polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$bottom.freq[i], X$top.freq[i], X$top.freq[i], X$bottom.freq[i]), lty = 3, border = "blue", lwd = 1.2) else
-          abline(v = c(mar1, mar2), col= "red", lty = "dashed")
-      } else abline(v = c(mar1, mar2), col= "red", lty = "dashed")
+        polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$bottom.freq[i], X$top.freq[i], X$top.freq[i], X$bottom.freq[i]), lty = lty, border = col, lwd = 1.2) else
+          abline(v = c(mar1, mar2), col= col, lty = lty)
+      } else abline(v = c(mar1, mar2), col= col, lty = lty)
     }  
     dev.off()
   }
 
-  # Run parallel in windows
-  if(parallel > 1) {
-    if(Sys.info()[1] == "Windows") {
-      
-      i <- NULL #only to avoid non-declared objects
-      
-      cl <- parallel::makeCluster(parallel)
-      
-      doParallel::registerDoParallel(cl)
-      
-      sp <- foreach::foreach(i = 1:nrow(X)) %dopar% {
-        specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab)
-      }
-      
-      parallel::stopCluster(cl)
-      
-    } 
-    if(Sys.info()[1] == "Linux") {    # Run parallel in Linux
-     
-      if(pb)       
-        sp <- pbmcapply::pbmclapply(1:nrow(X), mc.cores = parallel, function (i) {
-        specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab)
-      }) else
-      sp <- parallel::mclapply(1:nrow(X), mc.cores = parallel, function (i) {
-        specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab)
-      })
-    }
-    if(!any(Sys.info()[1] == c("Linux", "Windows"))) # parallel in OSX
-    {
-      cl <- parallel::makeForkCluster(getOption("cl.cores", parallel))
-      
-      doParallel::registerDoParallel(cl)
-      
-      sp <- foreach::foreach(i = 1:nrow(X)) %dopar% {
-        specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab)
-      }
-      
-      parallel::stopCluster(cl)
-      
-    }
-    }
-  else {
-    if(pb)
-    sp <- pbapply::pblapply(1:nrow(X), function(i) specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab)) else 
-      sp <- lapply(1:nrow(X), function(i) specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab))
-  }
+  # set pb options 
+  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
   
+  # set clusters for windows OS
+  if (Sys.info()[1] == "Windows" & parallel > 1)
+    cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
+  
+  # run loop apply function
+  out <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
+  { 
+    specreFUN(X = X, i = i, mar = mar, wl = wl, flim = flim, xl = xl, picsize = picsize, res = res, ovlp = ovlp, cexlab = cexlab)
+  }) 
 }
