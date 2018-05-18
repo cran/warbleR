@@ -5,7 +5,8 @@
 #' @usage ffts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = c(0, 22),
 #'   threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "ffts", pb = TRUE, 
 #'   clip.edges = FALSE, leglab = "ffts", ff.method = "seewave", ...)
-#' @param  X 'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
+#' @param X object of class 'selection_table', 'extended_selection_table' or data 
+#' frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
@@ -82,13 +83,40 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   wd <- getwd()
   on.exit(setwd(wd))
   
+  # set pb options 
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(ffts)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
     setwd(path)
   }  
   
     #if X is not a data frame
-    if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+    if(!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
     
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -116,7 +144,8 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   if(!any(ff.method == "seewave", ff.method == "tuneR")) stop(paste("ff.method", ff.method, "is not recognized"))  
   
   #return warning if not all sound files were found
-  recs.wd <- list.files(path = getwd(), pattern = "\\.wav$", ignore.case = TRUE)
+  if (!is_extended_selection_table(X))
+  {recs.wd <- list.files(path = getwd(), pattern = "\\.wav$", ignore.case = TRUE)
   if(length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files)) & pb) 
     cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
                   ".wav file(s) not found"))
@@ -125,7 +154,8 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   d <- which(X$sound.files %in% recs.wd) 
   if(length(d) == 0){
     stop("The .wav files are not in the working directory")
-  }  else X <- X[d, ]
+  }  else X <- X[d, , drop = FALSE]
+  }
   
   #if parallel is not numeric
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
@@ -137,15 +167,14 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   fftsFUN <- function(X, i, bp, wl, threshold){
     
     # Read sound files to get sample rate and length
-    r <- tuneR::readWave(file.path(getwd(), X$sound.files[i]), header = TRUE)
+    r <- read_wave(X = X, index = i, header = TRUE)
     f <- r$sample.rate
     
     b<- bp 
     if(!is.null(b)) {if(b[2] > ceiling(f/2000) - 1) b[2] <- ceiling(f/2000) - 1 
     b <- b * 1000}
     
-    
-    r <- tuneR::readWave(as.character(X$sound.files[i]), from = X$start[i], to = X$end[i], units = "seconds")
+    r <- read_wave(X = X, index = i)
     
     # calculate fundamental frequency at each time point     
     if(ff.method == "seewave")
@@ -200,7 +229,7 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
     }
     
     if(img) 
-      trackfreqs(X[i,], wl = wl, osci = FALSE, leglab = leglab, pb = FALSE, wn = wn,
+      trackfreqs(X[i, , drop = FALSE], wl = wl, osci = FALSE, leglab = leglab, pb = FALSE, wn = wn,
                  parallel = 1, path = path, img.suffix =  img.suffix, ovlp = ovlp,
                  custom.contour = data.frame(sound.files = X$sound.files[i], selec = X$selec[i], t(apfund$y)), ...)
     
@@ -227,3 +256,13 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   return(df)
   
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{ffts}}
+#'
+#' @keywords internal
+#' @details see \code{\link{ffts}} for documentation. \code{\link{ffts}} will be deprecated in future versions.
+#' @export
+
+ff_ts <- ffts

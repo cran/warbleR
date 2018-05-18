@@ -4,7 +4,7 @@
 #' @usage xcorr(X, wl =512, frange= NULL, ovlp=90, dens=0.9, bp= NULL, wn='hanning', 
 #' cor.method = "pearson", parallel = 1, path = NULL, pb = TRUE, na.rm = FALSE,
 #'  dfrange = FALSE, cor.mat = TRUE)
-#' @param  X 'selection.table' object or data frame containing columns for sound files (sound.files), 
+#' @param  X 'selection_table', 'extended_selection_table' or data frame containing columns for sound files (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #' is 512.
@@ -65,8 +65,7 @@
 #' @author Marcelo Araya-Salas \email{araya-salas@@cornell.edu})
 #' @source H. Khanna, S.L.L. Gaunt & D.A. McCallum (1997). Digital spectrographic 
 #' cross-correlation: tests of sensitivity. Bioacoustics 7(3): 209-234
-# last modification on mar-13-2018 (MAS)
-
+# last modification on may-7-2018 (MAS)
 
 xcorr <- function(X = NULL, wl = 512, frange = NULL, ovlp = 90, dens = 0.9, bp = NULL, wn ='hanning', 
                   cor.method = "pearson", parallel = 1, path = NULL,
@@ -77,15 +76,40 @@ xcorr <- function(X = NULL, wl = 512, frange = NULL, ovlp = 90, dens = 0.9, bp =
   wd <- getwd()
   on.exit(setwd(wd))
   
+  # set pb options 
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(xcorr)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
     setwd(path)
   }  
   
   #if X is not a data frame
-  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
-  
-  
+  if(!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
   
   #if there are NAs in start or end stop
   if(any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end") 
@@ -123,18 +147,16 @@ if(dfrange) {df <- dfts(X, wl =300, img = FALSE, length.out = 50, parallel = par
 frq.lim = c(min(df, na.rm = TRUE), max(df, na.rm = TRUE))
 } else frq.lim = frange
 
-
   # If parallel is not numeric
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
 #create templates
-  if(pb) cat("creating templates:")
+  if(pb) write(file = "", x ="creating templates:")
 
   tempFUN <- function(X, x, wl, ovlp, wn, frq.lim)
   {
-    clip <- tuneR::readWave(filename = as.character(X$sound.files[x]),from = X$start[x], to=X$end[x],units = "seconds")
-    
+    clip <- read_wave(X = X, index = x)
     samp.rate <- clip@samp.rate
     
     # Fourier transform
@@ -202,10 +224,8 @@ frq.lim = c(min(df, na.rm = TRUE), max(df, na.rm = TRUE))
   
   # run loop apply function for templates
   ltemp <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(x) 
-  { 
     tempFUN(X, x, wl, ovlp, wn, frq.lim)
-    
-  })   
+    )   
   
 names(ltemp) <- paste(X$sound.files,X$selec,sep = "-")
 
@@ -258,30 +278,33 @@ FUNXC <- function(i, cor.mat, survey ,wl, ovlp, wn, j, X)
   # Perform analysis for each time value (bin) of survey 
   # Starting time value (bin) of correlation window
   c.win.start <- as.list(1:(n.t.survey-n.t.template)*n.frq.template) # Starting position of subset of each survey amp matrix  
-  score.survey <- unlist(
-    lapply(X=c.win.start, FUN=function(x) 
+  score.survey <- sapply(X=c.win.start, FUN=function(x) 
     {
       # Unpack columns of survey amplitude matrix for correlation analysis
-      cor(amp.template, amp.survey.v[x + pts.v], method=cor.method, use='complete.obs') 
+      try_na(cor(amp.template, amp.survey.v[x + pts.v], method=cor.method, use='complete.obs')) 
     }
     )
-  )
   
   # Collect score results and time (center of time bins) in data frame
-  score.L <- data.frame(sound.file1 = paste(X$sound.files[j], X$selec[j], sep= "-"),sound.file2 = paste(template$sound.files,template$selec, sep= "-"), time=survey.spec$time[1:(n.t.survey-n.t.template)+n.t.template/2], 
-                        score=score.survey)
+  if (any(!is.na(score.survey)))
+  score.L <- data.frame(sound.file1 = paste(X$sound.files[j], X$selec[j], sep= "-"),sound.file2 = paste(template$sound.files,template$selec, sep= "-"), time=survey.spec$time[1:(n.t.survey-n.t.template)+n.t.template/2][!is.na(score.survey)], 
+                        score=score.survey[!is.na(score.survey)]) else 
+                          
+  score.L <- data.frame(sound.file1 = paste(X$sound.files[j], X$selec[j], sep= "-"), sound.file2 = paste(template$sound.files,template$selec, sep= "-"), time=survey.spec$time[1:(n.t.survey-n.t.template)+n.t.template/2][1], 
+                                                score= NA)
   return(score.L)
 }
 
 #run cross-correlation
-if(pb) cat("running cross-correlation:")
+if(pb) write(file = "", x ="running cross-correlation:")
 
 if (Sys.info()[1] == "Windows" & parallel > 1)
   cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
 
-a <- pbapply::pblapply(X = 1:(nrow(X)-1), cl = cl, FUN = function(j) 
+ord.shuf <- sample(1:(nrow(X)-1))
+a <- pbapply::pblapply(X = ord.shuf, cl = cl, FUN = function(j) 
  {
-    a <- tuneR::readWave(as.character(X$sound.files[j]), header = TRUE)
+  a <- read_wave(X = X, index = j, header = TRUE)  
  
   margin <-(max(with(X, end[j:nrow(X)] - start[j:nrow(X)])))/2
   start <-X$start[j] - margin
@@ -291,13 +314,14 @@ a <- pbapply::pblapply(X = 1:(nrow(X)-1), cl = cl, FUN = function(j)
   end <-X$end[j] + margin
   if(end > a$samples/a$sample.rate) end <- a$samples/a$sample.rate - 0.001
   
-  survey<-tuneR::readWave(filename = as.character(X$sound.files[j]), from = start, to = end, units = "seconds")
+  survey <- read_wave(X = X, index = j, from = start, to = end)
   
   score.L <- lapply((1+j):length(ltemp), function(i) try(FUNXC(i, cor.mat, survey, wl, ovlp, wn,  j, X), silent = T))
   
   if(any(!sapply(score.L, is.data.frame))) {
   if(j != (length(ltemp)-1))
-    {combs <- t(combn(paste(X$sound.files, X$selec,sep = "-"), 2))
+    {
+    combs <- t(combn(paste(X$sound.files, X$selec,sep = "-"), 2))
   combs <- combs[combs[,1] == paste(X$sound.files[j], X$selec[j],sep = "-"),]
   comDF <- data.frame(sound.file1 = combs[,1], sound.file2 = combs[,2], time = 0, score = NA, stringsAsFactors = FALSE)
   
@@ -319,6 +343,8 @@ a <- pbapply::pblapply(X = 1:(nrow(X)-1), cl = cl, FUN = function(j)
 return(score.df)
   }
 )
+
+a <- a[order(ord.shuf)]
 
 # put together correlation results in a single data frame
 b <- do.call("rbind", a)
@@ -366,3 +392,13 @@ names(c) <- c("correlation.data", "max.xcorr.matrix", "frq.lim")
 return(c)}
 
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{xcorr}}
+#'
+#' @keywords internal
+#' @details see \code{\link{xcorr}} for documentation. \code{\link{xcorr}} will be deprecated in future versions.
+#' @export
+
+x_corr <- xcorr

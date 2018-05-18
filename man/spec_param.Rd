@@ -8,7 +8,7 @@ spec_param(X, length.out = 5, ovlp = 90, wl = c(100, 1000), wn = "hanning",
  collev.min = -40, pal = "reverse.gray.colors.2", path = NULL, rm.axes = TRUE, ...)
 }
 \arguments{
-\item{X}{'selection.table' object or data frame with a single row and columns for sound file name (sound.files), selection number (selec), 
+\item{X}{object of class 'selection_table', 'extended_selection_table' or data frame with a single row and columns for sound file name (sound.files), selection number (selec), 
 and start and end time of signal (start and end). Default is \code{NULL}.}
 
 \item{length.out}{Numeric vector of length 1 controling the number of sublevels of
@@ -74,11 +74,8 @@ be provided. The following arguments accept can have varying values:
 # Set temporary working directory
 # setwd(tempdir())
 # save sound file examples
-data(list = c("Phae.long1", "Phae.long2","selec.table"))
+data(list = c("Phae.long1", "selec.table"))
 writeWave(Phae.long1,"Phae.long1.wav") 
-writeWave(Phae.long2,"Phae.long2.wav")
- writeWave(Phae.long3,"Phae.long3.wav")
- writeWave(Phae.long4,"Phae.long4.wav")
 
 # variable collevels
 spec_param(X = selec.table, wl = 164, ovlp = c(90), wn = c("flattop"), 
@@ -94,7 +91,7 @@ cex = 1, box = F)
 # variable wl and wn
 spec_param(X = selec.table, wl = c(100, 1000), ovlp = c(50, 90), wn = "all", 
 length.out = 5, nrow = 10, ncol = 14, width = 20, height = 11.3, rm.axes = TRUE, 
-cex = 0.7); last.img()
+cex = 0.7)
 
 # variable wl, collev.min and wn 
 spec_param(X = selec.table, wl = c(100, 1000), ovlp = 90, 
@@ -117,7 +114,7 @@ length.out = 3, nrow = 10, ncol = 14, width = 20, height = 11.3, rm.axes = TRUE,
   "reverse.terrain.colors", "reverse.cm.colors"), 
   length.out = 4, nrow = 5, ncol = 10, width = 20, height = 11.3, rm.axes = TRUE,
    cex = 0.7, group.tag = "wn",  spec.mar = 0.4, lab.mar = 0.8, box = FALSE, 
-   tag.pal = reverse.cm.colors)
+   tag.pal = list(reverse.cm.colors))
 
 check this floder
 getwd()

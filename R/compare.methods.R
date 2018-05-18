@@ -6,7 +6,7 @@
 #' it = "jpeg", parallel = 1, path = NULL, sp = NULL, pb = TRUE, grid = TRUE, 
 #' clip.edges = TRUE, threshold = 15, na.rm = FALSE, scale = FALSE,
 #'  pal = reverse.gray.colors.2, img = TRUE, ...)
-#' @param X 'selection.table' object or data frame with results from \code{\link{manualoc}} function, \code{\link{autodetec}} 
+#' @param X 'selection_table' object or data frame with results from \code{\link{manualoc}} function, \code{\link{autodetec}} 
 #' function, or any data frame with columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' Default \code{NULL}. 
@@ -83,7 +83,9 @@
 #' distance in the pool of signals. Principal Component Analysis (\code{\link[stats]{princomp}}) 
 #' is applied to calculate distances when using spectral parameters (SP). In that case the first 2 PC's are used. Classical 
 #' Multidimensional Scalling (also known as Principal Coordinates Analysis, 
-#' (\code{\link[stats]{cmdscale}})) is used for all other methods. Note that SP can only be used with at least 22 selections (number of rows in input data frame) as PCA only works with more units than variables. The graphs are return as image files in the 
+#' (\code{\link[stats]{cmdscale}})) is used for all other methods. Note that SP can
+#' only be used with at least 22 selections (number of rows in input data frame) as
+#' PCA only works with more units than variables. The graphs are return as image files in the 
 #' working directory. The file name contains the methods being compared and the 
 #' rownumber of the selections. This function uses internally a modified version
 #' of the \code{\link[seewave]{spectro}} function from seewave package to create spectrograms.
@@ -158,6 +160,34 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   # reset working directory 
   wd <- getwd()
   on.exit(setwd(wd))
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(compare.methods)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  options(warn = -1)
+  on.exit(options(warn = 0), add = TRUE)
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
@@ -165,9 +195,8 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   }  
   
   #if X is not a data frame
-  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  if(!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
 
-  
   #check basic columns in X
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -221,7 +250,9 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   if(any(!(length.out %% 1 == 0),length.out < 1)) stop("'length.out' should be a positive integer")
   
   #return warning if not all sound files were found
-  fs <- list.files(path = getwd(), pattern = "\\.wav$", ignore.case = TRUE)
+  if (!is_extended_selection_table(X))
+  {
+    fs <- list.files(path = getwd(), pattern = "\\.wav$", ignore.case = TRUE)
   if(length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                   ".wav file(s) not found"))
@@ -231,6 +262,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   if(length(d) == 0){
     stop("The .wav files are not in the working directory")
   }  else X <- X[d,]
+  }
   
   # If SP is used need at least 24 selections
   if("SP" %in% methods & is.null(sp))
@@ -245,11 +277,9 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   
   #if it argument is not "jpeg" or "tiff" 
   if(!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))  
-  
   #wrap img creating function
   if(it == "jpeg") imgfun <- jpeg else imgfun <- tiff
-  
-  
+
   #create empty list for method results
   disim.mats <- list()
   
@@ -265,7 +295,9 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
     }
   
   if("dfDTW" %in% methods)
-    {dtwmat <- dfts(X, wl = wl, flim = flim, ovlp = ovlp, img = FALSE, parallel = parallel, length.out = length.out,
+    {
+    if (pb)   write(file = "", x = "measuring dominant frequency contours:")
+    dtwmat <- dfts(X, wl = wl, flim = flim, ovlp = ovlp, img = FALSE, parallel = parallel, length.out = length.out,
                     pb = pb, clip.edges = clip.edges, threshold = threshold)
    
     dtwmat <- dtwmat[,3:ncol(dtwmat)]
@@ -281,7 +313,9 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   }
 
   if("ffDTW" %in% methods)
-  {dtwmat <- ffts(X, wl = 512, flim = flim, ovlp = ovlp, img = FALSE, parallel = parallel, length.out = length.out,
+  {
+   if (pb)  write(file = "", x ="measuring fundamental frequency contours:")
+    dtwmat <- ffts(X, wl = 512, flim = flim, ovlp = ovlp, img = FALSE, parallel = parallel, length.out = length.out,
                   pb = pb, clip.edges = clip.edges, threshold = threshold)
   
   dtwmat <- dtwmat[,3:ncol(dtwmat)]
@@ -297,7 +331,9 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   }
   
   if("SP" %in% methods)
-  { if(is.null(sp)) spmat <- specan(X, wl = 512, bp = flim, parallel = parallel, pb = pb, threshold = threshold) else spmat <- sp
+  { if(is.null(sp)) {
+    if (pb) write(file = "", x ="measuring spectral parameters:")
+    spmat <- specan(X, wl = 512, bp = flim, parallel = parallel, pb = pb, threshold = threshold)} else spmat <- sp
   
   sp <- princomp(scale(spmat[,3:ncol(spmat)]), cor = FALSE)$scores[ ,1:2]
 
@@ -325,7 +361,6 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   }
   
   if(nrow(X) > 4)  combs <- as.data.frame(combs[,sample(1:ncol(combs), n)])
-  
 
   #create matrix for sppliting screen
   m <- rbind(c(0, 2.5/7, 3/10, 5/10), #1
@@ -345,13 +380,10 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   # screen 7:9 for similarities/arrows
   # screen 10:11 method labels
   
-  
-  if(pb)  cat("saving graphs as image files:")
-  
       comp.methFUN <- function(X, u, res, disim.mats, m, mar, flim)
     {
     rs <- combs[,u]
-       X <- X[rs,]
+    X <- X[rs,]
   
        if(img)
   imgfun(filename = paste("comp.meth-", names(disim.mats)[1],"-",names(disim.mats)[2], "-", paste(X$labels, collapse = "-"), paste0(".", it), sep = ""), width = 16.25, height =  16.25, units = "cm", res = res)
@@ -365,40 +397,43 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   
   col <- adjustcolor(col, alpha.f = 0.5)
   
-  
   col[rs] <- hcl(h = seq(15, 375, length = 4 + 1), l = 65, c = 100)[1:4]
 
   col[rs] <- adjustcolor(col[rs], alpha.f = 0.8)
 
-  
   invisible(lapply(c(7:9, 1:4, 5:6, 10:11), function(x)
   {
     graphics::screen(x)
-    par( mar = rep(0, 4))
+    par(mar = rep(0, 4))
     if(x < 5) 
     { 
-      r <-  tuneR::readWave(as.character(X$sound.files[x]), header = TRUE)
+      r <-  read_wave(X = X, index = x, header = TRUE)
       tlim <- c((X$end[x] - X$start[x])/2 + X$start[x] - mxdur/2, (X$end[x] - X$start[x])/2 + X$start[x] + mxdur/2)
       
       mar1 <- X$start[x]-tlim[1]
       mar2 <- mar1 + X$end[x] - X$start[x]
       
-      if (tlim[1] < 0) { tlim[2] <- abs(tlim[1]) + tlim[2] 
-      mar1 <- mar1  + tlim[1]
-      mar2 <- mar2  + tlim[1]
+      if (tlim[1] < 0) { 
+        tlim1.fix <- TRUE
+      tlim[2] <- abs(tlim[1]) + tlim[2] 
+      mar1 <- mar1 + tlim[1]
+      mar2 <- mar2 + tlim[1]
       tlim[1] <- 0
-      }
-      if (tlim[2] > r$samples/r$sample.rate) { tlim[1] <- tlim[1] - (r$samples/r$sample.rate - tlim[2])
+      } else tlim1.fix <- FALSE
+      
+      if (tlim[2] > r$samples/r$sample.rate) 
+        if (!tlim1.fix){ 
+        tlim[1] <- tlim[1] - (r$samples/r$sample.rate - tlim[2])
       mar1 <- X$start[x]-tlim[1]
       mar2 <- mar1 + X$end[x] - X$start[x]
-      tlim[2] <- r$samples/r$sample.rate}
+      tlim[2] <- r$samples/r$sample.rate
+      } else tlim[2] <- r$samples/r$sample.rate
       
       if (flim[2] > ceiling(r$sample.rate/2000) - 1) flim[2] <- ceiling(r$sample.rate/2000) - 1
       
+      r <- read_wave(X = X, index = x, from = tlim[1], to = tlim[2])
       
-      r <- tuneR::readWave(as.character(X$sound.files[x]), from = tlim[1], to = tlim[2], units = "seconds")
-      
-      spectro_wrblr_int2(wave = r, f = r@samp.rate,flim = flim, wl = wl, ovlp = ovlp, axisX = FALSE, axisY = FALSE, tlab = FALSE, flab = FALSE, palette = pal, grid = grid, ...)
+      spectro_wrblr_int2(wave = r, f = r@samp.rate, flim = flim, wl = wl, ovlp = ovlp, axisX = FALSE, axisY = FALSE, tlab = FALSE, flab = FALSE, palette = pal, grid = grid, ...)
       box(lwd = 2)
       if(x == 1 | x == 3) 
         text(tlim[2] - tlim[1], ((flim[2] - flim[1])*0.86) + flim[1], labels = X$labels[x], col = col[rs[x]], cex = 1.5, font = 2, pos = 2) else 
@@ -495,6 +530,9 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
       # set pb options 
       pbapply::pboptions(type = ifelse(pb, "timer", "none"))
       
+      
+      if (pb)   write(file = "", x ="creating image files:")
+      
       # set clusters for windows OS
       if (Sys.info()[1] == "Windows" & parallel > 1)
         cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
@@ -504,3 +542,13 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
         comp.methFUN(X, u, res, disim.mats, m, mar, flim)
       })
       }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{compare.methods}}
+#'
+#' @keywords internal
+#' @details see \code{\link{compare.methods}} for documentation. \code{\link{compare.methods}} will be deprecated in future versions.
+#' @export
+
+compare_methods <- compare.methods

@@ -8,7 +8,7 @@
 #'   NULL, redo = FALSE, img = TRUE, it = "jpeg", set = FALSE, flist = NULL, smadj = NULL,
 #'   parallel = 1, path = NULL, pb = TRUE, pal = reverse.gray.colors.2, 
 #'   fast.spec = FALSE, ...)
-#' @param X 'selection.table' object or data frame with results from \code{\link{manualoc}} function or any data frame with columns
+#' @param X 'selection_table' object or data frame with results from \code{\link{manualoc}} function or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). 
 #' @param threshold A numeric vector of length 1 specifying the amplitude threshold for detecting 
@@ -129,7 +129,7 @@
 #' modified version of the timer function from seewave. 
 #last modification on jul-5-2016 (MAS)
 
-autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth = NULL, power = 1, 
+autodetec <- function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth = NULL, power = 1, 
                     bp = NULL, osci = FALSE, wl = 512, xl = 1, picsize = 1, res = 100, flim = c(0,22), 
                     ls = FALSE, sxrow = 10, rows = 10, mindur = NULL, maxdur = NULL, redo = FALSE, 
                     img = TRUE, it = "jpeg", set = FALSE, flist = NULL, smadj = NULL, parallel = 1, 
@@ -140,6 +140,31 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
   # reset working directory 
   wd <- getwd()
   on.exit(setwd(wd))
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(autodetec)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
@@ -215,7 +240,7 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
   pbapply::pboptions(type = ifelse(pb, "timer", "none"))
   
   #if it argument is not "jpeg" or "tiff" 
-  if(!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))  
+  if(!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))
   
   #wrap img creating function
   if(it == "jpeg") imgfun <- jpeg else imgfun <- tiff
@@ -237,13 +262,10 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
   if(!is.null(smadj)) if(!any(smadj == "start", smadj == "end", smadj == "both")) 
     stop(paste("smooth adjustment", smadj, "not allowed"))  
   
-  
   if(!is.null(X)){
     
     #if X is not a data frame
-    if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
-    
-    
+    if(!any(is.data.frame(X), is_selection_table(X))) stop("X is not of a class 'data.frame' or 'selection_table'")
     
     #check if all columns are found
     if(any(!(c("sound.files", "selec", "start", "end") %in% colnames(X)))) 
@@ -378,11 +400,11 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
         imgfun(filename = paste(fna, paste0(".", it), sep = "-"), 
         width = (10.16) * xl * picsize, height = (10.16) * picsize, units = "cm", res = res)
         
-     spectro_wrblr_int(song, f = f, wl = wl, collevels=seq(-45,0,1),grid = FALSE, main = as.character(X$sound.files[i]), osc = osci,  colwave = "blue4", fast.spec = fast.spec,
+     spectro_wrblr_int(song, f = f, wl = wl, collevels=seq(-45,0,1),grid = FALSE, main = as.character(X$sound.files[i]), osc = osci,  colwave = "#07889B", fast.spec = fast.spec,
               scale = FALSE, palette = pal, flim = fl, ...)
       rm(song)
       if(nrow(time.song)>0)
-      {sapply(1:nrow(time.song), function(j)  abline(v=c(time.song$start[j]-X$start[i], time.song$end[j]-X$start[i]),col="red",lwd=2, lty= "dashed"))
+      {sapply(1:nrow(time.song), function(j)  abline(v = c(time.song$start[j]-X$start[i], time.song$end[j] - X$start[i]),col = adjustcolor("#E37222", alpha.f = 0.7), lwd = 2, lty = "dotted"))
     
       sapply(1:nrow(time.song), function(j)  text(time.song$start[j]+time.song$duration[j]/2-X$start[i],
                                                  rep(c(((fl[2]-fl[1])*0.85)+fl[1],((fl[2]-fl[1])*0.9)+fl[1],((fl[2]-fl[1])*0.95)+fl[1]),
@@ -545,3 +567,13 @@ autodetec<-function(X= NULL, threshold=15, envt="abs", ssmooth = NULL, msmooth =
 
 return(results1)
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{autodetec}}
+#'
+#' @keywords internal
+#' @details see \code{\link{autodetec}} for documentation. \code{\link{autodetec}} will be deprecated in future versions.
+#' @export
+
+auto_detec <- autodetec

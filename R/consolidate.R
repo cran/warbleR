@@ -1,4 +1,4 @@
-#' Consolidate sound files into a single folder
+#' Consolidate (sound) files into a single folder
 #' 
 #' \code{consolidate} copies (sound) files scattered in several directories into a single folder.
 #' @export consolidate
@@ -7,11 +7,12 @@
 #' @param files character vector or factor indicating the subset of files that will be analyzed. The files names
 #' should include the full file path. Optional.
 #' @param path Character string containing the directory path where the sound files are located. 
+#' 'wav.path' set by \code{\link{warbleR_options}} is ignored. 
 #' If \code{NULL} (default) then the current working directory is used. 
 #' @param dest.path Character string containing the directory path where the cut sound files will be saved.
 #' If \code{NULL} (default) then the current working directory is used.
 #' @param pb Logical argument to control progress bar. Default is \code{TRUE}.
-#' @param file.ext Character string defining the file extension for the files to be consolidated. Default is \code{'\\.WAV$'}.
+#' @param file.ext Character string defining the file extension for the files to be consolidated. Default is \code{'.wav$'} ignoring case.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
 #' @param save.csv Logical. Controls whether a data frame containing sound file information is saved in the new folder.
@@ -21,7 +22,9 @@
 #' @family selection manipulation, sound file manipulation
 #' @seealso \code{\link{fixwavs}} for making sound files readable in R 
 #' @name consolidate
-#' @details This function allow users to put files scattered in several folders in a single folder.
+#' @details This function allow users to put files scattered in several folders in a 
+#' single folder. By default it works on sound files in '.wav' format but can work with
+#' other type of files (for instance '.txt' selection files).
 #' @examples{ 
 #' # First set empty folder
 #' # setwd(tempdir())
@@ -55,6 +58,28 @@ consolidate <- function(files = NULL, path = NULL, dest.path = NULL, pb = TRUE, 
   # reset working directory 
   wd <- getwd()
   on.exit(setwd(wd))
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(consolidate)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
   
   # check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
@@ -93,8 +118,10 @@ consolidate <- function(files = NULL, path = NULL, dest.path = NULL, pb = TRUE, 
     new_name <- unlist(lapply(unique(old_name), 
       function(x) { 
         on <- old_name[old_name == x]
-        if(length(on) > 1) return(paste0(gsub("\\.WAV$", "", on), "-", seq_len(length(on)), ".WAV")) else return(x)})) 
+        if(length(on) > 1) return(paste0(gsub(file.ext, "", on, ignore.case = TRUE), "-", seq_len(length(on)), gsub("$","", file.ext, fixed = TRUE))) else return(x)})) 
   
+    new_name <- gsub("\\", "", new_name, fixed = TRUE)
+    
   # create data frame with info from old and new names
   X <- data.frame(original_dir = gsub("\\.", path, dirname(files)), old_name, new_name, file_size_bytes, stringsAsFactors = FALSE)
   

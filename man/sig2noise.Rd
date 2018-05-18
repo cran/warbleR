@@ -11,7 +11,7 @@ sig2noise(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq.dur = FALSE
 in.dB = TRUE, before = FALSE, lim.dB = TRUE, bp = NULL, wl = 10)
 }
 \arguments{
-\item{X}{'selection.table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
+\item{X}{object of class 'selection_table', 'extended_selection_table' or data frame with results from \code{\link{manualoc}} or any data frame with columns
 for sound file name (sound.files), selection number (selec), and start and end time of signal
 (start and end).}
 
@@ -19,12 +19,15 @@ for sound file name (sound.files), selection number (selec), and start and end t
 the start and end points of selection over which to measure noise.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
-It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing). It can also be
+set globally using the 'parallel' option (see \code{\link{warbleR_options}}).}
 
-\item{path}{Character string containing the directory path where the sound files are located. 
-If \code{NULL} (default) then the current working directory is used.}
+\item{path}{Character string containing the directory path where the sound files are located.
+If \code{NULL} (default) then the current working directory is used. It can also be
+set globally using the 'wav.path' option (see \code{\link{warbleR_options}}).}
 
-\item{pb}{Logical argument to control progress bar. Default is \code{TRUE}.}
+\item{pb}{Logical argument to control if progress bar is shown. Default is \code{TRUE}. It can also be
+set globally using the 'pb' option (see \code{\link{warbleR_options}}).}
 
 \item{type}{Numeric. Determine the formula to be used to calculate the signal-to-noise ratio (S = signal
 , N = background noise): 
@@ -37,7 +40,7 @@ If \code{NULL} (default) then the current working directory is used.}
 }}
 
 \item{eq.dur}{Logical. Controls whether the noise segment that is measured has the same duration 
-than the signal (if \code{TRUE}, default \code{FALSE}). If \code{TRUE} then mar argument is ignored.}
+than the signal (if \code{TRUE}, default \code{FALSE}). If \code{TRUE} then 'mar' argument is ignored.}
 
 \item{in.dB}{Logical. Controls whether the signal-to-noise ratio is returned in decibels (20*log10(SNR)). 
 Default is \code{TRUE}.}
@@ -50,7 +53,9 @@ itself. Default is \code{TRUE}.}
 \item{bp}{Numeric vector of length 2 giving the lower and upper limits of a frequency bandpass filter (in kHz). Default is \code{NULL}.}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram for applying bandpass. Default 
-is 10. Ignored if \code{bp = NULL}. Note that lower values will increase time resolution, which is more important for signal-to-noise ratio calculations.}
+  is 10. Ignored if \code{bp = NULL}. It can also be
+set globally using the 'wl' option (see \code{\link{warbleR_options}}).
+ Note that lower values will increase time resolution, which is more important for signal-to-noise ratio calculations.}
 }
 \value{
 Data frame similar to \code{\link{autodetec}} output, but also includes a new variable 

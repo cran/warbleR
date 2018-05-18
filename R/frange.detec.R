@@ -1,6 +1,6 @@
 #' Detect frequency range on wave objects
 #' 
-#' \code{frange.detec} detects the frequency range of acoustic signals in wave objects.
+#' \code{frange.detec} detects the frequency range of acoustic signals on wave objects.
 #' @usage frange.detec(wave, wl = 512, fsmooth = 0.1, threshold = 10, wn = "hanning",
 #'  flim = c(0, 22), bp = NULL, fast.spec = FALSE, ovlp = 50, pal = reverse.gray.colors.2, 
 #'  widths = c(2, 1), main = NULL, plot = TRUE, all.detec = FALSE)
@@ -66,6 +66,28 @@ frange.detec <- function(wave, wl = 512, fsmooth = 0.1, threshold = 10, wn = "ha
   # close screens
   on.exit(invisible(close.screen(all.screens = TRUE)))
   
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(frange.detec)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
+  
   frng <- frd_wrblr_int(wave = wave, wl = wl, fsmooth = fsmooth, threshold = threshold, wn = wn, flim = flim, bp = bp, ovlp = ovlp)
   
   
@@ -77,3 +99,13 @@ frange.detec <- function(wave, wl = 512, fsmooth = 0.1, threshold = 10, wn = "ha
   
  
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{frange.detec}}
+#'
+#' @keywords internal
+#' @details see \code{\link{frange.detec}} for documentation. \code{\link{frange.detec}} will be deprecated in future versions.
+#' @export
+
+freq_range_detec <- frange.detec

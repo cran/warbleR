@@ -4,7 +4,7 @@
 #' @usage ovlp_sels(X, index = FALSE, pb = TRUE, max.ovlp = 0, relabel = FALSE, 
 #' drop = FALSE, priority = NULL, priority.col = NULL, unique.labs = TRUE, 
 #' indx.row = FALSE, parallel = 1)
-#' @param X 'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @param X 'selection_table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 #' be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above.
@@ -62,11 +62,35 @@ ovlp_sels <- function(X, index = FALSE, pb = TRUE, max.ovlp = 0, relabel = FALSE
                       priority = NULL, priority.col = NULL, unique.labs = TRUE, indx.row = FALSE, parallel = 1) 
   {
   
+  # set pb options 
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(ovlp_sels)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
   #X must be provided
   if(is.null(X)) stop("'X' must be provided (a data frame)")
   
   #if X is not a data frame
-  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  if(!any(is.data.frame(X), is_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table'")
   
   # check column names
   if(!all(c("sound.files", "selec", 
@@ -140,7 +164,7 @@ for(w in 1:nrow(out2)){
 unq <- table(lbls)
 
 # add NAs to single tags
-lbls[lbls == names(unq)[unq == 1]] <- NA
+lbls[lbls %in% names(unq)[unq == 1]] <- NA
 
 if(length(lbls[!is.na(lbls)]) > 0)
 lbls2 <- lbls <- lbls - min(lbls, na.rm = TRUE) + 1

@@ -9,7 +9,7 @@ specan(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
 wn = "hanning", fsmooth = 0.1)
 }
 \arguments{
-\item{X}{'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
+\item{X}{'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can
 be used as the input data frame.}
@@ -99,7 +99,7 @@ time intervals of 25\% and 75\% energy respectively (in s). See \code{\link[seew
      by the dominant frequency range. 1 means the signals is not modulated. 
    \item \code{startdom}:  dominant frequency measurement at the start of the signal 
    \item \code{enddom}: dominant frequency measurement at the end of the signal 
-   \item \code{dfslope}: slope of the change in dominant through time ((enddom-startdom)/duration). Units are kHz/s.  
+   \item \code{dfslope}: slope of the change in dominant frequency through time ((enddom-startdom)/duration). Units are kHz/s.  
    \item \code{peakf}: peak frequency. Frequency with highest energy (only generated if \code{fast = FALSE})
    \item \code{meanpeakf}: Mean peak frequency. Frequency with highest energy from the 
    mean spectrum (see \code{\link[seewave]{meanspec}}). Typically more consistent than peakf.

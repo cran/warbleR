@@ -33,18 +33,16 @@
 #' writeWave(Phae.long2, "Phae.long2.wav")
 #'
 #'  #run cross correlation first
-#'  xcor<-xcorr(X = selec.table[1:5,], wl =300, frange= c(2, 9), ovlp=90, dens=0.8, 
-#'  wn='hanning', cor.method = "pearson", cor.mat = FALSE) 
+#'  xcor<-xcorr(X = selec.table[1:5,], wl =300, frange= c(2, 9), ovlp=90, dens=0.8,
+#'  wn= "hanning", cor.method = "pearson", cor.mat = FALSE) 
 #'  
 #'  #plot pairwise scores
-#'   xcorr.graph(X = xcor, cex.cor = 2, cex.lab = 1, rel.cex = FALSE)
+#'   #xcorr.graph(X = xcor, cex.cor = 2, cex.lab = 1, rel.cex = FALSE)
 #' }
 #' @seealso \code{\link{xcorr}}
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
-#' @export
 
-
-xcorr.graph<-function(X, cex.cor = 1, cex.lab = 1,  cex.axis.lab=1, rel.cex = FALSE, labs = NULL) {
+xcorr.graph <- function(X, cex.cor = 1, cex.lab = 1,  cex.axis.lab=1, rel.cex = FALSE, labs = NULL) {
   
   #if X is not provided or is not a list
   if(!is.list(X))  stop("X is not a list. It should be the output of 'xcorr' function (set argument 'cormat' in 'xcorr' to FALSE)")
@@ -160,3 +158,13 @@ xcorr.graph<-function(X, cex.cor = 1, cex.lab = 1,  cex.axis.lab=1, rel.cex = FA
         outer = TRUE, line = -0.9, cex.lab= cex.axis.lab)
   on.exit(close.screen(all.screens = TRUE))
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{xcorr.graph}}
+#'
+#' @keywords internal
+#' @details see \code{\link{xcorr.graph}} for documentation. \code{\link{xcorr.graph}} will be deprecated in future versions.
+#' @export
+
+xcorr_graph <- xcorr.graph

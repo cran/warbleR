@@ -2,7 +2,7 @@
 % Please edit documentation in R/consolidate.R
 \name{consolidate}
 \alias{consolidate}
-\title{Consolidate sound files into a single folder}
+\title{Consolidate (sound) files into a single folder}
 \usage{
 consolidate(files = NULL, path = NULL, dest.path = NULL, pb = TRUE, file.ext = ".wav$", 
 parallel = 1, save.csv = TRUE, ...)
@@ -12,6 +12,7 @@ parallel = 1, save.csv = TRUE, ...)
 should include the full file path. Optional.}
 
 \item{path}{Character string containing the directory path where the sound files are located. 
+'wav.path' set by \code{\link{warbleR_options}} is ignored. 
 If \code{NULL} (default) then the current working directory is used.}
 
 \item{dest.path}{Character string containing the directory path where the cut sound files will be saved.
@@ -19,7 +20,7 @@ If \code{NULL} (default) then the current working directory is used.}
 
 \item{pb}{Logical argument to control progress bar. Default is \code{TRUE}.}
 
-\item{file.ext}{Character string defining the file extension for the files to be consolidated. Default is \code{'\\.WAV$'}.}
+\item{file.ext}{Character string defining the file extension for the files to be consolidated. Default is \code{'.wav$'} ignoring case.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
@@ -36,7 +37,9 @@ a '.csv' file with the information about file location, old and new names (if an
 \code{consolidate} copies (sound) files scattered in several directories into a single folder.
 }
 \details{
-This function allow users to put files scattered in several folders in a single folder.
+This function allow users to put files scattered in several folders in a 
+single folder. By default it works on sound files in '.wav' format but can work with
+other type of files (for instance '.txt' selection files).
 }
 \examples{
 { 

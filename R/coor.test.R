@@ -21,8 +21,16 @@
 #' @param rm.solo Logical. Controls if signals that are not intercalated at the start or end of the 
 #' sequence are removed (if \code{TRUE}). For instances the sequence of signals A-A-A-B-A-B-A-B-B-B (in which A and B represent different individuals, as in the 'indiv' column) would be subset to 
 #' A-B-A-B-A-B. Default is  \code{FALSE}.
-#' @return A data frame with the observed number of overlaps (obs.overlaps), mean number of overlaps expected by chance,
-#' and p value.  
+#' @return A data frame with the following columns:
+#' #' \itemize{
+#'    \item \code{sing.event}: singing event ID
+#'    \item \code{obs.overlaps}: observed number of overlaps
+#'    \item \code{mean.random.ovlps}: mean number of overlaps expected by chance
+#'    \item \code{p.value}: p value 
+#'    \item \code{coor.score}: coordination score (**sensu** Araya-Salas et al. 2017), 
+#'    calculated as `(obs.overlaps - mean.random.ovlps) / mean.random.ovlps`. 
+#'    Positive values indicate a tendency to overlap while negative values indicate a tendency to alternate.
+#'    }
 #' @export
 #' @name coor.test
 #' @details This function calculates the probability of finding and equal or lower number 
@@ -32,23 +40,57 @@
 #' expected values. The p-values are calculated as the proportion of random expected values that were lower (or higher) 
 #' than the observed value. The function runs one test for each singing event in the input data frame. The function 
 #' is equivalent to the "KeepGaps" methods described in Masco et al. 2015.
-#' @references Masco, C., Allesina, S., Mennill, D. J., and Pruett-Jones, S. (2015). The Song Overlap Null model Generator (SONG): a new tool for distinguishing between random and non-random song overlap. Bioacoustics. 1-12. 
+#' @references 
+#' {
+#' Araya-Salas M., Wojczulanis-Jakubas K., Phillips E.M., Mennill D.J., Wright T.F.\
+#'  (2017) To overlap or not to overlap: context-dependent coordinated singing in 
+#'  lekking long-billed hermits. Anim Behav.
+#' Masco, C., Allesina, S., Mennill, D. J., and Pruett-Jones, S. (2015). The Song 
+#' Overlap Null model Generator (SONG): a new tool for distinguishing between random
+#' and non-random song overlap. Bioacoustics.
+#' } 
 #' @examples{
 #' #load  simulated singing data (see data documentation)
-#' data(sim.coor.sing)
+#' data(sim_coor_sing)
 #' 
 #' # testing if coordination happens less than expected by chance
-#' coor.test(sim.coor.sing, iterations = 100, less.than.chance = TRUE)
+#' coor.test(sim_coor_sing, iterations = 100, less.than.chance = TRUE)
 #' 
 #' # testing if coordination happens more than expected by chance
-#' coor.test(sim.coor.sing, iterations = 100, less.than.chance = FALSE)
+#' coor.test(sim_coor_sing, iterations = 100, less.than.chance = FALSE)
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
-#last modification on jul-5-2016 (MAS)
+#last modification on apr-11-2018 (MAS)
 
 coor.test <- function(X = NULL, iterations = 1000, less.than.chance = TRUE, parallel = 1, pb = TRUE, 
                       rm.imcomp = FALSE, cutoff = 2, rm.solo = FALSE)
 {
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type))
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(coor.test)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
   if(!is.data.frame(X))  stop("X is not a data frame")
   
   #stop if some events have less than 10 observations
@@ -165,7 +207,7 @@ if(any(!cse)) warning("Some events didn't have 2 individuals and were excluded")
   obs.overlaps <- length(ovlp[ovlp=="ovlp"])
   mean.random.ovlps <- mean(rov)
   if(less.than.chance) p <- length(rov[rov <= obs.overlaps])/iterations else p <- length(rov[rov >= obs.overlaps])/iterations
-  l <- data.frame(h, obs.overlaps, mean.random.ovlps, p)
+  l <- data.frame(sing.event = h, obs.ovlps = obs.overlaps, mean.random.ovlps, p.value = p, coor.score = round((obs.overlaps - mean.random.ovlps)/mean.random.ovlps, 3))
   
   return(l)}
       # )
@@ -185,7 +227,15 @@ if(any(!cse)) warning("Some events didn't have 2 individuals and were excluded")
     
   df <- do.call(rbind, cote)
     
-colnames(df) <- c("sing.event", "obs.ovlps", "mean.random.ovlps", "p.value")
-
 return(df)
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{coor.test}}
+#'
+#' @keywords internal
+#' @details see \code{\link{coor.test}} for documentation. \code{\link{coor.test}} will be deprecated in future versions.
+#' @export
+
+coor_test <- coor.test

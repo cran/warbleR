@@ -8,14 +8,16 @@ specreator(X, wl = 512, flim = c(0, 22), wn = "hanning", pal
   = reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar =
   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE,
   propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE,  sc = FALSE, line = TRUE,
-  col = adjustcolor("red2", 0.6), lty = 3, mar = 0.05, it = "jpeg", 
-  parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, ...)
+  col = adjustcolor("#E37222", 0.6), lty = 3, mar = 0.05, it = "jpeg", 
+  parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, by.song = NULL, 
+  sel.labels = "selec", ...)
 }
 \arguments{
-\item{X}{'selection.table' or data frame containing columns for sound file name (sound.files), 
+\item{X}{'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 selection number (selec), and start and end time of signals (start and end). 
 Low and high frequency columns are optional.
-The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame.}
+The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. If using an 
+'extended_selection_table' the sound files are not required (see \code{\link{selection_table}}).}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
 is 512.}
@@ -96,7 +98,16 @@ to work better with 'fast' spectograms. Palette colors \code{\link[monitoR]{gray
 \code{\link[monitoR]{gray.3}} offer 
 decreasing darkness levels.}
 
-\item{...}{Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments.}
+\item{by.song}{Character string with the column name containing song labels. If
+provide a single spectrogram containinig all elements for each song will be produce. Note that 
+the function assumes that song labels are not repeated within a sound file. If \code{NULL} (default), spectrograms are produced for single selections.}
+
+\item{sel.labels}{Character string with the name of the column for selection 
+labeling. Ignored if 'by.song' is \code{NULL}. Default is 'selec'. Set to \code{NULL} to remove labels.}
+
+\item{...}{Additional arguments to be passed to the internal spectrogram 
+creating function for customizing graphical output. The function is a modified 
+version of \code{\link[seewave]{spectro}}, so it takes the same arguments.}
 }
 \value{
 Image files containing spectrograms of the signals listed in the input data frame.
@@ -116,15 +127,16 @@ high background noise levels.
 { 
 # First set empty folder
 # setwd(tempdir())
+
+# load and save data
 data(list = c("Phae.long1", "Phae.long2","selec.table"))
-writeWave(Phae.long1, "Phae.long1.wav") #save sound files 
+writeWave(Phae.long1, "Phae.long1.wav") #save sound files
 writeWave(Phae.long2, "Phae.long2.wav")
 
 # make spectrograms
-
-specreator(selec.table, flim = c(0, 11), res = 300, mar = 0.05, wl = 300)
+specreator(X = selec.table, flim = c(0, 11), res = 300, mar = 0.05, wl = 300)
  
- #check this folder
+# check this folder
 getwd()
 }
 

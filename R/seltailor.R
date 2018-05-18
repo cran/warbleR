@@ -6,8 +6,9 @@
 #'  osci = TRUE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE, pause = 1,
 #'   comments = TRUE, path = NULL, frange = FALSE, fast.spec = FALSE, ext.window = TRUE,
 #'   width = 15, height = 5, index = NULL, collevels = NULL, 
-#'   title = c("sound.files", "selec"), ts.df = NULL, col = "#E37222", alpha = 0.7, ...)
-#' @param X 'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
+#'   title = c("sound.files", "selec"), ts.df = NULL, col = "#E37222", 
+#'   alpha = 0.7, auto.contour = FALSE, ...)
+#' @param X 'selection_table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 #' be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above. Notice that, if an output file ("seltailor_output.csv") is found in the working directory it will be given priority over an input data frame.
@@ -27,7 +28,7 @@
 #' @param ovlp Numeric vector of length 1 specifying the percent overlap between two 
 #'   consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70.
 #' @param auto.next Logical argument to control whether the functions moves automatically to the 
-#' next selection. The time interval before moving to the next selection is controled by the 'pause' argument.
+#' next selection. The time interval before moving to the next selection is controled by the 'pause' argument. Ignored if \code{ts.df = TRUE}. 
 #' @param pause Numeric vector of length 1. Controls the duration of the waiting period before 
 #' moving to the next selection (in seconds). Default is 1. 
 #' @param comments Logical argument specifying if 'sel.comment' (when in data frame) should be included 
@@ -60,7 +61,11 @@
 #' 'autonext' is set to \code{FALSE}. Default is \code{NULL}. The data frame must include the 'sound.files' and 'selec' 
 #' columns for the same selections included in 'X'.
 #' @param col Character vector defining the color of the points when 'ts.df' is provided. Default is "#E37222" (orange).
-#' @param alpha Numeric of length one to adjust transparency of points when adjusting frequency contours. 
+#' @param alpha Numeric of length one to adjust transparency of points when adjusting frequency contours.
+#' @param auto.contour Logical. If \code{TRUE} contours are displayed automatically
+#' (without having to click on 'contour'). Note that adjusting the selection box 
+#' (frequency/time limits) won't be available. Default is \code{FALSE}. Ignored if
+#' 'ts.df' is not provided. 
 #' @param ... Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments. 
 #' @return data frame similar to X with the and a .csv file saved in the working directory with start and end time of 
 #'   selections.
@@ -121,12 +126,38 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
                        pause = 1, comments = TRUE, path = NULL, frange = FALSE, fast.spec = FALSE,
                        ext.window = TRUE, width = 15, height = 5, index = NULL,
                        collevels = NULL, title = c("sound.files", "selec"), 
-                       ts.df = NULL, col = "#E37222", alpha = 0.7, ...)
+                       ts.df = NULL, col = "#E37222", alpha = 0.7, auto.contour = FALSE, ...)
 {
   
   # reset working directory 
   wd <- getwd()
   on.exit(setwd(wd))
+  on.exit(options(warn = .Options$warn), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(seltailor)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
   
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
@@ -139,18 +170,38 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     auto.next <- FALSE
   }
   
-  
   # merge ts.df and X
   if(!is.null(ts.df))
-  {  
-    if(nrow(X) != ts.df) stop("number of rows in 'ts.df' and 'X' do not match")
-    
-      ncl <- names(ts.df)[-c(1:2)]
+  {  if(is.data.frame(ts.df))
+    {
+    if(nrow(X) != nrow(ts.df)) stop("number of rows in 'ts.df' and 'X' do not match")
+    names(ts.df)[-c(1:2)] <- gsub("_|-", ".", names(ts.df)[-c(1:2)])
+    ncl <- names(ts.df)[-c(1:2)]
     X <- merge(X, ts.df, by = c("sound.files", "selec"))
-  }
+    } else 
+      { # if ts.df is a list
+      if(nrow(X) != length(ts.df)) stop("number of rows in 'X' and length of 'ts.df' do not match")
+    
+    mxts <- max(sapply(ts.df, nrow))  
+    
+    out <- lapply(1:length(ts.df), function(x)
+      {
+      z <- ts.df[[x]]
+     df <- data.frame(t(c(z$frequency, rep(NA, mxts - nrow(z)), z$absolute.time, rep(NA, mxts - nrow(z)))))
+     colnames(df) <- paste0(colnames(df), rep(c("...FREQ", "...TIME"), each = mxts))
+    df$sound.files.selec <- names(ts.df)[x] 
+    return(df)  
+    })
+    
+    ts.df2 <- do.call(rbind, out)
+    X$sound.files.selec <- paste(X$sound.files, X$selec, sep = "-")
+    X <- merge(X, ts.df2, by = c("sound.files.selec"))
+    ncl <- names(ts.df2)[-ncol(ts.df2)]
+    }
+  } else auto.contour <- FALSE
   
   #if X is not a data frame
-  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  if(!any(is.data.frame(X), is_selection_table(X))) stop("X is not of a class 'data.frame' or 'selection_table'")
   
   #if there are NAs in start or end stop
   if(any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
@@ -173,18 +224,22 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
   if(frange & !all(any(names(X) == "bottom.freq"), any(names(X) == "top.freq")))
     X$top.freq <- X$bottom.freq <- NA
   
-  if(!file.exists(file.path(getwd(), "seltailor_output.csv")))
-  {X$tailored <- ""
+  if(!file.exists("seltailor_output.csv"))
+  {
+    X$tailored <- ""
   X$tailored <- as.character(X$tailored)
   if(!is.null(index))   X$tailored[!1:nrow(X) %in% index] <- "y"
   write.csv(droplevels(X[X$tailored != "delete", ]), "seltailor_output.csv", row.names =  FALSE)  
-  } else {X <- read.csv("seltailor_output.csv", stringsAsFactors = FALSE)  
+  } else {
+    X <- read.csv("seltailor_output.csv", stringsAsFactors = FALSE)  
   if(any(is.na(X$tailored))) X$tailored[is.na(X$tailored)] <-""
   if(all(any(!is.na(X$tailored)),nrow(X[X$tailored %in% c("y", "delete"),]) == nrow(X))) {
     options(show.error.messages=FALSE)
     cat("all selections have been analyzed")
     stop() 
   }
+  ncl <- intersect(names(ts.df), names(X))
+  ncl <- ncl[!ncl %in% c("sound.files", "selec")]
   }
   
   dn <- 1:nrow(X)
@@ -229,7 +284,8 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     spectro_wrblr_int(tuneR::readWave(as.character(X$sound.files[j]),from =  tlim[1], to = tlim[2], units = "seconds"), 
                       f = f, wl = wl, ovlp = ovlp, wn = wn, heights = c(3, 2), 
                       osc = osci, palette =  pal, main = NULL, axisX= TRUE, grid = FALSE, collab = "black", alab = "", fftw= TRUE, colwave = "#07889B", collevels = collevels,
-                      flim = fl, scale = FALSE, axisY= TRUE, fast.spec = fast.spec, ...)
+                      flim = fl, scale = FALSE, axisY= TRUE, fast.spec = fast.spec, 
+                      ...)
     if(!osci)
     {
       mtext("Time (s)", side=1, line= 1.8)
@@ -246,9 +302,9 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     lines(x = c(0, x2), y = rep(y, 2), lwd = 7, col = adjustcolor("#E37222", alpha.f = 0.6), xpd = TRUE)
     text(x = x2 + (diff(tlim) * 0.017), y = y, xpd = TRUE, labels = paste0(floor(prct * 100), "%"), col = "#E37222", cex = 0.8)
     
-    
+    options(warn = -1)
     #add lines of selections on spectrogram
-    if(any(is.na(X$bottom.freq[j]), is.na(X$top.freq[j])))
+    if((any(is.na(X$bottom.freq[j]), is.na(X$top.freq[j]))))
       polygon(x = rep(c(X$start[j], X$end[j]) - tlim[1], each = 2), y = c(fl, sort(fl, decreasing = TRUE)), lty = 3, border = "#07889B", lwd = 1.2, col = adjustcolor("#07889B", alpha.f = 0.15))  else
         polygon(x = rep(c(X$start[j], X$end[j]) - tlim[1], each = 2), y = c(c(X$bottom.freq[j], X$top.freq[j]),c(X$top.freq[j], X$bottom.freq[j])), lty = 3, border = "#07889B", lwd = 1.2, col = adjustcolor("#07889B", alpha.f = 0.15)) 
     
@@ -272,10 +328,10 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
       return(grY)   
     })
     
-    
     #ask users to select what to do next (1 click)
-    xy2 <- xy <- locator(n = 1, type = "n")
-    
+    if(!auto.contour) xy2 <- xy <- locator(n = 1, type = "n") else
+    xy2 <- xy <- list(x = 0, y = 0)
+  
     #if selected is lower than 0 make it 
     xy$x[xy$x < 0] <- 0  
     xy$y[xy$y < 0] <- 0 
@@ -284,10 +340,9 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     
     # fix freq
     if(!is.null(ts.df))
-      if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[5]]) & xy$y < max(ys[[5]]))
+      if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[5]]) & xy$y < max(ys[[5]]) | auto.contour)
       {
-        
-        Y <- fix_cntr_wrblr_int(X, j, ending.buttons = 1:4, ncl, tlim, xs, ys, flim = fl, col, alpha)
+        Y <- fix_cntr_wrblr_int(X, j, ending.buttons = 1:4, ncl, tlim, xs, ys, flim = fl, col, alpha, l = !is.data.frame(ts.df))
         X[, ncl] <- Y$ts.df
         xy <- Y$xy
         rm(Y)
@@ -372,8 +427,7 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
       if(!is.null(ts.df))
         if(xy$x > min(xs) & xy$x < max(xs) & xy$y > min(ys[[5]]) & xy$y < max(ys[[5]]))
         {
-          
-          Y <- fix_cntr_wrblr_int(X, j, ending.buttons = 1:4, ncl, tlim, xs, ys, flim = fl, col, alpha)
+          Y <- fix_cntr_wrblr_int(X, j, ending.buttons = 1:4, ncl, tlim, xs, ys, flim = fl, col, alpha, l = !is.data.frame(ts.df))
           X[, ncl] <- Y$ts.df
           xy <- Y$xy
           rm(Y)
@@ -497,5 +551,14 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
       }
     } 
   }
-  
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{seltailor}}
+#'
+#' @keywords internal
+#' @details see \code{\link{seltailor}} for documentation. \code{\link{seltailor}} will be deprecated in future versions.
+#' @export
+
+sel_tailor <- seltailor

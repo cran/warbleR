@@ -1,5 +1,31 @@
 # NEWS
 
+# warbleR 1.1.13
+## (CRAN release date: XXXX-XX-XX)
+
+## Changes and additions:
+
+* new function names (print(new_function_names))
+* object class 'extended_selection_table' to create self-contained acoustic data sets
+* 'before' and 'eq.dur' arguments in 'snrspec' function
+* 'ts.df' argument in 'seltailor' function to adjust frequency contours
+* 'ts.df' argument in 'seltailor' function to adjust frequency contours
+* 'by.song' argument in 'specreator' to create full song spectrograms with labeled elements
+
+## Bug fixes:
+
+* Change "http" to "https" protocol for accessing Xeno-Canto recordings in "querxc"
+
+## New functions:
+
+* selection_table: converts data frames into an object of classes 'selection_table' or 'extended_selection_table'
+* generic S3 methods for and 'print', 'cbind' and '[' for  classes 'selection_table' or 'extended_selection_table'
+* song_param: calculate acoustic parameters at the song (or other hierarchical) level
+* spec_param: plot catalog of a single selection with varying spectrogram (display) parameters
+* read_wave: wrapper for tuneR's readWave that ignores exntesion file case mismatches
+* warbleR_options: function to set global parameters
+*open_wd: open current working directory in wave browser
+
 # warbleR 1.1.12
 ## (CRAN release date: 2018-03-13)
 
@@ -12,9 +38,6 @@
 * Parallel computing in windows OS with and without progress bar
 * New arguments in 'specreator' to customize control lines/box around selections 
 * Replace internal "message" functions by "cat" (so warnings are printed in black, no red)
-
-## Bug fixes:
-* Change "http" to "https" protocol for accessing Xeno-Canto recordings in "querxc" 
 
 ## New functions:
 

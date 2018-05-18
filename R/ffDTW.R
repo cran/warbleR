@@ -6,7 +6,7 @@
 #' bp = c(0, 22), threshold = 5, img = TRUE, parallel = 1, path = NULL, 
 #' img.suffix = "ffDTW", pb = TRUE, clip.edges = TRUE, window.type = "none", 
 #' open.end = FALSE, scale = FALSE, ...)
-#' @param  X 'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
+#' @param  X object of class 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
@@ -78,11 +78,32 @@ ffDTW <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
                   img.suffix = "ffDTW", pb = TRUE, clip.edges = TRUE,
                   window.type = "none", open.end = FALSE, scale = FALSE, ...){     
   
-
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(ffDTW)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
     #if X is not a data frame
-    if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
-    
-    
+    if(!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
 
   #stop if only 1 selection
   if(nrow(X) == 1) stop("you need more than one selection for ffDTW")
@@ -107,3 +128,13 @@ ffDTW <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   return(dm)
 
   }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{ffDTW}}
+#'
+#' @keywords internal
+#' @details see \code{\link{ffDTW}} for documentation. \code{\link{ffDTW}} will be deprecated in future versions.
+#' @export
+
+ff_DTW <- ffDTW

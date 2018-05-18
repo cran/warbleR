@@ -40,7 +40,7 @@ License: GPL (>= 2)
 \section{Managing sound files}{
 
   
-  \code{\link{make.selection.table}}: Create 'selection.table' class objects
+  \code{\link{selection_table}}: Create 'selection_table' class objects
   
   \code{\link{mp32wav}}: Convert several .mp3 files in working directory to .wav
   format
@@ -59,6 +59,10 @@ License: GPL (>= 2)
   \code{\link{rm_sil}}: Remove silence segments from wave files
   
   \code{\link{consolidate}}: Consolidate sound files into a single folder
+  
+  \code{\link{selection_table}}: Create double-checked and self-contained selection tables
+  
+  \code{\link{fix_extended_selection_table}}: Fix attributes of extended selection tables
 }
 
 \section{Exploring/analyzing signal structure}{

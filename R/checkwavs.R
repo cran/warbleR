@@ -2,7 +2,7 @@
 #' 
 #' \code{checkwavs} checks whether .wav files can be read by subsequent functions.
 #' @usage checkwavs(X = NULL, path = NULL)
-#' @param X Optional. 'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @param X Optional. 'selection_table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 #' be used as the input data frame. If provided the function also returns the
@@ -49,6 +49,30 @@ checkwavs <- function(X = NULL, path = NULL) {
   wd <- getwd()
   on.exit(setwd(wd))
   
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(checkwavs)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
     setwd(path)
@@ -62,7 +86,7 @@ checkwavs <- function(X = NULL, path = NULL) {
   if(!is.null(X))
   {
     #if X is not a data frame
-    if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+    if(!any(is.data.frame(X), is_selection_table(X))) stop("X is not of a class 'data.frame' or 'selection_table'")
     
    if(!all(c("sound.files", "selec", 
               "start", "end") %in% colnames(X))) 
@@ -86,7 +110,7 @@ checkwavs <- function(X = NULL, path = NULL) {
     d <- which(X$sound.files %in% files) 
     if(length(d) == 0){
       stop("The .wav files are not in the working directory")
-    }  else X <- X[d, ]
+    }  else X <- X[d, , drop = FALSE]
     
     files <- files[files %in% X$sound.files]
   }
@@ -108,3 +132,12 @@ checkwavs <- function(X = NULL, path = NULL) {
     }
   }
 }
+
+##############################################################################################################
+#' alternative name for \code{\link{checkwavs}}
+#'
+#' @keywords internal
+#' @details see \code{\link{checkwavs}} for documentation. \code{\link{checkwavs}} will be deprecated in future versions.
+#' @export
+
+check_wavs <- checkwavs

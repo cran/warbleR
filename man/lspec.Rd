@@ -4,13 +4,13 @@
 \alias{lspec}
 \title{Create long spectrograms of whole sound files}
 \usage{
-lspec(X = NULL, flim = c(0,22), sxrow = 5, rows = 10, collev = seq(-40, 0, 1), 
+lspec(X = NULL, flim = c(0,22), sxrow = 5, rows = 10, collevels = seq(-40, 0, 1), 
 ovlp = 50, parallel = 1, wl = 512, gr = FALSE, pal = reverse.gray.colors.2, 
 cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL, pb = TRUE, 
 fast.spec = FALSE)
 }
 \arguments{
-\item{X}{'selection.table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
+\item{X}{'selection_table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
 for sound file name (sound.files), selection number (selec), and start and end time of signal
 (start and end). If given, two red dotted lines are plotted at the 
 start and end of a selection and the selections are labeled with the selection number 
@@ -26,7 +26,7 @@ per row. Default is 5.}
 \item{rows}{A numeric vector of length 1. Specifies number of rows per 
 image file. Default is 10.}
 
-\item{collev}{A numeric vector of length 3. Specifies levels to partition the 
+\item{collevels}{A numeric vector of length 3. Specifies levels to partition the 
 amplitude range of the spectrogram (in dB). The more levels the higher the
 resolution of the spectrogram. Default is seq(-40, 0, 1).}
 

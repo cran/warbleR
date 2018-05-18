@@ -28,7 +28,7 @@
 #'   
 #' @section Managing sound files:
 #'   
-#'   \code{\link{make.selection.table}}: Create 'selection.table' class objects
+#'   \code{\link{selection_table}}: Create 'selection_table' class objects
 #'   
 #'   \code{\link{mp32wav}}: Convert several .mp3 files in working directory to .wav
 #'   format
@@ -47,6 +47,10 @@
 #'   \code{\link{rm_sil}}: Remove silence segments from wave files
 #'   
 #'   \code{\link{consolidate}}: Consolidate sound files into a single folder
+#'   
+#'   \code{\link{selection_table}}: Create double-checked and self-contained selection tables
+#'   
+#'   \code{\link{fix_extended_selection_table}}: Fix attributes of extended selection tables
 #'   
 #' @section Exploring/analyzing signal structure:
 #'   
@@ -122,7 +126,8 @@
 #'   \code{\link{snrspecs}}: Create spectrograms to visualize margins over which 
 #'   noise will be measured by sig2noise
 
-#' @exportClass selection.table      
+#' @exportClass selection_table
+#' @exportClass extended_selection_table
 #' @import NatureSounds
 #' @import maps
 #' @import rjson
@@ -135,16 +140,15 @@
 #' @import grDevices
 #' @import utils
 #' @import parallel
-#' @import foreach
 #' @import iterators
 #' @import bitops
 #' @import jpeg
+#' @importFrom methods formalArgs new
 #' @importFrom pracma findpeaks
 #' @importFrom Sim.DiffProc BB GBM
-#' @importFrom doParallel registerDoParallel
 #' @importFrom methods slotNames
 #' @importFrom dtw dtwDist
-#' @importFrom stats cor dist aggregate approx ave princomp time ts predict smooth.spline complete.cases spline
+#' @importFrom stats cor dist aggregate approx ave princomp time ts predict smooth.spline complete.cases spline weighted.mean na.omit
 #' 
 #' @author Marcelo Araya-Salas & Grace Smith Vidaurre
 #'   

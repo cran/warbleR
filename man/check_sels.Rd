@@ -2,14 +2,19 @@
 % Please edit documentation in R/checksels.R
 \name{checksels}
 \alias{checksels}
+\alias{check_sels}
 \title{Check selection data frames}
 \usage{
-checksels(X, parallel =  1, path = NULL, check.header = FALSE, pb = TRUE)
+checksels(X, parallel = 1, path = NULL, check.header = FALSE, pb = TRUE,
+wav.size = FALSE)
+
+check_sels(X = NULL, parallel = 1, path = NULL, check.header = FALSE,
+  pb = TRUE, wav.size = FALSE)
 }
 \arguments{
-\item{X}{'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
+\item{X}{'selection_table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
-end time of selections. Alternatively, a 'selection.table' class object can be input to double check selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
+end time of selections. Alternatively, a 'selection_table' class object can be input to double check selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 be used as the input data frame.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
@@ -23,6 +28,10 @@ If \code{NULL} (default) then the current working directory is used.}
 with long sound files.}
 
 \item{pb}{Logical argument to control progress bar. Default is \code{TRUE}.}
+
+\item{wav.size}{Logical argument to control if the size of the wave object 
+when the selection is imported into R (as when using \code{\link[tuneR]{readWave}}
+is calculated and added as a column. Size is return in MB. Default is \code{FALSE}.}
 }
 \value{
 A data frame including the columns in the input data frame (X) and 2 additional columns:
@@ -31,6 +40,8 @@ in a selection limits the minimum window length (wl argument in other functions)
 }
 \description{
 \code{checksels} checks whether selections can be read by subsequent functions.
+
+alternative name for \code{\link{checksels}}
 }
 \details{
 This function checks 1) if the selections listed in the data frame correspond to .wav files
@@ -39,6 +50,8 @@ of the selections are found within the duration of the sound files. Note that th
 should be in the working directory (or the directory provided in 'path').
 This is useful for avoiding errors in dowstream functions (e.g. \code{\link{specan}}, \code{\link{xcorr}}, \code{\link{catalog}}, \code{\link{dfDTW}}). Note that corrupt files can be
 fixed using \code{\link{fixwavs}}) ('sox' must be installed to be able to run this function).
+
+see \code{\link{checksels}} for documentation. \code{\link{checksels}} will be deprecated in future versions.
 }
 \examples{
 {
@@ -60,3 +73,4 @@ checksels(X = selec.table)
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
+\keyword{internal}

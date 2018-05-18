@@ -8,10 +8,11 @@ seltailor(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
  osci = TRUE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE, pause = 1,
   comments = TRUE, path = NULL, frange = FALSE, fast.spec = FALSE, ext.window = TRUE,
   width = 15, height = 5, index = NULL, collevels = NULL, 
-  title = c("sound.files", "selec"), ts.df = NULL, col = "#E37222", alpha = 0.7, ...)
+  title = c("sound.files", "selec"), ts.df = NULL, col = "#E37222", 
+  alpha = 0.7, auto.contour = FALSE, ...)
 }
 \arguments{
-\item{X}{'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
+\item{X}{'selection_table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
 end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above. Notice that, if an output file ("seltailor_output.csv") is found in the working directory it will be given priority over an input data frame.}
@@ -39,7 +40,7 @@ plot, as in \code{\link[seewave]{spectro}}. Default is reverse.gray.colors.2. Se
 consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70.}
 
 \item{auto.next}{Logical argument to control whether the functions moves automatically to the 
-next selection. The time interval before moving to the next selection is controled by the 'pause' argument.}
+next selection. The time interval before moving to the next selection is controled by the 'pause' argument. Ignored if \code{ts.df = TRUE}.}
 
 \item{pause}{Numeric vector of length 1. Controls the duration of the waiting period before 
 moving to the next selection (in seconds). Default is 1.}
@@ -87,6 +88,11 @@ columns for the same selections included in 'X'.}
 \item{col}{Character vector defining the color of the points when 'ts.df' is provided. Default is "#E37222" (orange).}
 
 \item{alpha}{Numeric of length one to adjust transparency of points when adjusting frequency contours.}
+
+\item{auto.contour}{Logical. If \code{TRUE} contours are displayed automatically
+(without having to click on 'contour'). Note that adjusting the selection box 
+(frequency/time limits) won't be available. Default is \code{FALSE}. Ignored if
+'ts.df' is not provided.}
 
 \item{...}{Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments.}
 }

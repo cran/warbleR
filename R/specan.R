@@ -5,7 +5,7 @@
 #' @usage specan(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
 #'  parallel = 1, fast = TRUE, path = NULL, pb = TRUE, ovlp = 50, ff.method = "seewave", 
 #' wn = "hanning", fsmooth = 0.1)
-#' @param X 'selection.table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @param X 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can
 #' be used as the input data frame.
@@ -81,13 +81,12 @@
 #'      by the dominant frequency range. 1 means the signals is not modulated. 
 #'    \item \code{startdom}:  dominant frequency measurement at the start of the signal 
 #'    \item \code{enddom}: dominant frequency measurement at the end of the signal 
-#'    \item \code{dfslope}: slope of the change in dominant through time ((enddom-startdom)/duration). Units are kHz/s.  
+#'    \item \code{dfslope}: slope of the change in dominant frequency through time ((enddom-startdom)/duration). Units are kHz/s.  
 #'    \item \code{peakf}: peak frequency. Frequency with highest energy (only generated if \code{fast = FALSE})
 #'    \item \code{meanpeakf}: Mean peak frequency. Frequency with highest energy from the 
 #'    mean spectrum (see \code{\link[seewave]{meanspec}}). Typically more consistent than peakf.
 #'    \item \code{bottom.freq}: low frequency. Low limit of frequency range (only generated if \code{frange.detec = TRUE})
 #'    \item \code{top.freq}: high frequency. High limit of frequency range (only generated if \code{frange.detec = TRUE})
-
 #' }
 #' @export
 #' @name specan
@@ -128,13 +127,40 @@ specan <- function(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
   wd <- getwd()
   on.exit(setwd(wd))
   
+  # set pb options 
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(specan)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
     setwd(path)
   }  
   
   #if X is not a data frame
-  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  if(!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -167,10 +193,11 @@ specan <- function(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
     if(any(X$top.freq - X$bottom.freq < 0)) stop("top.freq should be higher than bottom.freq")
   }
   
+  if(!is_extended_selection_table(X)){
   #return warning if not all sound files were found
   fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
   if(length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
-    cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
+    write(file = "", x = paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                   ".wav file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
@@ -179,6 +206,7 @@ specan <- function(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
     stop("The .wav files are not in the working directory")
   }  else {
     X <- X[d, ]
+  }
   }
   
   # wl adjustment
@@ -190,7 +218,7 @@ specan <- function(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
 
   #create function to run within Xapply functions downstream
   spFUN <- function(i, X, bp, wl, threshold) { 
-    r <- tuneR::readWave(as.character(X$sound.files[i]), from = X$start[i], to = X$end[i], units = "seconds", toWaveMC = TRUE) 
+    r <- read_wave(X = X, index = i)
     
     if(bp[1] == "frange") b <- c(X$bottom.freq[i], X$top.freq[i]) else b <- bp
 
@@ -304,8 +332,6 @@ specan <- function(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
     
   }
   
-  if(pb) cat("measuring acoustic parameters:")
-  
   # set pb options 
   pbapply::pboptions(type = ifelse(pb, "timer", "none"))
   
@@ -326,3 +352,13 @@ specan <- function(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
   
   return(sp)
   }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{specan}}
+#'
+#' @keywords internal
+#' @details see \code{\link{specan}} for documentation. \code{\link{specan}} will be deprecated in future versions.
+#' @export
+
+spec_an <- specan

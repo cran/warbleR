@@ -25,7 +25,7 @@
 #' Note that recording id is always used (whether or not is listed by users) to avoid duplicated names.
 #' @param parallel Numeric. Controls whether parallel computing is applied when downloading mp3 files.
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing). Applied both when getting metadata and downloading files.
-#' @param path Character string containing the directory path where the sound files are located. 
+#' @param path Character string containing the directory path where the sound files will be saved. 
 #' If \code{NULL} (default) then the current working directory is used.
 #' @param pb Logical argument to control progress bar. Default is \code{TRUE}.
 #' @return If X is not provided the function returns a data frame with the following recording information: recording ID, Genus, Specific epithet, Subspecies, English name, Recordist, Country, Locality, Latitude, Longitude, Vocalization type, Audio file, License, URL, Quality, Time, Date. Sound files in .mp3 format are downloaded into the working directory if download = \code{TRUE} or if X is provided; a column indicating the  names of the downloaded files is included in the output data frame.  
@@ -80,6 +80,33 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
   # reset working directory 
   wd <- getwd()
   on.exit(setwd(wd))
+  
+  # set pb options 
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(querxc)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
@@ -248,3 +275,13 @@ if(pb)
  if(is.null(X)) if(as.numeric(q$numRecordings) > 0) return(droplevels(results))
   
    }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{querxc}}
+#'
+#' @keywords internal
+#' @details see \code{\link{querxc}} for documentation. \code{\link{querxc}} will be deprecated in future versions.
+#' @export
+
+quer_xc <- querxc

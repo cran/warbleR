@@ -7,12 +7,12 @@
 #'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE, propwidth = FALSE, 
 #'   xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, bp = c(0, 22), cex = c(0.6, 1), 
 #'   threshold = 15, threshold.time = NULL, threshold.freq = NULL, contour = "both", 
-#'   col = c("skyblue", "red2"), pch = c(21, 24),  mar = 0.05, lpos = "topright", 
+#'   col = c("#E37222B3", "#07889BB3"), pch = c(21, 24),  mar = 0.05, lpos = "topright", 
 #'   it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, 
 #'   pb = TRUE, type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, 
 #'    fast.spec = FALSE, ff.method = "seewave", frange.detec = FALSE, 
 #'    fsmooth = 0.1, widths = c(2, 1), freq.continuity = NULL, clip.edges = 2, ...)
-#' @param  X 'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
+#' @param  X object of class 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
@@ -65,8 +65,8 @@
 #' @param contour Character vector, one of "df", "ff" or "both", specifying whether the
 #'  dominant or fundamental frequencies or both should be plotted. Default is "both". 
 #' @param col Vector of length 1 or 2 specifying colors of points plotted to mark 
-#'   fundamental and dominant frequency measurements respetively (if both are plotted). Default is c("skyblue",
-#'   "red2").
+#'   fundamental and dominant frequency measurements respetively (if both are plotted). Default is \code{c("#E37222B3",
+#'   "#07889BB3")}.
 #' @param pch Numeric vector of length 1 or 2 specifying plotting characters for 
 #'   the frequency measurements. Default is c(21, 24).
 #' @param mar Numeric vector of length 1. Specifies the margins adjacent to the selections
@@ -169,24 +169,50 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
                        inner.mar = c(5,4,4,2), outer.mar = c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1,
                        title = TRUE, propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, 
                        bp = c(0, 22), cex = c(0.6, 1), threshold = 15, threshold.time = NULL, threshold.freq = NULL, 
-                       contour = "both", 
-                       col = c("skyblue", "red2"),  pch = c(21, 24), mar = 0.05, lpos = "topright", 
+                       contour = "both", col = c("#E37222B3", "#07889BB3"),  pch = c(21, 24), mar = 0.05, lpos = "topright", 
                        it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE,
-                       type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, fast.spec = FALSE, ff.method = "seewave", frange.detec = FALSE, fsmooth = 0.1, widths = c(2, 1), freq.continuity = NULL, clip.edges = 2, ...){     
+                       type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, fast.spec = FALSE, 
+                       ff.method = "seewave", frange.detec = FALSE, fsmooth = 0.1, widths = c(2, 1), 
+                       freq.continuity = NULL, clip.edges = 2, ...){     
   
   # reset working directory 
   wd <- getwd()
   on.exit(setwd(wd))
   
+  # set pb options 
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(trackfreqs)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
     setwd(path)
   }  
   
   #if X is not a data frame
-  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
-  
-  
+  if(!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -239,7 +265,9 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
     if(is.null(threshold.freq)) threshold.freq <- threshold
     
     #return warning if not all sound files were found
-    recs.wd <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
+  if (!is_extended_selection_table(X))  
+    {
+  recs.wd <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
     if(length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files))) 
       cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
                     ".wav file(s) not found"))
@@ -248,26 +276,27 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
     d <- which(X$sound.files %in% recs.wd) 
     if(length(d) == 0){
       stop("The .wav files are not in the working directory")
-    }  else X <- X[d, ]
-    
+    }  else X <- X[d, , drop = FALSE]
+  }
+  
     # If parallel is not numeric
     if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
     if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
     
     # Compare custom.contour to X
-    if(!is.null(custom.contour)){
+    if(!is.null(custom.contour) & is.data.frame(custom.contour)){
       #check if sound.files and selec columns are present and in the right order
       if(!identical(names(custom.contour)[1:2], c("sound.files", "selec"))) stop("'sound.files' and/or 'selec' columns are not found in custom.contour")
       
       #check if the info in sound.files and selec columns is the same for X and custom.contour
       #remove custom.contour selections not in X
-      custom.contour <- custom.contour[paste(custom.contour[,c("sound.files")], custom.contour[,c("selec")]) %in% paste(X[,c("sound.files")], X[,c("selec")])]
+      custom.contour <- custom.contour[paste(custom.contour[,c("sound.files")], custom.contour[,c("selec")]) %in% paste(as.data.frame(X)[,c("sound.files")], as.data.frame(X)[,c("selec")])]
       
       #stop if not the same number of selections
       if(nrow(X) > nrow(custom.contour)) stop("selection(s) in X but not in custom.contour")
       
       #order custom.contour as in X
-      custom.contour <- custom.contour[match(paste(custom.contour[,c("sound.files")], custom.contour[,c("selec")]), paste(X[,c("sound.files")], X[,c("selec")])),]      
+      custom.contour <- custom.contour[match(paste(custom.contour[,c("sound.files")], custom.contour[,c("selec")]), paste(as.data.frame(X)[,c("sound.files")], as.data.frame(X)[,c("selec")])),]      
     
       # frange.detec <- FALSE
       }
@@ -287,7 +316,7 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
     trackfreFUN <- function(X, i, mar, flim, xl, picsize, wl, wl.freq, cexlab, inner.mar, outer.mar, res, bp, cex, threshold.time, threshold.freq, pch, custom.contour){
       
       # Read sound files, initialize frequency and time limits for spectrogram
-      r <- tuneR::readWave(as.character(X$sound.files[i]), header = TRUE)
+      r <- read_wave(X = X, index = i, header = TRUE)
       f <- r$sample.rate
       t <- c(X$start[i] - mar, X$end[i] + mar)
       
@@ -305,7 +334,7 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
       
       
       # read rec segment
-      r <- tuneR::readWave(as.character(X$sound.files[i]), from = t[1], to = t[2], units = "seconds")
+      r <- read_wave(X = X, index = i, from = t[1], to = t[2])
       
       #in case bp its higher than can be due to sampling rate
       if(bp[1] == "frange") bp <- c(X$bottom.freq[i], X$top.freq[i])
@@ -373,10 +402,10 @@ if(!frange.detec){
     spectro_wrblr_int2(wave = r, f = f, flim = fl, fast.spec = fast.spec, palette = pal, ovlp = ovlp, wl = wl, grid = F, tlab = "", flab = "")
 
     #add green polygon on detected frequency bands
-      rect(xleft = 0, ybottom = b[1], xright = seewave::duration(r), ytop = b[2], col = adjustcolor("green3", 0.1), border = adjustcolor("gray", 0.2)) 
+      rect(xleft = 0, ybottom = b[1], xright = seewave::duration(r), ytop = b[2], col = adjustcolor("#07889B", alpha.f = 0.1), border = adjustcolor("gray", 0.1)) 
 
     #add line highlighting freq range
-    abline(h = b, col = "#80C3FF", lty = 3, lwd = 2) 
+    abline(h = b, col = "#07889B", lty = 3, lwd = 1) 
 
     # add axis labels
     mtext(side = 1, text = "Time (s)", line = 2.3)
@@ -483,11 +512,24 @@ if(!frange.detec){
     
     # Use freq values provided by user   
     if(!is.null(custom.contour))
-    {    
-      custom <- custom.contour[i, 3:ncol(custom.contour)]
+    { 
+      if (!is.data.frame(custom.contour)) {
+        custom <- try(custom.contour[[i]], silent = TRUE)
+        if (class(custom) == "try-error") {
+          custom <- rep(NA, 3)
+          freq1 <- matrix(rep(NA, 2), ncol = 2)
+          } else {
+          freq1 <- try(custom.contour[[i]][ , 2:3], silent = TRUE)
+        if (class(freq1) == "try-error") freq1 <- custom.contour[ , 2:3, drop = FALSE]
+  }      
+        freq <- freq1[!is.na(freq1[,2]), , drop = FALSE]
+        } else
+     { 
+       custom <- custom.contour[i, 3:ncol(custom.contour)]
       timeaxis <- seq(from = 0,  to = X$end[i] - X$start[i], length.out = length(custom))
       freq1 <- cbind(timeaxis, t(custom))
-      freq <- freq1[!is.na(freq1[,2]),]  
+      freq <- freq1[!is.na(freq1[,2]), , drop = FALSE] 
+      } 
       
       # Plot extreme values dominant frequency
       points(c(freq[c(which.max(freq[,2]),which.min(freq[,2])),1])+mar1, c(freq[c(which.max(freq[,2]),
@@ -516,7 +558,7 @@ if(!frange.detec){
     }
     
 ## legend
-      # remove points fo legend
+      # remove points for legend
     if(type == "l") pch <- NA
     if(type %in% c("l", "b")) lwd <- 3 else lwd = NA
     
@@ -535,8 +577,7 @@ if(!frange.detec){
       legend(lpos, legend = leglab[2],
              pch = pch[2], col = col[2], bty = "o", cex = cex[2], bg = col[5], pt.bg = col[2], lwd = lwd)
       } else
-    
-{ 
+    { 
 legend(lpos, legend = leglab[1],
              pch = pch[2], col = col[2], bty = "o", cex = cex[2], bg = col[5], pt.bg = col[2], lwd = lwd)}
     
@@ -565,10 +606,10 @@ legend(lpos, legend = leglab[1],
         zf3 <- c(lims[1], zf, lims[2])
         
         # plot amplitude values curve
-        polygon(cbind(z3, zf3), col= adjustcolor("#4D69FF", 0.9))
+        polygon(cbind(z3, zf3), col= adjustcolor("#E37222", 0.8))
         
         # add border line
-        points(z3, zf3, type = "l", col = adjustcolor("black", 0.5))
+        points(z3, zf3, type = "l", col = adjustcolor("gray", 0.5))
         
         # add background color
         rect(xleft = 0, ybottom = fl[1], xright = 1, ytop = fl[2], col = adjustcolor("#4D69FF", 0.05))
@@ -584,7 +625,7 @@ legend(lpos, legend = leglab[1],
         
         # add line to highligh freq range
         abline(v = threshold.freq/100, col = adjustcolor("blue4", 0.7), lty = 3, lwd = 2.3)
-        abline(h = b, col = "#80C3FF", lty = 3, lwd = 3.3)
+        abline(h = b, col = "#80C3FF", lty = 3, lwd = 1.1)
         
          if(title)
          {
@@ -598,8 +639,6 @@ legend(lpos, legend = leglab[1],
          }
         
       }
-      
-      
       
     invisible() 
     dev.off()
@@ -621,3 +660,13 @@ legend(lpos, legend = leglab[1],
                   custom.contour)
     }) 
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{trackfreqs}}
+#'
+#' @keywords internal
+#' @details see \code{\link{trackfreqs}} for documentation. \code{\link{trackfreqs}} will be deprecated in future versions.
+#' @export
+
+track_freqs <- trackfreqs

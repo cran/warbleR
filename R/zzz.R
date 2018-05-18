@@ -4,10 +4,44 @@
 # see https://github.com/hadley/r-pkgs/blob/master/r.rmd
 
 .onAttach <- function(libname, pkgname) {
- if(!requireNamespace("ggplot2",quietly = TRUE))
-   packageStartupMessage("\nNOTEs: \n 1) install ggplot2 to run coor.graph() \n 2) functions 'imp.raven' and 'imp.syrinx' were moved to the Rraven package \n 3) 'low.freq' and 'high.freq' columns names are now expected to be 'bottom.freq' and 'top.freq'")
+    packageStartupMessage("\nNOTE: functions are being renamed (run 'print(new_function_names)' to see new names). Both old and new names are available in this version \n Please see citation('warbleR') for use in publication")
 }
 
-# .onLoad <- function(libname, pkgname) {
-# if(!Sys.info()[1] == "Windows" & !requireNamespace("pbmcapply",quietly = TRUE)) install.packages("pbmcapply", repos = "http://cran.us.r-project.org")
-#   }
+# set warbleR options
+.onLoad <- function(libname, pkgname){
+  opts <- list(
+    bp = NULL,
+    collevels = NULL,
+    flim = NULL,
+    it = NULL,
+    res = NULL,
+    osci = NULL,
+    pal = NULL,
+    parallel = NULL,
+    pb = TRUE,
+    wav.path = NULL,
+    wl = NULL,
+    wn = NULL
+    )
+
+  optsx <- getOption("warbleR")
+  if (!is.null(optsx)) {
+    for (i in intersect(names(opts), names(optsx)))
+      opts[[i]] <- optsx[[i]]
+    for (i in setdiff(names(optsx), names(opts)))
+      opts[[i]] <- optsx[[i]]
+  }
+  options("warbleR" = opts)
+  invisible(NULL)
+}
+
+
+
+.onUnload <- function(libpath){
+  options("warbleR" = NULL)
+  
+  # rm_new_names()
+  
+  invisible(NULL)
+}
+

@@ -6,11 +6,12 @@
 \usage{
 dfts(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", ovlp = 70,
 bp = c(0, 22), threshold = 15, threshold.time = NULL, threshold.freq = NULL, 
-img = TRUE, parallel = 1, path = NULL, img.suffix = "dfts", pb = TRUE, 
-clip.edges = FALSE, leglab = "dfts", frange.detec = FALSE, fsmooth = 0.1, ...)
+img = TRUE, parallel = 1, path = NULL, img.suffix = "dfts", pb = TRUE,
+clip.edges = FALSE, leglab = "dfts", frange.detec = FALSE, fsmooth = 0.1,
+ raw.contour = FALSE, track.harm = FALSE, adjust.wl = FALSE, ...)
 }
 \arguments{
-\item{X}{'selection.table' object or data frame with results containing columns for sound file name (sound.files), 
+\item{X}{object of class 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 selection number (selec), and start and end time of signal (start and end).
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame.}
 
@@ -70,11 +71,19 @@ bandpass filter (overwriting 'bp' argument). Default is \code{FALSE}.}
 sliding window (in kHz) used for frequency range detection (when \code{frange.detec = TRUE}). This help to average amplitude "hills" to minimize the effect of
 amplitude modulation. Default is 0.1.}
 
-\item{...}{Additional arguments to be passed to \code{\link{trackfreqs}} for customizing
-graphical output.}
+\item{raw.contour}{Logical. If \code{TRUE} then a list with the original contours 
+(i.e. without interpolating values to make all contours of equal length) is returned.}
+
+\item{track.harm}{Logical. If true warbleR's \code{\link{track_harm}} function is 
+used to track frequency contours. Otherwise seewave's \code{\link[seewave]{dfreq}} is used by default.}
+
+\item{adjust.wl}{Logical. If \code{TRUE} the 'wl' is reset to be equal at the 
+number of samples in a selections if the samples are less than 'wl'. Default is \code{FALSE}.}
+
+\item{...}{Additional arguments to be passed to \code{\link{trackfreqs}}.}
 }
 \value{
-A data frame with the dominant frequency values measured across the signals. If img is 
+If \code{raw.contour = TRUE} (default) a data frame with the dominant frequency values measured across the signals.  Otherwise, a list with the raw frequency detections (i.e. without interpolating values to make all contours of equal length) is returned. If img is 
 \code{TRUE} it also produces image files with the spectrograms of the signals listed in the 
 input data frame showing the location of the dominant frequencies 
 (see \code{\link{trackfreqs}} description for more details).

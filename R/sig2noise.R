@@ -3,16 +3,19 @@
 #' \code{sig2noise} measures signal-to-noise ratio across multiple files.
 #' @usage sig2noise(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq.dur = FALSE,
 #' in.dB = TRUE, before = FALSE, lim.dB = TRUE, bp = NULL, wl = 10)
-#' @param X 'selection.table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
+#' @param X object of class 'selection_table', 'extended_selection_table' or data frame with results from \code{\link{manualoc}} or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). 
 #' @param mar numeric vector of length 1. Specifies the margins adjacent to
 #'   the start and end points of selection over which to measure noise.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
-#' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
-#' @param path Character string containing the directory path where the sound files are located. 
-#' If \code{NULL} (default) then the current working directory is used.
-#' @param pb Logical argument to control progress bar. Default is \code{TRUE}.
+#' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing). It can also be
+#' set globally using the 'parallel' option (see \code{\link{warbleR_options}}).
+#' @param path Character string containing the directory path where the sound files are located.
+#' If \code{NULL} (default) then the current working directory is used. It can also be
+#' set globally using the 'wav.path' option (see \code{\link{warbleR_options}}).
+#' @param pb Logical argument to control if progress bar is shown. Default is \code{TRUE}. It can also be
+#' set globally using the 'pb' option (see \code{\link{warbleR_options}}).
 #' @param type Numeric. Determine the formula to be used to calculate the signal-to-noise ratio (S = signal
 #' , N = background noise): 
 #' \itemize{
@@ -23,7 +26,7 @@
 #' \item \code{3}: ratio of the difference between S amplitude envelope quadratic mean and N amplitude envelope quadratic mean to N amplitude envelope quadratic mean (\code{(rms(env(S)) - rms(env(N)))/rms(env(N))})
 #' }
 #' @param eq.dur Logical. Controls whether the noise segment that is measured has the same duration 
-#' than the signal (if \code{TRUE}, default \code{FALSE}). If \code{TRUE} then mar argument is ignored.
+#' than the signal (if \code{TRUE}, default \code{FALSE}). If \code{TRUE} then 'mar' argument is ignored.
 #' @param in.dB Logical. Controls whether the signal-to-noise ratio is returned in decibels (20*log10(SNR)). 
 #' Default is \code{TRUE}.
 #' @param before Logical. If \code{TRUE} noise is only measured right before the signal (instead of before and after). Default is \code{FALSE}.
@@ -31,7 +34,9 @@
 #' itself. Default is \code{TRUE}.
 #' @param bp Numeric vector of length 2 giving the lower and upper limits of a frequency bandpass filter (in kHz). Default is \code{NULL}.
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram for applying bandpass. Default 
-#'   is 10. Ignored if \code{bp = NULL}. Note that lower values will increase time resolution, which is more important for signal-to-noise ratio calculations.
+#'   is 10. Ignored if \code{bp = NULL}. It can also be
+#' set globally using the 'wl' option (see \code{\link{warbleR_options}}).
+#'  Note that lower values will increase time resolution, which is more important for signal-to-noise ratio calculations. 
 #' @return Data frame similar to \code{\link{autodetec}} output, but also includes a new variable 
 #' with the signal-to-noise values.
 #' @export
@@ -74,13 +79,40 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
   wd <- getwd()
   on.exit(setwd(wd))
   
+  # set pb options 
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(sig2noise)
+  
+  # get warbleR options
+  opt.argms <- .Options$warbleR
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+        for (q in 1:length(opt.argms))
+                assign(names(opt.argms)[q], opt.argms[[q]])
+ 
   #check path to working directory
   if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
     setwd(path)
-  } 
+  }
   
   #if X is not a data frame
-  if(!class(X) %in% c("data.frame", "selection.table")) stop("X is not of a class 'data.frame' or 'selection table")
+  if(!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
   
   if(!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -99,9 +131,9 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
   #if any selections longer than 20 secs stop
   if(any(X$end - X$start>20)) stop(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))  
   
-   options( show.error.messages = TRUE)
-  
   #return warning if not all sound files were found
+  if(!any(class(X) == "extended_selection_table"))
+  {
   fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
   if(length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
@@ -111,19 +143,20 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
   d <- which(X$sound.files %in% fs) 
   if(length(d) == 0){
     stop("The .wav files are not in the working directory")
-  }  else X <- X[d, ]
-   
+  }  else X <- X[d, , drop = FALSE]
+  } else d <- 1:nrow(X)
+  
   # If parallel is not numeric
   if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
-  options(warn = 0)
 
   # function to run over single selection
   snr_FUN <- function(y, mar, bp, wl, type, before, in.dB, lim.dB){
     
     # Read sound files to get sample rate and length
-    r <- tuneR::readWave(file.path(getwd(), X$sound.files[y]), header = TRUE)
+    r <- read_wave(X = X, index = y, header = TRUE)
+    # r <- tuneR::readWave(file.path(getwd(), X$sound.files[y]), header = TRUE)
     f <- r$sample.rate
     
     
@@ -144,7 +177,7 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
     
     if(enn > r$samples/f) enn <- r$samples/f
     
-    r <- tuneR::readWave(file.path(getwd(), X$sound.files[y]), from = stn, to = enn, units = "seconds", toWaveMC = TRUE)
+    r <- read_wave(X = X, index = y, from = stn, to = enn)
     
     # add band-pass frequnecy filter
     if (!is.null(bp)) {
@@ -206,19 +239,19 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
   }
    
   # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  pbapply::pboptions(type = ifelse(as.logical(pb), "timer", "none"))
   
   # set clusters for windows OS
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # run loop apply function
-  SNR <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
+  SNR <- pbapply::pbsapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
   { 
     snr_FUN(y = i, mar, bp, wl, type, before, in.dB, lim.dB)
   }) 
       
     # Add SNR data to manualoc output
-    z <- data.frame(X[d,], SNR = unlist(SNR))
+    z <- data.frame(X[d,], SNR = SNR)
   return(z)
 }
