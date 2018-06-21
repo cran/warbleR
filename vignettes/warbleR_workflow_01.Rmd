@@ -15,7 +15,7 @@ output:
       smooth_scroll: true
 vignette: >
   \usepackage[utf8]{inputenc}
-  %\VignetteIndexEntry{warbleR: 01 - Import sound files and select signals}
+  %\VignetteIndexEntry{1. Import sound files and select signals}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 

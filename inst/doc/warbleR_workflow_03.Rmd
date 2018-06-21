@@ -15,7 +15,7 @@ output:
       smooth_scroll: true
 vignette: >
   \usepackage[utf8]{inputenc}
-  %\VignetteIndexEntry{warbleR: 03 - Acoustic (dis)similarity, coordinated singing and  and simulating songs}
+  %\VignetteIndexEntry{3. Acoustic (dis)similarity, coordinated singing and simulating songs}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 

@@ -1,6 +1,6 @@
 #' Spectrograms of selected signals
 #' 
-#' \code{specreator} creates spectrograms of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
+#' \code{specreator} creates spectrograms of signals from selection tables.
 #' @usage specreator(X, wl = 512, flim = c(0, 22), wn = "hanning", pal
 #'   = reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar =
 #'   c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE,
@@ -146,7 +146,7 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
-  if (is.null(path)) path <- getwd() else {if (!file.exists(path)) stop("'path' provided does not exist") else
+  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
     setwd(path)
   }  
   
@@ -182,7 +182,7 @@ specreator <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", pal = rever
   if (it == "jpeg") imgfun <- jpeg else imgfun <- tiff
   
   #return warning if not all sound files were found
-  if(!is_extended_selection_table(X))
+  if (!is_extended_selection_table(X))
   {
     recs.wd <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files))) 

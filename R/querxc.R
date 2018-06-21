@@ -5,7 +5,7 @@
 #' parallel = 1, path = NULL, pb = TRUE)  
 #' @param qword Character vector of length one indicating the genus, or genus and
 #'  species, to query 'Xeno-Canto' database. For example, \emph{Phaethornis} or \emph{Phaethornis longirostris}. 
-#'  (\url{https://www.xeno-canto.org/}). More complex queries can be done by using search terms that follow the 
+#'  More complex queries can be done by using search terms that follow the 
 #'  xeno-canto advance query syntax.This syntax uses tags to search within a particular aspect of the recordings 
 #'  (e.g. country, location, sound type). Tags are of the form tag:searchterm'. For instance, 'type:song' 
 #'  will search for all recordings in which the sound type description contains the word 'song'. 
@@ -109,19 +109,19 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
-  if(is.null(path)) path <- getwd() else {if(!file.exists(path)) stop("'path' provided does not exist") else
+  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
     setwd(path)
   }  
   
   #check internet connection
   a <- try(RCurl::getURL("www.xeno-canto.org"), silent = TRUE)
-  if(substr(a[1],0,5) == "Error") stop("No connection to xeno-canto.org (check your internet connection!)")
+  if (substr(a[1],0,5) == "Error") stop("No connection to xeno-canto.org (check your internet connection!)")
   
-  if(a == "Could not connect to the database")  stop("xeno-canto.org website is apparently down")
+  if (a == "Could not connect to the database")  stop("xeno-canto.org website is apparently down")
   
   # If parallel is not numeric
-  if(!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
-  if(any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
+  if (!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
+  if (any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
 
   # set pb options 
   pbapply::pboptions(type = ifelse(pb, "timer", "none"))
@@ -129,22 +129,22 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
   file.name <- gsub(" ", "_", file.name) 
   file.name <- tolower(file.name) 
   
-  if(is.null(X) & !is.null(file.name))  
+  if (is.null(X) & !is.null(file.name))  
   {
     
-    if(any(!(file.name %in%
+    if (any(!(file.name %in%
              c("recording_id", "genus", "specific_epithet", "subspecies", "english_name", "recordist"   , 
                "country", "locality", "latitude", "longitude", "vocalization_type", "audio_file", "license",
                "url", "quality", "time", "date")))) stop("File name tags don't match column names in the output of this function (see documentation)")
   }
   
   
-  if(is.null(X))
+  if (is.null(X))
   {
     
     #search recs in xeno-canto (results are returned in pages with 500 recordings each)
-    if(pb)
-      cat("Obtaining recording list...")
+    if (pb & download)
+      write(file = "", x = "Obtaining recording list...")
     
     #format JSON
     qword <- gsub(" ", "%20", qword)
@@ -152,7 +152,7 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
     #initialize search
     q <- rjson::fromJSON(file = paste0("https://www.xeno-canto.org/api/2/recordings?query=", qword))
     
-    if(as.numeric(q$numRecordings) == 0) cat("No recordings were found") else {
+    if (as.numeric(q$numRecordings) == 0) cat("No recordings were found") else {
       
       nms <- c("id", "gen", "sp", "ssp", "en", "rec", "cnt", "loc", "lat", "lng", "type", "file", "lic", "url", "q", "time", "date")
       
@@ -171,7 +171,7 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
         
         d2 <- lapply(d,  function(x) 
         {
-          if(!all(nms %in% names(x))){ 
+          if (!all(nms %in% names(x))){ 
             dif <- setdiff(nms, names(x))
             mis <- rep(NA, length(dif))
             names(mis) <- dif
@@ -199,18 +199,18 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
     #remove duplicates
     results <- results[!duplicated(results$Recording_ID), ]
     
-    if(pb)
-      cat(paste( nrow(results), " recordings found!", sep=""))  
+    if (pb)
+      write(file = "", x = paste0(nrow(results), " recordings found!"))
     } 
   } else { 
     #stop if X is not a data frame
-    if(class(X) != "data.frame") stop("X is not a data frame")
+    if (class(X) != "data.frame") stop("X is not a data frame")
     
     #stop if the basic columns are not found
-    if(!is.null(file.name))
-    {if(any(!c(file.name, "recording_id") %in% tolower(colnames(X)))) 
+    if (!is.null(file.name))
+    {if (any(!c(file.name, "recording_id") %in% tolower(colnames(X)))) 
       stop(paste(paste(c(file.name, "recording_id")[!c(file.name, "recording_id") %in% tolower(colnames(X))], collapse=", "), "column(s) not found in data frame"))} else
-        if(!"recording_id" %in% colnames(X)) 
+        if (!"recording_id" %in% colnames(X)) 
           stop("Recording_ID column not found in data frame")
     
     download <- TRUE
@@ -218,19 +218,19 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
   }
   
   #download recordings
-  if(download) {
-    if(any(file.name == "recording_id")) file.name <- file.name[-which(file.name == "recording_id")]
+  if (download) {
+    if (any(file.name == "recording_id")) file.name <- file.name[-which(file.name == "recording_id")]
     
-    if(!is.null(file.name))  {  if(length(which(tolower(names(results)) %in% file.name)) > 1)
+    if (!is.null(file.name))  {  if (length(which(tolower(names(results)) %in% file.name)) > 1)
       fn <- apply(results[,which(tolower(names(results)) %in% file.name)], 1 , paste , collapse = "-" ) else 
         fn <- results[,which(tolower(names(results)) %in% file.name)]
       results$sound.files <- paste(paste(fn, results$Recording_ID, sep = "-"), ".mp3", sep = "")     
     } else
-      results$sound.files <- paste(results$Recording_ID, ".mp3", sep = "")   
+      results$sound.files <- paste0(results$Recording_ID, ".mp3")   
     
     
     xcFUN <-  function(results, x){
-      if(!file.exists(results$sound.files[x]))
+      if (!file.exists(results$sound.files[x]))
         download.file(url = paste("https://www.xeno-canto.org/download.php?XC=", results$Recording_ID[x], sep=""), destfile = results$sound.files[x],
                       quiet = TRUE,  mode = "wb", cacheOK = TRUE,
                       extra = getOption("download.file.extra"))
@@ -238,6 +238,8 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
     }
 
     # set clusters for windows OS
+    if (pb)
+      write(file = "", x = "Downloading files...")
     if (Sys.info()[1] == "Windows" & parallel > 1)
       cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
     
@@ -246,15 +248,14 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
       xcFUN(results, x) 
   }) 
   
-if(pb)
-   cat("double-checking downloaded files")
+if (pb) write(file = "", x ="double-checking downloaded files")
    
    #check if some files have no data
     fl <- list.files(pattern = ".mp3$")
     size0 <- fl[file.size(fl) == 0]
    
     #if so redo those files
-    if(length(size0) > 1)
+    if (length(size0) > 1)
   {  Y <- results[results$sound.files %in% size0, ]
      unlink(size0)
      
@@ -272,7 +273,7 @@ if(pb)
     
     
   }
- if(is.null(X)) if(as.numeric(q$numRecordings) > 0) return(droplevels(results))
+ if (is.null(X)) if (as.numeric(q$numRecordings) > 0) return(droplevels(results))
   
    }
 

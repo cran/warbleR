@@ -15,7 +15,7 @@ output:
       smooth_scroll: true
 vignette: >
   \usepackage[utf8]{inputenc}
-  %\VignetteIndexEntry{warbleR: 02 - Visual inspection and signal classification}
+  %\VignetteIndexEntry{2. Visual inspection and signal classification}
   %\VignetteEngine{knitr::rmarkdown}
 ---
 
