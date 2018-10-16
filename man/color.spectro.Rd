@@ -122,6 +122,9 @@ writeWave(Phae.long1, "Phae.long1.wav") #save sound files
 }
 
 }
+\references{
+{Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
+}
 \seealso{
 \code{\link{trackfreqs}} for creating spectrograms to visualize 
   frequency measurements by \code{\link{specan}}, \code{\link{snrspecs}} for 
@@ -129,10 +132,12 @@ writeWave(Phae.long1, "Phae.long1.wav") #save sound files
 
 Other spectrogram creators: \code{\link{dfDTW}},
   \code{\link{dfts}}, \code{\link{ffDTW}},
-  \code{\link{ffts}}, \code{\link{snrspecs}},
+  \code{\link{ffts}}, \code{\link{multi_DTW}},
+  \code{\link{phylo_spectro}}, \code{\link{snrspecs}},
   \code{\link{sp.en.ts}}, \code{\link{specreator}},
   \code{\link{trackfreqs}}
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
 }
+\concept{spectrogram creators}

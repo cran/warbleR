@@ -19,7 +19,7 @@
 #' @name catalog2pdf
 #' @details The function combines catalog images in .jpeg format from the \code{\link{catalog}} function into pdfs. Note that using lower resolution and smaller dimension (width and height) when creating catalogs will substantially decrease the size of pdf files (which could be pretty big).
 #' @seealso \code{\link{catalog2pdf}}, 
-#' \url{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}
+#' \href{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}{blog post on catalogs}
 #' @examples
 #' \dontrun{
 #' # Set temporary working directory
@@ -38,6 +38,7 @@
 #' # check this floder
 #' getwd()
 #' }
+#' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 # last modification on mar-13-2018 (MAS)
 
@@ -54,7 +55,7 @@ catalog2pdf <- function(keep.img = TRUE, overwrite = FALSE, parallel = 1, path =
   argms <- methods::formalArgs(catalog2pdf)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]

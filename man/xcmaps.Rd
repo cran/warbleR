@@ -32,7 +32,7 @@ A map of 'Xeno-Canto' recordings per species (image file), or a faceted
 }
 \details{
 This function creates maps for visualizing the geographic spread of recordings from the open-access
-online repository 'Xeno-Canto' (\url{http://www.xeno-canto.org/}). The function takes the output of 
+online repository  \href{http://www.xeno-canto.org/}{Xeno-Canto}. The function takes the output of 
 \code{\link{querxc}} as input. Maps can be displayed in the graphic devide or saved as images in the
 working directory.
 }
@@ -47,6 +47,12 @@ xcmaps(X, img = FALSE)
 #or save it as a file in the working directory
 xcmaps(X)
 
+}
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 }
 }
 \author{

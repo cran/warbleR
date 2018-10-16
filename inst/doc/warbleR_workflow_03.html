@@ -93,6 +93,9 @@ img {
 .tabbed-pane {
   padding-top: 12px;
 }
+.html-widget {
+  margin-bottom: 20px;
+}
 button.code-folding-btn:focus {
   outline: none;
 }
@@ -232,7 +235,7 @@ div.tocify {
 </center>
 <p> </p></em></h4>
 <h4 class="date"><em><center>
-“2018-06-21”
+“2018-10-16”
 </center></em></h4>
 
 </div>
@@ -245,7 +248,7 @@ div.tocify {
 <p> </p>
 <!-- <center> <h1><b>Acoustic (dis)similarity and coordinated singing</h1></b> </center> -->
 <!-- <center> <i><font size="4">Marcelo Araya-Salas and Grace Smith Vidaurre</font></i> </center> -->
-<!-- <center> 2018-06-21 </center> -->
+<!-- <center> 2018-10-16 </center> -->
 <div id="bioacoustics-in-r-with-warbler" class="section level2">
 <h2>Bioacoustics in R with <code>warbleR</code></h2>
 <p>Bioacoustics research encompasses a wide range of questions, study systems and methods, including the software used for analyses. The <code>warbleR</code> and <code>Rraven</code> packages leverage the flexibility of the <code>R</code> environment to offer a broad and accessible bioinformatics tool set. These packages fundamentally rely upon two types of data to begin bioacoustic analyses in R:</p>
@@ -478,10 +481,10 @@ str(dm)</code></pre>
 </ul>
 <p><code>xcorr</code> requires margins half the duration of the signal on either side of the signal (e.g. before and after the start and end coordinates). Signals that are very close to either the start or end of a recording may throw errors. Additionally, when sound files have been modified by bandpass filters, some pairwise cross-correlations may not work and the correlation matrix may contain <code>NA</code> values. <code>xcorr</code> now contains an argument to remove columns of the matrix that contain <code>NA</code> values, which will reduce the data in the matrix but also allow the matrix to be used in subsequent analyses.</p>
 <p>Here our output is a matrix of peak correlation per pairwise comparison, with the recording-selection names as the matrix dimension names.</p>
-<pre class="r"><code>xc &lt;- xcorr(Phae.hisnrt, wl = 300, na.rm = FALSE, frange = c(2,10))
+<pre class="r"><code>xc &lt;- xcorr(Phae.hisnrt, wl = 300, na.rm = FALSE, bp = c(2,10))
 str(xc)</code></pre>
 <p>To visualize the cross-correlation across all pairwise comparisons, we need to feed the function <code>xcorr.graph</code> a list of <code>xcorr</code> output (<code>xcorr</code>must be run with <code>cor.mat = FALSE</code>). Here we save the graphical output of <code>xcorr.graph</code> for better ease of visualization.</p>
-<pre class="r"><code>xc &lt;- xcorr(Phae.hisnrt, wl = 300, na.rm = FALSE, frange = c(2,10), cor.mat = FALSE)
+<pre class="r"><code>xc &lt;- xcorr(Phae.hisnrt, wl = 300, na.rm = FALSE, bp = c(2,10), cor.mat = FALSE)
 
 jpeg(&quot;xcorr_graph.jpeg&quot;, width = 30, height = 30, units = &quot;cm&quot;, res = 200)
 xcorr.graph(xc, cex.cor = 1, cex.lab = 1, cex.axis.lab = 1)

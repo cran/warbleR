@@ -6,9 +6,9 @@
 #' and measurement of acoustic parameters. warbleR makes fundamental sound 
 #' analysis tools from the R package seewave, as well as new tools not yet 
 #' offered in the R environment, readily available for batch process analysis. The functions 
-#' facilitate searching and downloading avian vocalizations from 'Xeno-Canto' 
-#' \url{http://www.xeno-canto.org/}, creating maps of 'Xeno-Canto' recordings, 
-#' converting .mp3 files to .wav files, checking .wav files, automatically detecting acoustic signals, selecting 
+#' facilitate searching and downloading avian vocalizations from  
+#' \href{http://www.xeno-canto.org}{Xeno-Canto}, creating maps of \href{http://www.xeno-canto.org}{Xeno-Canto} recordings,
+#'  converting .mp3 files to .wav files, checking .wav files, automatically detecting acoustic signals, selecting 
 #' them manually, printing spectrograms of whole recordings or individual signals, measuring signal 
 #' to noise ratio, cross-correlation and performing acoustic measurements.
 #'      
@@ -24,6 +24,8 @@
 #'   
 #'   \code{\link{querxc}}: Download recordings and/or metadata from 'Xeno-Canto'
 #'  
+#'   \code{\link{quer_ml}}: Download recordings and/or metadata from Macaulay Library
+#'   
 #'   \code{\link{sim_songs}}: Simulate animal vocalizations
 #'   
 #' @section Managing sound files:
@@ -40,11 +42,15 @@
 #'   
 #'   \code{\link{fixwavs}}: Fix .wav files so they can be read by other functions
 #'   
+#'   \code{\link{resample_est}}: Resample wave objects in extended selection tables
+#'   
 #'   \code{\link{wavdur}}: Determine the duration of sound files
 #'   
 #'   \code{\link{cut_sels}}: Cut selections from a selection table into individual sound files
 #'  
 #'   \code{\link{rm_sil}}: Remove silence segments from wave files
+#'   
+#'   \code{\link{rm_channels}}: Remove channels in wave files
 #'   
 #'   \code{\link{consolidate}}: Consolidate sound files into a single folder
 #'   
@@ -77,6 +83,8 @@
 #'      
 #'   \code{\link{specan}}: Measure acoustic parameters on selected acoustic 
 #'   signals
+#'   
+#'   \code{\link{mfcc_stats}}: Calculate descriptive statistics on Mel-frequency cepstral coefficients
 #'   
 #'   \code{\link{xcorr}}: Pairwise cross-correlation of multiple signals  
 #'   
@@ -125,6 +133,8 @@
 #'   
 #'   \code{\link{snrspecs}}: Create spectrograms to visualize margins over which 
 #'   noise will be measured by sig2noise
+#'   
+#'   \code{\link{phylo_spectro}}: Add spectrograms onto phylogenetic trees
 
 #' @exportClass selection_table
 #' @exportClass extended_selection_table
@@ -143,12 +153,14 @@
 #' @import iterators
 #' @import bitops
 #' @import jpeg
+#' @importFrom bioacoustics resample
 #' @importFrom methods formalArgs new
 #' @importFrom pracma findpeaks
 #' @importFrom Sim.DiffProc BB GBM
 #' @importFrom methods slotNames
 #' @importFrom dtw dtwDist
-#' @importFrom stats cor dist aggregate approx ave princomp time ts predict smooth.spline complete.cases spline weighted.mean na.omit
+#' @importFrom soundgen analyze
+#' @importFrom stats cor dist aggregate approx ave princomp time ts predict smooth.spline complete.cases spline weighted.mean na.omit var
 #' 
 #' @author Marcelo Araya-Salas & Grace Smith Vidaurre
 #'   

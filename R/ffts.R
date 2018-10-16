@@ -91,7 +91,7 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   argms <- methods::formalArgs(ffts)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
@@ -127,7 +127,7 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   if (any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
   
   #if end or start are not numeric stop
-  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'end' and 'selec' must be numeric")
+  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
   if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
@@ -197,6 +197,14 @@ ffts <- function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
       apfund1 <- apfund
     } else {
       if (!clip.edges)  {
+        
+        # clip start edges
+        ffreq <- ffreq[which(as.numeric(is.na(ffreq[ , 2])) == 0)[1]:nrow(ffreq), ]
+        
+        # clip end edges
+        ffreq <- ffreq[1:max(which(as.numeric(is.na(ffreq[ , 2])) == 0)), ]
+        
+        # interpolate
         apfund <- approx(ffreq[,1], ffreq[,2], xout = seq(from = ffreq1[1, 1],
                                                           to = ffreq1[nrow(ffreq1), 1], length.out = length.out), 
                          method = "linear") 

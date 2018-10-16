@@ -1,25 +1,21 @@
 #' Spectrogram cross-correlation 
 #' 
 #' \code{xcorr} estimates the similarity of two spectrograms by means of cross-correlation
-#' @usage xcorr(X, wl =512, frange= NULL, ovlp=90, dens=0.9, bp= NULL, wn='hanning', 
+#' @usage xcorr(X, wl =512, bp = NULL, ovlp=90, dens=0.9, wn='hanning', 
 #' cor.method = "pearson", parallel = 1, path = NULL, pb = TRUE, na.rm = FALSE,
-#'  dfrange = FALSE, cor.mat = TRUE)
+#'  cor.mat = TRUE)
 #' @param  X 'selection_table', 'extended_selection_table' or data frame containing columns for sound files (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #' is 512.
-#' @param frange A numeric vector of length 2 setting the upper and lower frequency limits (in kHz) 
-#' in which to compare the signals. Must be provided. The \code{\link{dfts}} function can be used to determine this parameter if \code{dfrange = TRUE}. This method is more adequate for pure tone
-#' signals. Default is \code{NULL}.
-#' @param dfrange Logical. If \code{TRUE} the \code{\link{dfts}} function can is used to determine the frequency range in which to compare signals. 
+#' @param bp A numeric vector of length 2 setting the upper and lower frequency limits (in kHz) 
+#' in which to compare the signals or "frange" (default) to indicate that values in 'bottom.freq'
+#' and 'top.freq' columns will be used as frequency limits. Default is \code{NULL}.
 #' @param ovlp Numeric vector of length 1 specifying \% of overlap between two 
 #' consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 90. High values of ovlp 
 #' slow down the function but produce more accurate results.
 #' @param dens Numeric vector of length 1 specifying the approximate density of points in which to sample amplitude. 
 #' See \code{\link[monitoR]{makeTemplate}}. Deafult is 0.9.
-#' @param bp A numeric vector of length 2 for the lower and upper limits of a 
-#' frequency bandpass filter (in kHz) in which to detect dominant frequency. 
-#' Only applied when frange is \code{NULL}. Default is \code{NULL}.
 #' @param wn A character vector of length 1 specifying the window name as in \code{\link[seewave]{ftwindow}}. 
 #' @param cor.method A character vector of length 1 specifying the correlation method as in \code{\link[stats]{cor}}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
@@ -57,19 +53,23 @@
 #' writeWave(Phae.long3, "Phae.long3.wav")
 #' writeWave(Phae.long4, "Phae.long4.wav")
 #'
-#'xcor <- xcorr(X = selec.table, wl = 300, frange = c(2, 9), ovlp = 90,
+#'xcor <- xcorr(X = selec.table, wl = 300, bp = c(2, 9), ovlp = 90,
 #'dens = 1, wn = 'hanning', cor.method = "pearson")
 #' 
 #' }
 #' @seealso \code{\link{xcorr.graph}}
 #' @author Marcelo Araya-Salas \email{araya-salas@@cornell.edu})
-#' @source H. Khanna, S.L.L. Gaunt & D.A. McCallum (1997). Digital spectrographic 
-#' cross-correlation: tests of sensitivity. Bioacoustics 7(3): 209-234
+#' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' 
+#' H. Khanna, S.L.L. Gaunt & D.A. McCallum (1997). Digital spectrographic cross-correlation: tests of sensitivity. Bioacoustics 7(3): 209-234
+#' }
 # last modification on may-7-2018 (MAS)
 
-xcorr <- function(X = NULL, wl = 512, frange = NULL, ovlp = 90, dens = 0.9, bp = NULL, wn ='hanning', 
-                  cor.method = "pearson", parallel = 1, path = NULL,
-                  pb = TRUE, na.rm = FALSE, dfrange = FALSE, cor.mat = TRUE)
+xcorr <- function(X = NULL, wl = 512, bp = NULL, ovlp = 90, dens = 0.9, 
+                  wn ='hanning', cor.method = "pearson", parallel = 1, 
+                  path = NULL, pb = TRUE, na.rm = FALSE, cor.mat = TRUE)
 {
   
   # reset working directory 
@@ -84,7 +84,7 @@ xcorr <- function(X = NULL, wl = 512, frange = NULL, ovlp = 90, dens = 0.9, bp =
   argms <- methods::formalArgs(xcorr)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
@@ -117,14 +117,17 @@ xcorr <- function(X = NULL, wl = 512, frange = NULL, ovlp = 90, dens = 0.9, bp =
   #stop if only 1 selection
   if (nrow(X) == 1) stop("you need more than one selection to do cross-correlation")
   
-  #if bp is not vector or length!=2 stop
-  if (!is.null(bp)) {if (!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
-    if (!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")}}
   
-  #if flim is not vector or length!=2 stop
-  if (is.null(frange) & !dfrange) stop("either 'frange' must be provided or 'dfrange' set to TRUE")
-  if (!is.null(frange) & !is.vector(frange)) stop("'frange' must be a numeric vector of length 2") else
-      if (!is.null(frange) & !length(frange) == 2) stop("'frange' must be a numeric vector of length 2")
+  # bp checking
+  if (bp[1] != "frange")
+  {if (!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
+    if (!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")} 
+  } else
+  {if (!any(names(X) == "bottom.freq") & !any(names(X) == "top.freq")) stop("'bp' = frange requires bottom.freq and top.freq columns in X")
+    if (any(is.na(c(X$bottom.freq, X$top.freq)))) stop("NAs found in bottom.freq and/or top.freq") 
+    if (any(c(X$bottom.freq, X$top.freq) < 0)) stop("Negative values found in bottom.freq and/or top.freq") 
+    if (any(X$top.freq - X$bottom.freq < 0)) stop("top.freq should be higher than low.f")
+  }
   
   #if wl is not vector or length!=1 stop
   if (!is.numeric(wl)) stop("'wl' must be a numeric vector of length 1") else {
@@ -141,11 +144,25 @@ xcorr <- function(X = NULL, wl = 512, frange = NULL, ovlp = 90, dens = 0.9, bp =
     if (!is.vector(dens)) stop("'dens' must be a numeric vector of length 1") else{
       if (!length(dens) == 1) stop("'dens' must be a numeric vector of length 1")}} 
   
-# if frange was not provided the range is calculated with dominant frequency range  
-if (dfrange) {df <- dfts(X, wl =300, img = FALSE, length.out = 50, parallel = parallel, clip.edges = TRUE)
-  df <- df[, 3:ncol(df)]
-frq.lim = c(min(df, na.rm = TRUE), max(df, na.rm = TRUE))
-} else frq.lim = frange
+  if (!is_extended_selection_table(X)){
+    #return warning if not all sound files were found
+    fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
+    if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
+      write(file = "", x = paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
+                                 ".wav file(s) not found"))
+    
+    #count number of sound files in working directory and if 0 stop
+    d <- which(X$sound.files %in% fs) 
+    if (length(d) == 0){
+      stop("The .wav files are not in the working directory")
+    }  else {
+      X <- X[d, ]
+    }
+  }
+  
+  # if bp is frange
+  if (bp[1] == "frange") frq.lim <- c(min(X$bottom.freq), max(X$top.freq)) 
+  else frq.lim <- bp
 
   # If parallel is not numeric
   if (!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 

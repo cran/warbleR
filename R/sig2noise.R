@@ -69,8 +69,10 @@
 #' }
 #' 
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
-#' @source \url{https://en.wikipedia.org/wiki/Signal-to-noise_ratio}
-#last modification on mar-13-2018 (MAS)
+#' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' \href{https://en.wikipedia.org/wiki/Signal-to-noise_ratio}{Wikipedia: Signal-to-noise ratio}
+#' }
+#last modification on aug-06-2018 (MAS)
 
 sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq.dur = FALSE,
                       in.dB = TRUE, before = FALSE, lim.dB = TRUE, bp = NULL, wl = 10){
@@ -87,7 +89,7 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
   argms <- methods::formalArgs(sig2noise)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
@@ -123,7 +125,7 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
   if (any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
   
   #if end or start are not numeric stop
-  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'end' and 'selec' must be numeric")
+  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
   if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
@@ -156,7 +158,7 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
     
     # Read sound files to get sample rate and length
     r <- read_wave(X = X, index = y, header = TRUE)
-    # r <- tuneR::readWave(file.path(getwd(), X$sound.files[y]), header = TRUE)
+   
     f <- r$sample.rate
     
     
@@ -251,7 +253,11 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
     snr_FUN(y = i, mar, bp, wl, type, before, in.dB, lim.dB)
   }) 
       
-    # Add SNR data to manualoc output
-    z <- data.frame(X[d,], SNR = SNR)
-  return(z)
+    # Add SNR data to X
+    z <- data.frame(X, SNR = SNR)
+    
+  # fix extended selection table
+    if (is_extended_selection_table(X)) z <- fix_extended_selection_table(X = z, Y = X)  
+
+    return(z)
 }

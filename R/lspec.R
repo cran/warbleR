@@ -61,7 +61,7 @@
 #'   This function aims to facilitate visual inspection of multiple files as well as visual classification 
 #'   of vocalization units and the analysis of animal vocal sequences.
 #' @seealso \code{\link{lspec2pdf}}, \code{\link{catalog2pdf}}, 
-#' https://marce10.github.io/2017-01-07-Create_pdf_files_with_spectrograms_of_full_recordings/
+#' \href{https://marce10.github.io/2017/01/07/Create_pdf_files_with_spectrograms_of_full_recordings.html}{blog post on spectrogram pdfs}
 #' @examples
 #' \dontrun{
 #' # Set temporary working directory
@@ -79,6 +79,10 @@
 #' 
 #' #check this floder
 #' getwd()
+#' }
+#' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on mar-13-2018 (MAS)
@@ -98,7 +102,7 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collevels = s
   argms <- methods::formalArgs(lspec)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
@@ -157,7 +161,7 @@ lspec <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collevels = s
                                                                    "start", "end") %in% colnames(X))], collapse=", "), "column(s) not found in data frame"))
 
   #if end or start are not numeric stop
-  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'end' and 'selec' must be numeric")
+  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
   if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  

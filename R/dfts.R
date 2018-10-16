@@ -6,7 +6,7 @@
 #' bp = c(0, 22), threshold = 15, threshold.time = NULL, threshold.freq = NULL, 
 #' img = TRUE, parallel = 1, path = NULL, img.suffix = "dfts", pb = TRUE,
 #' clip.edges = FALSE, leglab = "dfts", frange.detec = FALSE, fsmooth = 0.1,
-#'  raw.contour = FALSE, track.harm = FALSE, adjust.wl = FALSE, ...)
+#'  raw.contour = FALSE, track.harm = FALSE, adjust.wl = TRUE, ...)
 #' @param  X object of class 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
@@ -51,11 +51,11 @@
 #' @param raw.contour Logical. If \code{TRUE} then a list with the original contours 
 #'  (i.e. without interpolating values to make all contours of equal length) is returned.
 #' @param track.harm Logical. If true warbleR's \code{\link{track_harm}} function is 
-#' used to track frequency contours. Otherwise seewave's \code{\link[seewave]{dfreq}} is used by default. 
-#' @param adjust.wl Logical. If \code{TRUE} the 'wl' is reset to be equal at the 
-#' number of samples in a selections if the samples are less than 'wl'. Default is \code{FALSE}.
+#' used to track frequency contours. Otherwise seewave's \code{\link[seewave]{dfreq}} is used by default.
+#' @param adjust.wl Logical. If \code{TRUE} 'wl' (window length) is reset to be lower than the 
+#' number of samples in a selection if the number of samples is less than 'wl'. Default is \code{TRUE}.
 #' @param ... Additional arguments to be passed to \code{\link{trackfreqs}}.
-#' @return If \code{raw.contour = TRUE} (default) a data frame with the dominant frequency values measured across the signals.  Otherwise, a list with the raw frequency detections (i.e. without interpolating values to make all contours of equal length) is returned. If img is 
+#' @return The function returns a data frame with the dominant frequency values measured across the signals.  If \code{raw.contour = TRUE} a list with the raw frequency detections (i.e. without interpolating values to make all contours of equal length) is returned. If img is 
 #' \code{TRUE} it also produces image files with the spectrograms of the signals listed in the 
 #' input data frame showing the location of the dominant frequencies 
 #' (see \code{\link{trackfreqs}} description for more details).
@@ -67,8 +67,8 @@
 #' The function uses the \code{\link[stats]{approx}} function to interpolate values between dominant frequency 
 #' measures. If there are no frequencies above the amplitude theshold at the begining or end 
 #'  of the signals then NAs will be generated. On the other hand, if there are no frequencies 
-#'  above the amplitude theshold in between signal segments in which amplitude was 
-#'  detected then the values of this adjacent segments will be interpolated 
+#'  above the amplitude theshold in time windows in between the signal in which amplitude was 
+#'  detected then the values of the adjacent will be interpolated 
 #'  to fill out the missing values (e.g. no NAs in between detected amplitude segments). 
 #' 
 #' @examples{
@@ -81,17 +81,27 @@
 #' writeWave(Phae.long1, "Phae.long1.wav")
 #' 
 #' # run function 
-#' dfts(X = selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300)
+#' dfts(X = selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300, pb = FALSE)
 #' 
+#' # note a NA in the row 4 column 3 (dfreq-1)
+#' # this can be removed by clipping edges (removing NAs at the start and/or end 
+#' # when no freq was detected) 
+#' 
+#' dfts(X = selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300, pb = FALSE, 
+#' clip.edges = TRUE)
+#' }
+#' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on march-12-2018 (MAS)
 
-dfts <-  function(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", ovlp = 70, 
+dfts <- function(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", ovlp = 70, 
                   bp = c(0, 22), threshold = 15, threshold.time = NULL, threshold.freq = NULL,
                   img = TRUE, parallel = 1,
                   path = NULL, img.suffix = "dfts", pb = TRUE, clip.edges = FALSE, leglab = "dfts", frange.detec = FALSE, fsmooth = 0.1, raw.contour = FALSE, 
-                  track.harm = FALSE, adjust.wl = FALSE, ...){     
+                  track.harm = FALSE, adjust.wl = TRUE, ...){     
   
   # reset working directory and default parameters
   wd <- getwd()
@@ -107,7 +117,7 @@ dfts <-  function(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", o
   argms <- methods::formalArgs(dfts)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
@@ -126,7 +136,6 @@ dfts <-  function(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", o
     for (q in 1:length(opt.argms))
       assign(names(opt.argms)[q], opt.argms[[q]])
   
-  
   #check path to working directory
   if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
     setwd(path)
@@ -140,12 +149,11 @@ dfts <-  function(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", o
     stop(paste(paste(c("sound.files", "selec", "start", "end")[!(c("sound.files", "selec", 
                                                                    "start", "end") %in% colnames(X))], collapse=", "), "column(s) not found in data frame"))
   
-  
   #if there are NAs in start or end stop
   if (any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
   
   #if end or start are not numeric stop
-  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'end' and 'selec' must be numeric")
+  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
   if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
@@ -202,38 +210,64 @@ dfts <-  function(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", o
     if (frange.dtc){
       frng <- frd_wrblr_int(wave = r, wl = wl.freq, fsmooth = fsmooth, threshold = threshold.freq, wn = wn, flim = c(0, 22), bp = b/ 1000, ovlp = ovlp)
     
-    if (!all(is.na(frng$frange))) b <- as.numeric(frng$frange) * 1000 }
+    if (!all(is.na(frng$frange))) b <- as.numeric(frng$frange) * 1000 
+    }
     
     # calculate dominant frequency at each time point     
     dfrq1 <- track_harm(wave = r, f = f, wl = wl, plot = FALSE, ovlp = ovlp, bandpass = b, fftw = TRUE,
-                             threshold = threshold, dfrq = !track.harm, adjust.wl = adjust.wl)
+                             threshold = threshold.time, dfrq = !track.harm, adjust.wl = adjust.wl)
     
         dfrq <- dfrq1[!is.na(dfrq1[,2]), , drop = FALSE]
         if (nrow(dfrq1) == 1 & !is.matrix(dfrq)) dfrq <- as.matrix(t(dfrq))
         
         dfrq[dfrq[,2] < b[1]/1000, ] <- NA
         if (nrow(dfrq1) == 1 & !is.matrix(dfrq)) dfrq <- as.matrix(t(dfrq))
-        if (any(is.na(dfrq[1, ]))) {dfrq <- dfrq[!is.na(dfrq[ , 1]), , drop = FALSE]
-        if (!is.matrix(dfrq)) dfrq <- as.matrix(t(dfrq))
+        if (any(is.na(dfrq[1, ]))) {
+          dfrq <- dfrq[!is.na(dfrq[ , 1]), , drop = FALSE]
+          if (!is.matrix(dfrq)) dfrq <- as.matrix(t(dfrq))
         }
     
   if (!raw.contour){ 
-     if (nrow(dfrq) < 2) {apdom <- list()
+     if (nrow(dfrq) < 2) {
+       apdom <- list()
     apdom$x <- dfrq1[, 1]
     apdom$y <- rep(NA, length.out)
     apdom1 <- apdom
     
     } else {
-      if (!clip.edges) {        
-        apdom <- approx(dfrq[,1], dfrq[,2], xout = seq(from = dfrq1[1, 1], 
+      if (!clip.edges) {       
+        apdom <- try_na(approx(dfrq[ , 1], dfrq[ , 2], xout = seq(from = dfrq1[1,  1], 
                                                                 to = dfrq1[nrow(dfrq1), 1], length.out = length.out),
-                               method = "linear")
-      apdom1 <- apdom
+                               method = "linear"))
+      
+      if (!is.list(apdom)) 
+      {
+        apdom <- list()
+        apdom$x <- dfrq1[, 1]
+        apdom$y <- rep(NA, length.out)
+        apdom1 <- apdom
+      }
+        apdom1 <- apdom
       } else 
         {
-        apdom <- approx(dfrq[,1], dfrq[,2], 
-                        xout = seq(from = dfrq[1, 1],  to = dfrq[nrow(dfrq), 1], 
-                                   length.out = length.out), method = "linear")
+        # clip start edges
+        dfrq <- dfrq[which(as.numeric(is.na(dfrq[ , 2])) == 0)[1]:nrow(dfrq), ]
+        
+        # clip end edges
+        dfrq <- dfrq[1:max(which(as.numeric(is.na(dfrq[ , 2])) == 0)), ]
+      
+        # interpolate    
+        apdom <- try_na(approx(dfrq[,1], dfrq[,2], 
+                        xout = seq(from = dfrq[1, 1],  to = dfrq1[nrow(dfrq), 1], 
+                                   length.out = length.out), method = "linear"))
+        
+        if (!is.list(apdom)) 
+        {
+          apdom <- list()
+          apdom$x <- dfrq1[, 1]
+          apdom$y <- rep(NA, length.out)
+          apdom1 <- apdom
+        }
         
         #fix for ploting with trackfreqs
         dfrq1[,2][is.na(dfrq1[,2])] <- 0
@@ -273,7 +307,7 @@ dfts <-  function(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", o
 
     if (img)  
     {
-      trackfreqs(X[i, , drop = FALSE], wl = wl, wl.freq = wl.freq, osci = FALSE, leglab = leglab, pb = FALSE, wn = wn, threshold.time = threshold.time, threshold.freq = threshold.freq, bp = bp, 
+      trackfreqs(X = X[i, , drop = FALSE], wl = wl, wl.freq = wl.freq, osci = FALSE, leglab = leglab, pb = FALSE, wn = wn, threshold.time = threshold.time, threshold.freq = threshold.freq, bp = bp, 
                  parallel = 1, path = path, img.suffix = img.suffix, ovlp = ovlp,
                  custom.contour = cstm.cntr, xl = ifelse(frange.dtc, 1.8, 1), fsmooth = fsmooth, frange.detec = frange.dtc, ...)
       } 
@@ -292,6 +326,10 @@ dfts <-  function(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", o
   { 
  dftsFUN(X, i, bp, wl, threshold.time, threshold.freq, fsmooth, wl.freq, frange.dtc = frange.detec, raw.contour, track.harm, adjust.wl)
   }) 
+  
+  if (any(sapply(lst, class) == "try-error") & !adjust.wl) stop("error during frequency detection for at least 1 selection (try 'adjust.wl = TRUE' and/or a lower threshold)") else 
+    if (any(sapply(lst, class) == "try-error"))
+    stop("error during frequency detection for at least 1 selection (try a lower threshold)")
   
   if (!raw.contour)
 {  df <- data.frame(sound.files = X$sound.files, selec = X$selec, (as.data.frame(matrix(unlist(lst),nrow = length(X$sound.files), byrow = TRUE))))

@@ -18,7 +18,7 @@
 #' @export
 #' @name xcmaps
 #' @details This function creates maps for visualizing the geographic spread of recordings from the open-access
-#' online repository 'Xeno-Canto' (\url{http://www.xeno-canto.org/}). The function takes the output of 
+#' online repository  \href{http://www.xeno-canto.org/}{Xeno-Canto}. The function takes the output of 
 #' \code{\link{querxc}} as input. Maps can be displayed in the graphic devide or saved as images in the
 #' working directory.
 #' @examples
@@ -33,6 +33,10 @@
 #' xcmaps(X)
 #' 
 #' }
+#' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
 
 xcmaps <- function(X, img = TRUE, it = "jpeg", res = 100, labels = F) {
@@ -42,7 +46,7 @@ xcmaps <- function(X, img = TRUE, it = "jpeg", res = 100, labels = F) {
   argms <- methods::formalArgs(xcmaps)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]

@@ -32,11 +32,11 @@ It specifies the number of cores to be used. Default is 1 (i.e. no parallel comp
 }
 \value{
 Sound files for which silence segments have been removed are saved in the new 
-folder "removed_silence_files". If `img = TRUE` then spectrogram images highlighting the silence segments 
+folder "silence-removed_files". If `img = TRUE` then spectrogram images highlighting the silence segments 
 that were removed are also saved.
 }
 \description{
-\code{rm_sil}
+\code{rm_sil} Removes silences in wave files
 }
 \details{
 The function removes silence segments (i.e. segments with very low amplitude values) from wave files.
@@ -60,17 +60,23 @@ env(wv1)
  writeWave(object = wv1, filename = "wv1.wav", extensible = FALSE)
 
 #remove silence
-rm_sil(flist = "wv1.wav")
+rm_sil(flist = "wv1.wav", pb = FALSE)
 
-# OR this is tempdir was used instead
-# rm_sil(path = tempdir(), flist = "wv1.wav")
+# OR this if tempdir was used instead
+# rm_sil(path = tempdir(), flist = "wv1.wav", pb = FALSE)
 
 #check this floder
 getwd()
 }
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+}
 }
 \seealso{
-\code{\link{fixwavs}}, \code{\link{autodetec}},
+\code{\link{fixwavs}}, \code{\link{autodetec}}
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})

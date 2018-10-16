@@ -70,7 +70,10 @@
 #' #check here:
 #' getwd()
 #' }
-#' @details Users can zoom-in a specific sound file segment by clicking at the 
+#' @details This function may work very slowly with middle and large size sound files. We strongly suggest using
+#'  other software tools (e.g. Raven, Avisoft) to create selection tables manually. 
+#' 
+#'   Users can zoom-in a specific sound file segment by clicking at the 
 #'   start and end (left side and right side) of the segment. To select the
 #'   start and end of a vocalization unit the users need to click at the end and
 #'   then at the start (right side and left side) of the unit. In addition, 6 
@@ -125,7 +128,7 @@ manualoc <- function(wl = 512, flim = c(0,12), seltime = 1, tdisp = NULL, reccom
   argms <- methods::formalArgs(manualoc)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"

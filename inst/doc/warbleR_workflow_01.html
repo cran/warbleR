@@ -93,6 +93,9 @@ img {
 .tabbed-pane {
   padding-top: 12px;
 }
+.html-widget {
+  margin-bottom: 20px;
+}
 button.code-folding-btn:focus {
   outline: none;
 }
@@ -232,7 +235,7 @@ div.tocify {
 </center>
 <p> </p></em></h4>
 <h4 class="date"><em><center>
-“2018-06-21”
+“2018-10-16”
 </center></em></h4>
 
 </div>
@@ -372,7 +375,7 @@ Phae.lon &lt;- querxc(qword = &quot;Phaethornis longirostris&quot;, download = F
 
 # Check out the structure of resulting the data frame
 str(Phae.lon)</code></pre>
-<pre><code>78 recordings found!</code></pre>
+<pre><code>79 recordings found!</code></pre>
 <p> </p>
 <p>You can then use the function <code>xcmaps</code> to visualize the geographic spread of the queried recordings. <code>xcmaps</code> will create an image file of a map per species in your current directory if <code>img = TRUE</code>. If <code>img = FALSE</code>, maps will be displayed in the graphics device.</p>
 <pre class="r"><code># Image type default is jpeg, but tiff files have better resolution
@@ -387,16 +390,16 @@ xcmaps(X = Phae.lon, img = FALSE) # a single species</code></pre>
 <p> </p>
 <pre class="r"><code># How many recordings are available for Phaethornis longirostris?
 nrow(Phae.lon) </code></pre>
-<pre><code>[1] 78</code></pre>
+<pre><code>[1] 79</code></pre>
 <pre class="r"><code># How many signal types exist in the xeno-canto metadata?
 levels(Phae.lon$Vocalization_type)</code></pre>
-<pre><code>[1] &quot;alarm call&quot;        &quot;flight call&quot;       &quot;song&quot;              &quot;song at lek&quot;       &quot;calls&quot;             &quot;call&quot;              &quot;lekking&quot;          
+<pre><code>[1] &quot;song&quot;              &quot;alarm call&quot;        &quot;flight call&quot;       &quot;song at lek&quot;       &quot;calls&quot;             &quot;call&quot;              &quot;lekking&quot;          
 [8] &quot;300&quot;               &quot;song, wing whirrs&quot;</code></pre>
 <pre class="r"><code># How many recordings per signal type?
 table(Phae.lon$Vocalization_type)</code></pre>
 <pre><code>
-       alarm call       flight call              song       song at lek             calls              call           lekking               300 
-                1                 2                64                 2                 1                 5                 1                 1 
+             song        alarm call       flight call       song at lek             calls              call           lekking               300 
+               65                 1                 2                 2                 1                 5                 1                 1 
 song, wing whirrs 
                 1 </code></pre>
 <p> </p>
@@ -405,34 +408,34 @@ song, wing whirrs
 # First by quality
 Phae.lon &lt;- Phae.lon[Phae.lon$Quality == &quot;A&quot;, ]
 nrow(Phae.lon)</code></pre>
-<pre><code>[1] 19</code></pre>
+<pre><code>[1] 20</code></pre>
 <pre class="r"><code># Then by signal type
 Phae.lon.song &lt;- Phae.lon[grep(&quot;song&quot;, Phae.lon$Vocalization_type, ignore.case = TRUE), ]
 nrow(Phae.lon.song)</code></pre>
-<pre><code>[1] 14</code></pre>
+<pre><code>[1] 15</code></pre>
 <pre class="r"><code># Finally by locality
 Phae.lon.LS &lt;- Phae.lon.song[grep(&quot;La Selva Biological Station, Sarapiqui, Heredia&quot;, Phae.lon.song$Locality, ignore.case = FALSE), ]
 
 # Check resulting data frame, 6 recordings remain
 str(Phae.lon.LS)</code></pre>
 <pre><code>'data.frame':   6 obs. of  17 variables:
- $ Recording_ID     : Factor w/ 78 levels &quot;402755&quot;,&quot;402754&quot;,..: 12 13 14 15 16 17
+ $ Recording_ID     : Factor w/ 79 levels &quot;433645&quot;,&quot;402755&quot;,..: 13 14 15 16 17 18
  $ Genus            : Factor w/ 1 level &quot;Phaethornis&quot;: 1 1 1 1 1 1
  $ Specific_epithet : Factor w/ 1 level &quot;longirostris&quot;: 1 1 1 1 1 1
  $ Subspecies       : Factor w/ 3 levels &quot;&quot;,&quot;baroni&quot;,&quot;cephalus&quot;: 1 1 1 1 1 1
  $ English_name     : Factor w/ 1 level &quot;Long-billed Hermit&quot;: 1 1 1 1 1 1
- $ Recordist        : Factor w/ 17 levels &quot;Marilyn Castillo&quot;,..: 9 9 9 9 9 9
- $ Country          : Factor w/ 7 levels &quot;Mexico&quot;,&quot;Panama&quot;,..: 5 5 5 5 5 5
- $ Locality         : Factor w/ 24 levels &quot;Boca de Chajul, Marqués de Comillas, Chiapas&quot;,..: 10 10 10 10 10 10
- $ Latitude         : Factor w/ 23 levels &quot;16.1332&quot;,&quot;16.1696&quot;,..: 10 10 10 10 10 10
- $ Longitude        : Factor w/ 22 levels &quot;-90.9381&quot;,&quot;-90.9035&quot;,..: 10 10 10 10 10 10
- $ Vocalization_type: Factor w/ 9 levels &quot;alarm call&quot;,&quot;flight call&quot;,..: 3 3 3 3 3 3
- $ Audio_file       : Factor w/ 78 levels &quot;//www.xeno-canto.org/402755/download&quot;,..: 12 13 14 15 16 17
- $ License          : Factor w/ 5 levels &quot;//creativecommons.org/licenses/by-nc-nd/4.0/&quot;,..: 3 3 3 3 3 3
- $ Url              : Factor w/ 78 levels &quot;https://www.xeno-canto.org/402755&quot;,..: 12 13 14 15 16 17
+ $ Recordist        : Factor w/ 18 levels &quot;Oscar Campbell&quot;,..: 10 10 10 10 10 10
+ $ Country          : Factor w/ 7 levels &quot;Panama&quot;,&quot;Mexico&quot;,..: 5 5 5 5 5 5
+ $ Locality         : Factor w/ 25 levels &quot;Panama Rainforest Discovery Centre&quot;,..: 11 11 11 11 11 11
+ $ Latitude         : Factor w/ 24 levels &quot;9.1314&quot;,&quot;16.1332&quot;,..: 11 11 11 11 11 11
+ $ Longitude        : Factor w/ 23 levels &quot;-79.7235&quot;,&quot;-90.9381&quot;,..: 11 11 11 11 11 11
+ $ Vocalization_type: Factor w/ 9 levels &quot;song&quot;,&quot;alarm call&quot;,..: 1 1 1 1 1 1
+ $ Audio_file       : Factor w/ 79 levels &quot;//www.xeno-canto.org/433645/download&quot;,..: 13 14 15 16 17 18
+ $ License          : Factor w/ 5 levels &quot;//creativecommons.org/licenses/by-nc-sa/4.0/&quot;,..: 3 3 3 3 3 3
+ $ Url              : Factor w/ 79 levels &quot;https://www.xeno-canto.org/433645&quot;,..: 13 14 15 16 17 18
  $ Quality          : Factor w/ 4 levels &quot;A&quot;,&quot;B&quot;,&quot;C&quot;,&quot;D&quot;: 1 1 1 1 1 1
- $ Time             : Factor w/ 62 levels &quot;07:30&quot;,&quot;07:00&quot;,..: 11 12 13 14 15 16
- $ Date             : Factor w/ 35 levels &quot;2016-01-18&quot;,&quot;2017-02-09&quot;,..: 10 11 11 11 12 13</code></pre>
+ $ Time             : Factor w/ 62 levels &quot;08:30&quot;,&quot;07:30&quot;,..: 12 13 14 15 16 17
+ $ Date             : Factor w/ 36 levels &quot;2018-07-10&quot;,&quot;2016-01-18&quot;,..: 11 12 12 12 13 14</code></pre>
 <p> </p>
 <p>We can check if the location coordinates make sense (all recordings should be from a single place in Costa Rica) by making a map of these recordings using <code>xcmaps</code>.</p>
 <pre class="r"><code># map in the RStudio graphics device (img = FALSE)

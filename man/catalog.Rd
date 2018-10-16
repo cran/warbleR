@@ -95,10 +95,9 @@ for vertical orientation.}
 \item{width}{Numeric. Single value (in inches) indicating the width of the output image files.  Default is 8.5
 for vertical orientation.}
 
-\item{tags}{String vector. Provides the column names that will be used for the color tagging legend above. Tags can also be numeric. Continuous variables would be break down in 10 color classes.
-spectrograms.}
+\item{tags}{String vector. Provides the column names that will be used for the color tagging legend above. Tags can also be numeric. Continuous variables would be break down in 10 color classes.}
 
-\item{tag.pal}{List of color palette function for tags. Should be of length 1, 2.  Default is \code{list(temp.colors, heat.colors, topo.colors)}.}
+\item{tag.pal}{List of color palette function for tags. Should be of length 1, 2 or 3.  Default is \code{list(temp.colors, heat.colors, topo.colors)}.}
 
 \item{legend}{A numeric vector of length 1 controling a legend for color tags is added.
 Ignored if no tags are provided. Four values are allowed: 
@@ -160,7 +159,7 @@ page are shown in the legend. Default is \code{FALSE}.}
 
 \item{rm.axes}{Logical. If \code{TRUE} frequency and time axes are excluded. Default is \code{FALSE}.}
 
-\item{title}{Character vector of length 1 to set the tile of catalogs.}
+\item{title}{Character vector of length 1 to set the title of catalogs.}
 
 \item{by.row}{Logical. If \code{TRUE} (default) catalogs are filled by rows.}
 
@@ -228,7 +227,6 @@ catalog(X = X, flim = c(1, 10), nrow = 5, ncol = 12, same.time.scale = F,
  orientation = "v",  labels = c("sound.files", "selec"), legend = 3, 
  collevels = seq(-65, 0, 5), tag.pal = list(terrain.colors), tags = c("songtype", "indiv"))
 
-
 # with legend
 catalog(X = X, flim = c(1, 10), nrow = 5, ncol = 12, same.time.scale = F,
  ovlp = 90, parallel = 1, mar = 0.01, wl = 200, gr = FALSE,
@@ -246,9 +244,12 @@ check this floder
 getwd()
 }
 }
+\references{
+{Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
+}
 \seealso{
-\url{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}
-\url{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}
+\href{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}{blog post on catalogs},
+\href{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}{blog post on customizing catalogs}, 
 \code{\link{catalog2pdf}}
 }
 \author{

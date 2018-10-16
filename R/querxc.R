@@ -1,6 +1,6 @@
 #' Access 'Xeno-Canto' recordings and metadata
 #' 
-#' \code{querxc} downloads recordings and metadata from 'Xeno-Canto' (\url{https://www.xeno-canto.org/}).
+#' \code{querxc} downloads recordings and metadata from \href{https://www.xeno-canto.org/}{Xeno-Canto}.
 #' @usage querxc(qword, download = FALSE, X = NULL, file.name = c("Genus", "Specific_epithet"), 
 #' parallel = 1, path = NULL, pb = TRUE)  
 #' @param qword Character vector of length one indicating the genus, or genus and
@@ -11,7 +11,7 @@
 #'  will search for all recordings in which the sound type description contains the word 'song'. 
 #'  Several tags can be included in the same query. The query "phaethornis cnt:belize' will only return 
 #'  results for birds in the genus \emph{Phaethornis} that were recorded in  Belize. 
-#'  See \url{https://www.xeno-canto.org/help/search} for a full description and see examples below 
+#'  See \href{https://www.xeno-canto.org/help/search}{Xeno-Canto's search help} for a full description and see examples below 
 #'  for queries using terms with more than one word.
 #' @param download Logical argument. If \code{FALSE} only the recording file names and
 #'   associated metadata are downloaded. If \code{TRUE}, recordings are also downloaded to the working
@@ -32,7 +32,7 @@
 #' @export
 #' @name querxc
 #' @details This function queries for avian vocalization recordings in the open-access
-#' online repository 'Xeno-Canto' (\url{https://www.xeno-canto.org/}). It can return recordings metadata
+#' online repository \href{https://www.xeno-canto.org/}{Xeno-Canto}. It can return recordings metadata
 #' or download the associated sound files. Complex queries can be done by using search terms that follow the 
 #'  xeno-canto advance query syntax (check "qword" argument description). 
 #'  Files are double-checked after downloading and "empty" files are re-downloaded. 
@@ -40,7 +40,7 @@
 #'  Maps of recording coordinates can be produced using 
 #' \code{\link{xcmaps}}.
 #' @seealso \code{\link{xcmaps}}, 
-#' \url{https://marce10.github.io/2016/12/22/Download_a_single_recording_for_each_species_in_a_site_from_Xeno-Canto.html} 
+#' \href{https://marce10.github.io/2016/12/22/Download_a_single_recording_for_each_species_in_a_site_from_Xeno-Canto.html}{blog post on accessing Xeno-Canto recordings} 
 #' @examples
 #' \dontrun{
 #' # Set temporary working directory
@@ -71,6 +71,10 @@
 #' # search for all female songs in sound type
 #' femsong <- querxc(qword = 'type:song type:female', download = FALSE)
 #' }
+#' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) 
 #last modification on nov-16-2016 (MAS)
 
@@ -89,7 +93,7 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
   argms <- methods::formalArgs(querxc)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"

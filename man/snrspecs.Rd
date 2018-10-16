@@ -3,9 +3,6 @@
 \name{snrspecs}
 \alias{snrspecs}
 \title{Spectrograms with background noise margins}
-\source{
-\url{https://en.wikipedia.org/wiki/Signal-to-noise_ratio}
-}
 \usage{
 snrspecs(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70, 
 inner.mar = c(5, 4, 4, 2), outer.mar = c(0, 0, 0, 0), picsize = 1, 
@@ -131,6 +128,11 @@ mar = 0.2, snrmar = 0.01, wl = 300)
 getwd()
 }
 }
+\references{
+{Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+\href{https://en.wikipedia.org/wiki/Signal-to-noise_ratio}{Wikipedia: Signal-to-noise ratio}
+}
+}
 \seealso{
 \code{\link{trackfreqs}} for creating spectrograms to visualize 
   frequency measurements by \code{\link{specan}}, \code{\link{specreator}} for 
@@ -139,9 +141,11 @@ getwd()
 Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{dfDTW}}, \code{\link{dfts}},
   \code{\link{ffDTW}}, \code{\link{ffts}},
+  \code{\link{multi_DTW}}, \code{\link{phylo_spectro}},
   \code{\link{sp.en.ts}}, \code{\link{specreator}},
   \code{\link{trackfreqs}}
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
 }
+\concept{spectrogram creators}

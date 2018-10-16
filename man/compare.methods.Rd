@@ -20,8 +20,7 @@ Default \code{NULL}.}
 the spectrogram, as in \code{\link[seewave]{spectro}}. Default is c(0, 22).}
 
 \item{bp}{numeric vector of length 2 giving the lower and upper limits of the 
-frequency bandpass filter (in kHz) used in the acoustic distance methods. Default is c(0, 22). Note that
-for XCORR this argument sets the frange argument from the \code{\link{xcorr}} function.}
+frequency bandpass filter (in kHz) used in the acoustic distance methods. Default is c(0, 22).}
 
 \item{mar}{Numeric vector of length 1. Specifies plot margins around selection in seconds. Default is 0.1.}
 
@@ -179,8 +178,11 @@ methods = c("XCORR", "SP"), parallel = 1, it = "jpeg")
 }
 
 }
+\references{
+{Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
+}
 \seealso{
-\url{https://marce10.github.io/2017/02/17/Choosing_the_right_method_for_measuring_acoustic_signal_structure.html}
+\href{https://marce10.github.io/2017/02/17/Choosing_the_right_method_for_measuring_acoustic_signal_structure.html}{blog post on comparing methods}
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu}). It uses 

@@ -11,7 +11,9 @@ pb = TRUE, parallel = 1, ...)
 \arguments{
 \item{X}{data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "selec": unique selection identifier (within a sound file), 3) "start": start time and 4) "end": 
-end time of selections. Columns for 'top.freq', 'bottom.freq' and 'channel' are optional.  Alternatively, a 'selection_table' class object can be input to double check selections. 
+end time of selections. Columns for 'top.freq', 'bottom.freq' and 'channel' are optional. Note that, when 'channel' is
+not provided the first channel (i.e. left channel) would be used by default. 
+Frequency parameters (including top and bottom frequency) should be provided in kHz. Alternatively, a 'selection_table' class object can be input to double check selections. 
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 be used as the input object for other \code{\link{warbleR}} functions.}
 
@@ -23,7 +25,8 @@ If \code{NULL} (default) then the current working directory is used.}
 
 \item{whole.recs}{Logical. If \code{TRUE} the function will create a selection 
 table for all sound files in the working directory (or "path") with `start = 0` 
-and `end = wavdur()`. Default is if \code{FALSE}.}
+and `end = wavdur()`. Default is if \code{FALSE}. Note that this will not create
+a extended selection table. If provided 'X' is ignored.}
 
 \item{extended}{Logical. If \code{TRUE}, the function will create an object of class 'extended_selection_table' 
 which included the wave objects of the selections as an additional attribute ('wave.objects') to the data set. This is 
@@ -121,9 +124,15 @@ selec.table$song <- as.numeric(selec.table$sound.files)
 
 st <- selection_table(X = selec.table, extended = TRUE, confirm.extended = FALSE, by.song = "song")
 }
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+}
 }
 \seealso{
-\code{\link{checkwavs}}
+\code{\link{checkwavs}}, \href{https://marce10.github.io/2018/05/15/Extended_selection_tables.html}{blog post on extended selection tables}
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})

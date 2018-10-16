@@ -68,6 +68,12 @@ move.imgs(cut = TRUE, to = "image_files")
 # Check this folder
 getwd()
 }
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+}
 }
 \seealso{
 \code{\link{filtersels}}
@@ -77,3 +83,4 @@ Other data manipulation: \code{\link{open_wd}}
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
+\concept{data manipulation}

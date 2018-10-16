@@ -4,18 +4,17 @@
 \alias{specreator}
 \title{Spectrograms of selected signals}
 \usage{
-specreator(X, wl = 512, flim = c(0, 22), wn = "hanning", pal
-  = reverse.gray.colors.2, ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar =
-  c(0, 0, 0, 0), picsize = 1, res = 100, cexlab = 1, title = TRUE,
-  propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE,  sc = FALSE, line = TRUE,
-  col = adjustcolor("#E37222", 0.6), lty = 3, mar = 0.05, it = "jpeg", 
-  parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, by.song = NULL, 
-  sel.labels = "selec", ...)
+specreator(X, wl = 512, flim = "frange", wn = "hanning", pal  = reverse.gray.colors.2, 
+ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = c(0, 0, 0, 0), picsize = 1, res = 100, 
+cexlab = 1, propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE,  sc = FALSE, line = TRUE,
+col = adjustcolor("#E37222", 0.6), lty = 3, mar = 0.05, it = "jpeg", parallel = 1, 
+path = NULL, pb = TRUE, fast.spec = FALSE, by.song = NULL, sel.labels = "selec", 
+title.labels = NULL, dest.path = NULL, ...)
 }
 \arguments{
 \item{X}{'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 selection number (selec), and start and end time of signals (start and end). 
-Low and high frequency columns are optional.
+'top.freq' and 'bottom.freq' columns are optional.
 The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. If using an 
 'extended_selection_table' the sound files are not required (see \code{\link{selection_table}}).}
 
@@ -52,9 +51,6 @@ presentation quality.}
 \item{cexlab}{Numeric vector of length 1 specifying the relative size of axis 
 labels. See \code{\link[seewave]{spectro}}.}
 
-\item{title}{Logical argument to add a title to individual spectrograms. 
-Default is \code{TRUE}.}
-
 \item{propwidth}{Logical argument to scale the width of spectrogram 
 proportionally to duration of the selection. Default is \code{FALSE}.}
 
@@ -90,13 +86,14 @@ If \code{NULL} (default) then the current working directory is used.}
 
 \item{pb}{Logical argument to control progress bar. Default is \code{TRUE}.}
 
-\item{fast.spec}{Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
-increases performance (much faster), although some options become unavailable, as collevels, and sc (amplitude scale).
-This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
-\code{\link[monitoR]{gray.3}}, \code{\link[monitoR]{topo.1}} and \code{\link[monitoR]{rainbow.1}} (which should be imported from the package monitoR) seem
-to work better with 'fast' spectograms. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
-\code{\link[monitoR]{gray.3}} offer 
-decreasing darkness levels.}
+\item{fast.spec}{Logical. If \code{TRUE} then image function is used internally to create spectrograms, 
+which substantially increases performance (much faster), although some options become unavailable, 
+as collevels, and sc (amplitude scale). This option is indicated for signals with high background noise 
+levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
+\code{\link[monitoR]{gray.3}}, \code{\link[monitoR]{topo.1}} and \code{\link[monitoR]{rainbow.1}}
+(which should be imported from the package monitoR) seem to work better with 'fast' spectograms. 
+Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, \code{\link[monitoR]{gray.3}} 
+offer decreasing darkness levels.}
 
 \item{by.song}{Character string with the column name containing song labels. If
 provide a single spectrogram containinig all elements for each song will be produce. Note that 
@@ -104,6 +101,11 @@ the function assumes that song labels are not repeated within a sound file. If \
 
 \item{sel.labels}{Character string with the name of the column for selection 
 labeling. Ignored if 'by.song' is \code{NULL}. Default is 'selec'. Set to \code{NULL} to remove labels.}
+
+\item{title.labels}{Character string with the name(s) of the column(s) to use as title. Default is \code{NULL} (no title). Only sound file and song included if 'by.song' is provided.}
+
+\item{dest.path}{Character string containing the directory path where the cut sound files will be saved.
+If \code{NULL} (default) then the current working directory is used.}
 
 \item{...}{Additional arguments to be passed to the internal spectrogram 
 creating function for customizing graphical output. The function is a modified 
@@ -141,6 +143,11 @@ getwd()
 }
 
 }
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+}
+}
 \seealso{
 \code{\link{trackfreqs}} for creating spectrograms to visualize 
   frequency measurements by \code{\link{specan}}, \code{\link{snrspecs}} for 
@@ -149,9 +156,11 @@ getwd()
 Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{dfDTW}}, \code{\link{dfts}},
   \code{\link{ffDTW}}, \code{\link{ffts}},
+  \code{\link{multi_DTW}}, \code{\link{phylo_spectro}},
   \code{\link{snrspecs}}, \code{\link{sp.en.ts}},
   \code{\link{trackfreqs}}
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
 }
+\concept{spectrogram creators}

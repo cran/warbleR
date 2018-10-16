@@ -1,16 +1,39 @@
-# NEWS
+# *warbleR 1.1.15*
 
+## New functions:
 
-# warbleR 1.1.14
-## (CRAN release date: 2018-06-22)
+* resample_est: resample wave objects in a extended selection table
+* phylo_spectro: add spectrograms to the tips of a phylogeny
+* wav_info: wrapper for 'selection_table()' that returns wave file information 
+* multi_DTW: wrapper on dtw for comparing signals described by multiple contours
+* rm_channels: remove channels from wave files
+* melfcc_stats: calculate descriptive statistics on Mel-frequency cepstral coefficients
 
 ## Changes and additions:
 
-* 'open_wd' example fixed (requested by CRAN)
+* 'normalize' argument in 'mp32wav()' renamed as 'dip.depth'
+* 'frange' and 'dfrange' arguments in 'xcorr()' function deprecated
+* 'selection_table` now can take files found in different directories and create extended selection tables
+* new parameters measured by  'specan()'
+* wav.size.MB column names is now wav.size in 'check_sels()' output
+* 'title.labels' argument in 'specreator()' to customized title
 
+## Bug fixes:
 
-# warbleR 1.1.13
-## (CRAN release date: 2018-05-18)
+* Using 'wav.path' from 'warbleR_options' in 'catalog()'
+* clipping.edges option in 'dfts()' and 'ffts()'
+
+</br>
+
+# *warbleR 1.1.14*
+
+## Changes and additions:
+
+* 'open_wd()' example fixed (requested by CRAN)
+
+</br>
+
+# *warbleR 1.1.13*
 
 ## Changes and additions:
 
@@ -35,8 +58,9 @@
 * warbleR_options: function to set global parameters
 *open_wd: open current working directory in wave browser
 
-# warbleR 1.1.12
-## (CRAN release date: 2018-03-13)
+</br> 
+
+# *warbleR 1.1.12*
 
 ## Changes and additions:
 
@@ -53,8 +77,9 @@
 * track_harm: track harmonic frequency contour
 * sim_song: simulate songs 
 
-# warbleR 1.1.10
-### (CRAN release date: 2018-08-28)
+</br>
+
+# *warbleR 1.1.10*
 
 ## Changes and additions:
 
@@ -69,8 +94,9 @@
 * rm_sil: removes silence segments (i.e. segments with very low amplitude values) from wave files
 * consolidate: copies (sound) files scattered in several directories into a single folder
 
-# warbleR 1.1.9
-### (CRAN release date: 2017-11-18)
+</br> 
+
+# *warbleR 1.1.9*
 
 ## Changes and additions:
 
@@ -103,19 +129,17 @@
 
 * Reading wave files with no stereo slot in "specan" and "checksels"
 
-===============================================================================================
+</br> 
 
-# warbleR 1.1.8
-### (CRAN release date: 2017-04-26)
+# *warbleR 1.1.8*
 
 ## Bug fixes:
 
 * installation in some linux distributions
 
-===============================================================================================
+</br> 
 
-# warbleR 1.1.7
-### (CRAN release date: 2017-04-24)
+# *warbleR 1.1.7*
 
 ## Changes and additions:
 
@@ -125,10 +149,9 @@
 
 * installation in windows OS fixed (pbmcapply conflict in previous version)
 
-===============================================================================================
+</br> 
 
-# warbleR 1.1.6 
-### (CRAN release date: 2017-04-05)
+# *warbleR 1.1.6* 
 
 ## New functions:
 
@@ -171,10 +194,9 @@ different individuals) would be subset to A-B-A-B-A-B
 * error for identifying readable sound files in some specific .wav formats in checkwavs function
 * error when comparing signals with a high duration difference in xcorr
 
-===============================================================================================
+</br> 
 
-# warbleR 1.1.5 
-### (CRAN release date: 2017-01-19)
+# *warbleR 1.1.5* 
 
 ## Changes and additions:
 
@@ -190,11 +212,9 @@ different individuals) would be subset to A-B-A-B-A-B
 
 *  sp.en.ts: extracts the spectral entropy across signals as a time series iteratively
 
+</br> 
 
-===============================================================================================
-
-# warbleR 1.1.4 
-### (CRAN release date: 2016-11-14)
+# *warbleR 1.1.4* 
 
 ## Changes and additions:
 
@@ -212,5 +232,3 @@ different individuals) would be subset to A-B-A-B-A-B
 
 *  filtersels: subsets selection data frames based on manually filtered image files
 *  lspec2pdf: combines lspec images to single pdf files iteratively
-
-

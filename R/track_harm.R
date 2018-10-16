@@ -26,8 +26,8 @@
 #' @param ylab Label of the frequency axis.
 #' @param ylim A numeric vector of length 2 for the frequency limit of 
 #'  the spectrogram (in kHz), as in \code{\link[seewave]{spectro}}. Default is c(0, f/2000).
-#' @param adjust.wl Logical. If \code{TRUE} the 'wl' is reset to be equal at the 
-#' number of samples in a selections if the samples are less than 'wl'. Default is \code{FALSE}.
+#' @param adjust.wl Logical. If \code{TRUE} 'wl' (window length) is reset to be lower than the 
+#' number of samples in a selection if the number of samples is less than 'wl'. Default is \code{FALSE}.
 #' @param dfrq Logical. If \code{TRUE} seewave's \code{\link[seewave]{dfreq}} is used instead. Default is \code{FALSE}.
 #' @param ... Additional arguments to be passed to the plotting function.
 #' @seealso \code{\link{trackfreqs}} for tracking frequencies iteratively on selections tables.
@@ -49,6 +49,10 @@
 #'#track both frequencies 
 #' 
 #' }
+#' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' }
 #' @author Jerome Sueur, modified by Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on feb-22-2018 (MAS)
 
@@ -63,7 +67,7 @@ track_harm <- function (wave, f, wl = 512, wn = "hanning", ovlp = 0, fftw = FALS
   argms <- methods::formalArgs(track_harm)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]

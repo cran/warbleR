@@ -8,7 +8,7 @@ dfDTW(X = NULL, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", ovlp =
 bp = c(0, 22), threshold = 15, threshold.time = NULL, threshold.freq = NULL, img = TRUE, 
 parallel = 1, path = NULL, ts.df = NULL, img.suffix = "dfDTW", pb = TRUE, 
 clip.edges = TRUE, window.type = "none", open.end = FALSE, scale = FALSE, 
-frange.detec = FALSE,  fsmooth = 0.1, ...)
+frange.detec = FALSE,  fsmooth = 0.1, adjust.wl = TRUE, ...)
 }
 \arguments{
 \item{X}{object of class 'selection_table', 'extended_selection_table' or data 
@@ -37,7 +37,7 @@ frequency bandpass filter (in kHz). Default is c(0, 22).}
 
 \item{threshold}{amplitude threshold (\%) for dominant frequency detection. Default is 15.}
 
-\item{threshold.time}{amplitude threshold (\%) for the time domain. Use for fundamental and dominant frequency detection. If \code{NULL} (default) then the 'threshold' value is used.}
+\item{threshold.time}{amplitude threshold (\%) for the time domain. Use for dominant frequency detection. If \code{NULL} (default) then the 'threshold' value is used.}
 
 \item{threshold.freq}{amplitude threshold (\%) for the frequency domain. Use for frequency range detection from the spectrum (see 'frange.detec'). If \code{NULL} (default) then the
 'threshold' value is used.}
@@ -78,6 +78,9 @@ bandpass filter (overwriting 'bp' argument). Default is \code{FALSE}.}
 sliding window (in kHz) used for frequency range detection (when \code{frange.detec = TRUE}). This help to average amplitude "hills" to minimize the effect of
 amplitude modulation. Default is 0.1.}
 
+\item{adjust.wl}{Logical. If \code{TRUE} 'wl' (window length) is reset to be lower than the 
+number of samples in a selection if the number of samples is less than 'wl'. Default is \code{TRUE}.}
+
 \item{...}{Additional arguments to be passed to \code{\link{trackfreqs}} for customizing
 graphical output.}
 }
@@ -110,21 +113,28 @@ writeWave(Phae.long1, "Phae.long1.wav")
 
 # run function 
 dfDTW(selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300)
+}
 
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 }
 }
 \seealso{
 \code{\link{specreator}} for creating spectrograms from selections,
  \code{\link{snrspecs}} for creating spectrograms to 
   optimize noise margins used in \code{\link{sig2noise}} and \code{\link{dfts}}, \code{\link{ffts}}, \code{\link{ffDTW}} for frequency contour overlaid spectrograms.
- \url{https://marce10.github.io/2016/09/12/Similarity_of_acoustic_signals_with_dynamic_time_warping_(DTW).html}
+ \href{https://marce10.github.io/2016/09/12/Similarity_of_acoustic_signals_with_dynamic_time_warping_(DTW).html}{blog post on DTW similarity}
 
 Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{dfts}}, \code{\link{ffDTW}},
-  \code{\link{ffts}}, \code{\link{snrspecs}},
+  \code{\link{ffts}}, \code{\link{multi_DTW}},
+  \code{\link{phylo_spectro}}, \code{\link{snrspecs}},
   \code{\link{sp.en.ts}}, \code{\link{specreator}},
   \code{\link{trackfreqs}}
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
+\concept{spectrogram creators}

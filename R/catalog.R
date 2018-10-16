@@ -67,8 +67,7 @@
 #' @param width Numeric. Single value (in inches) indicating the width of the output image files.  Default is 8.5
 #'  for vertical orientation.
 #' @param tags String vector. Provides the column names that will be used for the color tagging legend above. Tags can also be numeric. Continuous variables would be break down in 10 color classes.
-#'  spectrograms. 
-#' @param tag.pal List of color palette function for tags. Should be of length 1, 2.  Default is \code{list(temp.colors, heat.colors, topo.colors)}.
+#' @param tag.pal List of color palette function for tags. Should be of length 1, 2 or 3.  Default is \code{list(temp.colors, heat.colors, topo.colors)}.
 #' @param legend A numeric vector of length 1 controling a legend for color tags is added.
 #' Ignored if no tags are provided. Four values are allowed: 
 #' \itemize{
@@ -115,7 +114,7 @@
 #' @param sub.legend Logical. If \code{TRUE} then only the levels present on each
 #' page are shown in the legend. Default is \code{FALSE}.
 #' @param rm.axes Logical. If \code{TRUE} frequency and time axes are excluded. Default is \code{FALSE}.
-#' @param title Character vector of length 1 to set the tile of catalogs. 
+#' @param title Character vector of length 1 to set the title of catalogs. 
 #' @param by.row Logical. If \code{TRUE} (default) catalogs are filled by rows. 
 #' @param box Logical. If \code{TRUE} (default) a box is drawn around spectrograms and 
 #' corresponding labels and tags. 
@@ -133,8 +132,8 @@
 #'   This files can be put together in a single pdf file with \code{\link{catalog2pdf}}.
 #'   We recommend using low resolution (~60-100) and smaller dimensions (width & height < 10) if
 #'   aiming to generate pdfs (otherwise pdfs could be pretty big).
-#' @seealso \url{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}
-#' \url{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}
+#' @seealso \href{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}{blog post on catalogs},
+#' \href{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}{blog post on customizing catalogs}, 
 #' \code{\link{catalog2pdf}}
 #' @examples
 #' \dontrun{
@@ -178,7 +177,6 @@
 #'  orientation = "v",  labels = c("sound.files", "selec"), legend = 3, 
 #'  collevels = seq(-65, 0, 5), tag.pal = list(terrain.colors), tags = c("songtype", "indiv"))
 #' 
-#'
 #' # with legend
 #' catalog(X = X, flim = c(1, 10), nrow = 5, ncol = 12, same.time.scale = F,
 #'  ovlp = 90, parallel = 1, mar = 0.01, wl = 200, gr = FALSE,
@@ -195,6 +193,7 @@
 #' check this floder
 #' getwd()
 #' }
+#' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on feb-09-2017 (MAS)
 
@@ -219,7 +218,7 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
   argms <- methods::formalArgs(catalog)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
@@ -241,6 +240,10 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
   #if X is not a data frame
   if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
   
+  #check path to working directory
+  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
+    setwd(path)
+  }  
   
   #read files
   if (!is_extended_selection_table(X))
@@ -268,11 +271,6 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
   #set collevels for spec_param
   if (collevels[1] != "collev.min") 
     X$collev.min <- collevels[1] else collevels <- seq(-40, 0, 1)
-  
-  #check path to working directory
-  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
-    setwd(path)
-  }  
   
   #nrow must be equal or higher than 2
   if (nrow < 2) stop("number of rows must be equal or higher than 2")
@@ -342,7 +340,7 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
   if (any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")
   
   #if end or start are not numeric stop
-  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'end' and 'selec' must be numeric")
+  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
   if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))
@@ -554,8 +552,8 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
   #calculate time and freq ranges based on all recs
   rangs <- lapply(1:nrow(X), function(i){
    r <- read_wave(X = X, index = i, header = TRUE)
-    f <- r$sample.rate
-    
+   f <- r$sample.rate
+
     # change mar to prop.mar (if provided)
     if (!is.null(prop.mar)) adj.mar <- (X$end[i] - X$start[i]) * prop.mar else
       adj.mar <- mar
@@ -567,10 +565,12 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
     if (t[2] > r$samples/f) t[2] <- r$samples/f
     
     #in case flim its higher than can be due to sampling rate
-    fl<- flim
+    fl <- flim
     if (fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1
     return(data.frame(fl1 = fl[1], fl2 = fl[2], mardur = t[2] - t[1]))
-  })
+    print(fl)
+    })
+  
   
   rangs <- do.call(rbind, rangs)
   
@@ -675,9 +675,7 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
         # minlf <- min(m[,1])
         
         fig.type <- fig.type[!fig.type %in% c("flab", "tlab", "freq.ax")]
-        
       }    
-      
       
       #add legend col
       if (legend > 0)
@@ -755,7 +753,7 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
         if (fig.type[i] == "spec")  #plot spectros
         {     #Read sound files, initialize frequency and time limits for spectrogram
          r <- read_wave(X = X3, index = i, header = TRUE)
-          f <- r$sample.rate
+         f <- r$sample.rate
           
           # change mar to prop.mar (if provided)
           if (!is.null(prop.mar)) adj.mar <- (X3$end[i] - X3$start[i]) * prop.mar else
@@ -791,7 +789,6 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
           
           # draw spectro
           if (fast.spec & !is.null(group.tag)) par(bg =  X3$colgroup[i], new = TRUE)
-          
           spectro_wrblr_int2(wave = rec, f = rec@samp.rate, flim = flim, wl = X3$...wl...[i], wn = X3$...wn...[i], ovlp = X3$...ovlp...[i], axisX = axisX, axisY = axisY, tlab = NULL, flab = NULL, palette = X3$pal[i], fast.spec = fast.spec, main = NULL, grid = gr, page = page, rm.zero = TRUE, cexlab = cex * 1.2, collevels = collevels, collev.min = X3$collev.min[i], cexaxis = cex * 1.2, add = TRUE)
           
           #add box

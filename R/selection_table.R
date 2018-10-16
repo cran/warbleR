@@ -6,7 +6,9 @@
 #' pb = TRUE, parallel = 1, ...)
 #' @param X data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": unique selection identifier (within a sound file), 3) "start": start time and 4) "end": 
-#' end time of selections. Columns for 'top.freq', 'bottom.freq' and 'channel' are optional.  Alternatively, a 'selection_table' class object can be input to double check selections. 
+#' end time of selections. Columns for 'top.freq', 'bottom.freq' and 'channel' are optional. Note that, when 'channel' is
+#' not provided the first channel (i.e. left channel) would be used by default. 
+#' Frequency parameters (including top and bottom frequency) should be provided in kHz. Alternatively, a 'selection_table' class object can be input to double check selections. 
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 #' be used as the input object for other \code{\link{warbleR}} functions.
 #' @param max.dur the maximum duration of expected for a selection  (ie. end - start). If surpassed then an error message 
@@ -15,7 +17,8 @@
 #' If \code{NULL} (default) then the current working directory is used.
 #' @param whole.recs Logical. If \code{TRUE} the function will create a selection 
 #' table for all sound files in the working directory (or "path") with `start = 0` 
-#' and `end = wavdur()`. Default is if \code{FALSE}.  
+#' and `end = wavdur()`. Default is if \code{FALSE}. Note that this will not create
+#' a extended selection table. If provided 'X' is ignored.  
 #' @param extended Logical. If \code{TRUE}, the function will create an object of class 'extended_selection_table' 
 #' which included the wave objects of the selections as an additional attribute ('wave.objects') to the data set. This is 
 #' and self-contained format that does not require the original sound files for running most acoustic analysis in 
@@ -71,7 +74,7 @@
 #'  selection table). You can check the size of the output extended selection table
 #'  with the \code{\link[utils]{object.size}} function. Note that extended selection table created 'by.song' could be 
 #'  considerable larger.
-#' @seealso \code{\link{checkwavs}}
+#' @seealso \code{\link{checkwavs}}, \href{https://marce10.github.io/2018/05/15/Extended_selection_tables.html}{blog post on extended selection tables}
 #' @export
 #' @name selection_table
 #' @examples
@@ -101,6 +104,10 @@
 #' 
 #' st <- selection_table(X = selec.table, extended = TRUE, confirm.extended = FALSE, by.song = "song")
 #' }
+#' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on may-9-2018 (MAS)
 
@@ -120,7 +127,7 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
   argms <- methods::formalArgs(selection_table)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
@@ -139,14 +146,14 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
     for (q in 1:length(opt.argms))
       assign(names(opt.argms)[q], opt.argms[[q]])
   
+  # set working directory
   setwd(path)
   
   # If parallel is not numeric
   if (!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if (any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
-  
-  
+  # create a selection table for a row for each full length recording
   if (whole.recs){ 
     sound.files <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
     
@@ -156,7 +163,7 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
   }
   
   if (pb) write(file = "", x ="checking selections:")
-  check.results <- checksels(X, path = path, wav.size = TRUE, ...)        
+  check.results <- checksels(X, path = path, wav.size = TRUE, pb = pb, ...)        
   
   if (any(check.results$check.res != "OK")) stop("Not all selections can be read (use check.sels() to locate problematic selections)")
   
@@ -165,15 +172,15 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
   ## Set the name for the class
   class(X) <- unique(append("selection_table", class(X)))
   
-  check.results <- check.results[, names(check.results) %in% c("sound.files", "selec", by.song, "check.res", "duration", "min.n.sample", "sample.rate", "channels", "bits", "wav.size.MB", "sound.file.samples")]
+  check.results <- check.results[, names(check.results) %in% c("sound.files", "selec", by.song, "check.res", "duration", "min.n.sample", "sample.rate", "channels", "bits", "wav.size", "sound.file.samples")]
   
   # add wave object to extended file
   if (extended)
   { 
-    exp.size <- sum(round(check.results$bits * check.results$sample.rate * (check.results$duration + (mar * 2)) / 4) / 1024 ^ 2)
+    exp.size <- sum(round(check.results$bits * check.results$sample.rate * (check.results$duration + (mar * 2)) / 4) / 1024 )
     
     if (confirm.extended)
-      answer <- readline(prompt = paste0("Expected 'extended_selection_table' size is ~", round(exp.size), "MB (~", round(exp.size/1024, 5), " GB) \n Do you want to proceed (y/n): \n")) else answer <- "yeah dude!"
+      answer <- readline(prompt = paste0("Expected 'extended_selection_table' size is ~", ifelse(round(exp.size) == 0, round(exp.size, 2), round(exp.size)), "MB (~", round(exp.size/1024, 5), " GB) \n Do you want to proceed (y/n): \n")) else answer <- "yeah dude!"
       
       if (substr(answer, 1, 1) %in% c("y", "Y")) # if yes
       {
@@ -181,6 +188,8 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
         check.results$orig.end <- X$end
         
         check.results$mar.after <- check.results$mar.before <- rep(mar, nrow(X))
+        
+        # get sound file duration
         dur <- wavdur(files = as.character(X$sound.files))$duration
         
         #reset margin signals if lower than 0 or higher than duration
@@ -192,11 +201,14 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
         
         if (!is.null(by.song))
         {
-          Y <- song_param(X = as.data.frame(X), song_colm = by.song, pb = FALSE)[, c("sound.files", "song", "start", "end")]
+          Y <- song_param(X = as.data.frame(X), song_colm = by.song, pb = FALSE)
+          Y <-Y[, names(Y) %in% c("sound.files", by.song, "start", "end")]
           
-          Y$mar.before <- sapply(unique(Y$song), function(x) check.results$mar.before[which.min(check.results$orig.start[check.results$song == x])])
+          check.results$song <- X[, by.song]          
+
+          Y$mar.before <- sapply(unique(Y[ , by.song]), function(x) check.results$mar.before[which.min(check.results$orig.start[check.results$song == x])])
           
-          Y$mar.after <- sapply(unique(Y$song), function(x) check.results$mar.after[which.max(check.results$orig.end[check.results$song == x])])
+          Y$mar.after <- sapply(unique(Y[ , by.song]), function(x) check.results$mar.after[which.max(check.results$orig.end[check.results$song == x])])
         } else {
           Y <- X
           Y$mar.before <- check.results$mar.before
@@ -224,7 +236,7 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
         
         if (!is.null(by.song)) 
         {
-          names(attributes(X)$wave.objects) <- paste0(Y$sound.files, "-song_", Y$song) 
+          names(attributes(X)$wave.objects) <- paste0(Y$sound.files, "-song_", Y[ , by.song]) 
           X$sound.files <- check.results$sound.files <- paste0(X$sound.files, "-song_", as.data.frame(X)[ , names(X) == by.song,])
           
           for(i in unique(X$sound.files))
@@ -245,7 +257,7 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
           
         } else 
         {  
-          names(attributes(X)$wave.objects) <- check.results$sound.files <- X$sound.files <- paste(X$sound.files, X$selec, sep = "_")
+          names(attributes(X)$wave.objects) <- check.results$sound.files <- X$sound.files <- paste(basename(as.character(X$sound.files)), X$selec, sep = "_")
           check.results$selec <- X$selec <- 1
           
           check.results$n.samples <- as.vector(sapply(attr(X, "wave.objects"), function(x) length(x@left)))     # add n.samples for header info
@@ -258,7 +270,7 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
     check.results$n.samples <- check.results$sound.file.samples
   
   # order check results columns
-  check.results <- check.results[,na.omit(match(c("orig.sound.files", "orig.selec", "orig.start", "orig.end", "sound.files", "selec", "start", "end", "check.results", "duration", "sample.rate", "channels", "bits", "wav.size.MB", "mar.before", "mar.after", "n.samples"), names(check.results)))]
+  check.results <- check.results[,na.omit(match(c("orig.sound.files", "orig.selec", "orig.start", "orig.end", "sound.files", "selec", "start", "end", "check.results", "duration", "sample.rate", "channels", "bits", "wav.size", "mar.before", "mar.after", "n.samples"), names(check.results)))]
   
   attributes(X)$check.results <- check.results
   

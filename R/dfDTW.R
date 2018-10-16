@@ -6,7 +6,7 @@
 #' bp = c(0, 22), threshold = 15, threshold.time = NULL, threshold.freq = NULL, img = TRUE, 
 #' parallel = 1, path = NULL, ts.df = NULL, img.suffix = "dfDTW", pb = TRUE, 
 #' clip.edges = TRUE, window.type = "none", open.end = FALSE, scale = FALSE, 
-#' frange.detec = FALSE,  fsmooth = 0.1, ...)
+#' frange.detec = FALSE,  fsmooth = 0.1, adjust.wl = TRUE, ...)
 #' @param  X object of class 'selection_table', 'extended_selection_table' or data 
 #' frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
@@ -25,7 +25,7 @@
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
 #'   frequency bandpass filter (in kHz). Default is c(0, 22).
 #' @param threshold amplitude threshold (\%) for dominant frequency detection. Default is 15.
-#' @param threshold.time amplitude threshold (\%) for the time domain. Use for fundamental and dominant frequency detection. If \code{NULL} (default) then the 'threshold' value is used.
+#' @param threshold.time amplitude threshold (\%) for the time domain. Use for dominant frequency detection. If \code{NULL} (default) then the 'threshold' value is used.
 #' @param threshold.freq amplitude threshold (\%) for the frequency domain. Use for frequency range detection from the spectrum (see 'frange.detec'). If \code{NULL} (default) then the
 #'  'threshold' value is used.
 #' @param img Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.
@@ -51,7 +51,9 @@
 #' bandpass filter (overwriting 'bp' argument). Default is \code{FALSE}.
 #' @param fsmooth A numeric vector of length 1 to smooth the frequency spectrum with a mean
 #'  sliding window (in kHz) used for frequency range detection (when \code{frange.detec = TRUE}). This help to average amplitude "hills" to minimize the effect of
-#'  amplitude modulation. Default is 0.1. 
+#'  amplitude modulation. Default is 0.1.
+#' @param adjust.wl Logical. If \code{TRUE} 'wl' (window length) is reset to be lower than the 
+#' number of samples in a selection if the number of samples is less than 'wl'. Default is \code{TRUE}.
 #' @param ... Additional arguments to be passed to \code{\link{trackfreqs}} for customizing
 #' graphical output.
 #' @return A matrix with the pairwise dissimilarity values. If img is 
@@ -61,7 +63,7 @@
 #' @seealso \code{\link{specreator}} for creating spectrograms from selections,
 #'  \code{\link{snrspecs}} for creating spectrograms to 
 #'   optimize noise margins used in \code{\link{sig2noise}} and \code{\link{dfts}}, \code{\link{ffts}}, \code{\link{ffDTW}} for frequency contour overlaid spectrograms.
-#'  \url{https://marce10.github.io/2016/09/12/Similarity_of_acoustic_signals_with_dynamic_time_warping_(DTW).html}
+#'  \href{https://marce10.github.io/2016/09/12/Similarity_of_acoustic_signals_with_dynamic_time_warping_(DTW).html}{blog post on DTW similarity}
 #' @export
 #' @name dfDTW
 #' @details This function extracts the dominant frequency values as a time series and
@@ -81,7 +83,10 @@
 #' 
 #' # run function 
 #' dfDTW(selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300)
+#' }
 #' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on nov-31-2016 (MAS)
@@ -91,14 +96,14 @@ dfDTW <-  function(X = NULL, wl = 512, wl.freq = 512, length.out = 20, wn = "han
            img = TRUE, parallel = 1, path = NULL, ts.df = NULL,
            img.suffix = "dfDTW", pb = TRUE, clip.edges = TRUE, 
            window.type = "none", open.end = FALSE, scale = FALSE, frange.detec = FALSE,
-           fsmooth = 0.1, ...){     
+           fsmooth = 0.1, adjust.wl = TRUE, ...){     
 
   #### set arguments from options
   # get function arguments
   argms <- methods::formalArgs(dfDTW)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
@@ -132,10 +137,12 @@ dfDTW <-  function(X = NULL, wl = 512, wl.freq = 512, length.out = 20, wn = "han
   if (is.null(threshold.freq)) threshold.freq <- threshold
   
   #run dfts function
+  if (pb) write(file = "", x = "measuring dominant frequency contours (step 1 of 2):")
+  
   res <- dfts(X, wl = wl, length.out = length.out, wn = wn, ovlp = ovlp, wl.freq = wl.freq,
               bp = bp, threshold.time = threshold.time, threshold.freq = threshold.freq, 
               img = img, parallel = parallel,
-              path = path, img.suffix = img.suffix, pb = pb, clip.edges = clip.edges, fsmooth = fsmooth, frange.detec = frange.detec, ...)
+              path = path, img.suffix = img.suffix, pb = pb, clip.edges = clip.edges, fsmooth = fsmooth, frange.detec = frange.detec, adjust.wl = adjust.wl, ...)
   } else {
     
     if (!all(c("sound.files", "selec") %in% names(ts.df))) 
@@ -154,6 +161,7 @@ dfDTW <-  function(X = NULL, wl = 512, wl.freq = 512, length.out = 20, wn = "han
   if (any(is.na(mat))) stop("missing values in time series (frequency was not detected at
                            the start and/or end of the signal)")
   
+  if (!pb & is.null(ts.df)) write(file = "", x = "calculating DTW distances (step 2 of 2, no progress bar):")
   dm <- dtw::dtwDist(mat, mat, window.type = window.type, open.end = open.end)    
   
   rownames(dm) <- colnames(dm) <- paste(res$sound.files, res$selec, sep = "-")

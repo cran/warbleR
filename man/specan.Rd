@@ -4,9 +4,9 @@
 \alias{specan}
 \title{Measure acoustic parameters in batches of sound files}
 \usage{
-specan(X, bp = c(0,22), wl = 512, wl.freq = NULL, threshold = 15,
- parallel = 1, fast = TRUE, path = NULL, pb = TRUE, ovlp = 50, ff.method = "seewave", 
-wn = "hanning", fsmooth = 0.1)
+specan(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
+ parallel = 1, fast = TRUE, path = NULL, pb = TRUE, ovlp = 50,
+wn = "hanning", fsmooth = 0.1, harmonicity = FALSE, nharmonics = 3, ...)
 }
 \arguments{
 \item{X}{'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
@@ -15,9 +15,9 @@ end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{auto
 be used as the input data frame.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
-frequency bandpass filter (in kHz) or "frange" to indicate that values in bottom.freq
-and top.freq columns will be used as bandpass limits. Default is c(0, 22).Lower limit of
- bandpass is not applied to fundamental frequencies.}
+frequency bandpass filter (in kHz) or "frange" (default) to indicate that values in bottom.freq
+and top.freq columns will be used as bandpass limits.  Lower limit of
+ bandpass filter is not applied to fundamental frequencies.}
 
 \item{wl}{A numeric vector of length 1 specifying the spectrogram window length. Default is 512. See 'wl.freq' for setting windows length independenlty in the frequency domain.}
 
@@ -32,7 +32,7 @@ dominant frequency detection. Default is 15.}
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
 
 \item{fast}{Logical. If \code{TRUE} (default) then the peakf acoustic parameter (see below) is not computed, which 
-substantially increases performance (~9 times faster).}
+substantially increases performance (~9 times faster). This argument will be removed in future version.}
 
 \item{path}{Character string containing the directory path where the sound files are located. 
 If \code{NULL} (default) then the current working directory is used.}
@@ -43,17 +43,20 @@ If \code{NULL} (default) then the current working directory is used.}
 consecutive windows, used for fundamental frequency (using \code{\link[seewave]{fund}} or \code{\link[tuneR]{FF}}) and dominant frequency (using \code{\link[seewave]{dfreq}}). 
 Default is 50.}
 
-\item{ff.method}{Character. Selects the method used to calculate the fundamental
-frequency. Either 'tuneR' (using \code{\link[tuneR]{FF}}) or 'seewave' (using 
-\code{\link[seewave]{fund}}). Default is 'seewave'. Use trackfreqs to decide which method works the best. 
-'tuneR' performs faster (and seems to be more accurate) than 'seewave'.}
-
 \item{wn}{Character vector of length 1 specifying window name. Default is hanning'. 
 See function \code{\link[seewave]{ftwindow}} for more options.}
 
 \item{fsmooth}{A numeric vector of length 1 to smooth the frequency spectrum with a mean
 sliding window (in kHz) used for mean peak frequency detection. This help to average 
 amplitude "hills" to minimize the effect of amplitude modulation. Default is 0.1.}
+
+\item{harmonicity}{Logical. If \code{TRUE} harmonicity related parameters (fundamental frequency parameters [meanfun, minfun, maxfun], hn_freq, 
+hn_width, harmonics and HNR) are measured. Note that measuring these parameters 
+considerably increases computing time.}
+
+\item{nharmonics}{Numeric vector of length 1 setting the number of harmonics to analyze.}
+
+\item{...}{Additional parameters to be passed to \code{\link[soundgen]{analyze}}, which measures parameters related to harmonicity.}
 }
 \value{
 Data frame with 'sound.files' and 'selec' as in the input data frame, plus the following acoustic parameters: 
@@ -94,17 +97,26 @@ time intervals of 25\% and 75\% energy respectively (in s). See \code{\link[seew
    \item \code{mindom}: minimum of dominant frequency measured across the acoustic signal
    \item \code{maxdom}: maximum of dominant frequency measured across the acoustic signal 
    \item \code{dfrange}: range of dominant frequency measured across the acoustic signal 
-   \item \code{modindx}: modulation index. Calculated as the cumulative absolute 
+   \item \code{modindx}: modulation index. Calculated as the cumulative absolute
      difference between adjacent measurements of dominant frequencies divided
      by the dominant frequency range. 1 means the signals is not modulated. 
    \item \code{startdom}:  dominant frequency measurement at the start of the signal 
    \item \code{enddom}: dominant frequency measurement at the end of the signal 
    \item \code{dfslope}: slope of the change in dominant frequency through time ((enddom-startdom)/duration). Units are kHz/s.  
-   \item \code{peakf}: peak frequency. Frequency with highest energy (only generated if \code{fast = FALSE})
-   \item \code{meanpeakf}: Mean peak frequency. Frequency with highest energy from the 
-   mean spectrum (see \code{\link[seewave]{meanspec}}). Typically more consistent than peakf.
-   \item \code{bottom.freq}: low frequency. Low limit of frequency range (only generated if \code{frange.detec = TRUE})
-   \item \code{top.freq}: high frequency. High limit of frequency range (only generated if \code{frange.detec = TRUE})
+   \item \code{peakf}: peak frequency. Frequency with the highest energy. This 
+   parameter can take a considerable amount of time to measure. It's only 
+   generated if \code{fast = FALSE}. It provides a more accurate measure of peak
+   frequency than 'meanpeakf' but can be more easily affected by background noise.
+   \item \code{meanpeakf}: mean peak frequency. Frequency with highest energy from the 
+   mean frequency spectrum (see \code{\link[seewave]{meanspec}}). Typically more consistent than peakf.
+   \item \code{hn_freq}: mean frequency of the 'n' upper harmonics (kHz) (see \code{\link[soundgen]{analyze}}). 
+   Number of harmonics is defined with the argument 'nharmonics'.
+   \item \code{hn_width}: mean bandwidth of the 'n' upper harmonics (kHz) (see \code{\link[soundgen]{analyze}}). Number of harmonics is defined with the argument 'nharmonics'.  
+   \item \code{harmonics}: the amount of energy in upper harmonics, namely the 
+   ratio of total spectral power above 1.25 x F0 to the total spectral power 
+   below 1.25 x F0 (dB) (see \code{\link[soundgen]{analyze}}). Number of 
+   harmonics is defined with the argument 'nharmonics'.
+   \item \code{HNR}: harmonics-to-noise ratio (dB). A measure of the harmonic content generated by \code{\link[soundgen]{getPitchAutocor}}.
 }
 }
 \description{
@@ -116,27 +128,34 @@ The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used
  directly without any additional modification. The function measures 29 acoustic parameters (if \code{fast = TRUE}) on 
  each selection in the data frame. Most parameters are produced internally by 
  \code{\link[seewave]{specprop}}, \code{\link[seewave]{fpeaks}}, \code{\link[seewave]{fund}},
- and \code{\link[seewave]{dfreq}} from the package seewave and \code{\link[tuneR]{FF}} 
- from the package tuneR. NAs are produced for fundamental and dominant 
- frequency measures when there are no amplitude values above the threshold.
+ and \code{\link[seewave]{dfreq}} from the package seewave and \code{\link[soundgen]{analyze}} 
+ from the package soundgen. NAs are produced for fundamental and dominant 
+ frequency measures when there are no amplitude values above the threshold. 
+ Additional parameters can be provided to the internal function \code{\link[soundgen]{analyze}}, which measures parameters related to harmonicity.
 }
 \examples{
 {
 # First set temporary folder
-# setwd(tempdir())
 
-data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
+data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "selec.table"))
 writeWave(Phae.long1,"Phae.long1.wav")
 writeWave(Phae.long2,"Phae.long2.wav")
 writeWave(Phae.long3,"Phae.long3.wav")
-writeWave(Phae.long4,"Phae.long4.wav")
 
-a <- specan(X = selec.table, bp = c(0, 22))
+# measure acoustic parameters
+sp_param <- specan(X = selec.table[1:8,], pb = FALSE)
 
-# using a diferent threshold
-a <- specan(X = selec.table, bp = c(0, 22), threshold = 20)
-# View(a)
+# measuring peakf
+sp_param <- specan(X = selec.table[1:8,], pb = FALSE, fast = FALSE)
 
+# measuring harmonic-related parameters using progress bar
+sp_param <- specan(X = selec.table[1:8,], harmonicity = TRUE)
+}
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 }
 }
 \author{

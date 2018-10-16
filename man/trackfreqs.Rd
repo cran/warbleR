@@ -215,6 +215,12 @@ trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
 bp = c(1, 3), contour = "both", wl = 300)
 
 }
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+}
 }
 \seealso{
 \code{\link{specreator}} for creating spectrograms from selections,
@@ -224,9 +230,11 @@ bp = c(1, 3), contour = "both", wl = 300)
 Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{dfDTW}}, \code{\link{dfts}},
   \code{\link{ffDTW}}, \code{\link{ffts}},
+  \code{\link{multi_DTW}}, \code{\link{phylo_spectro}},
   \code{\link{snrspecs}}, \code{\link{sp.en.ts}},
   \code{\link{specreator}}
 }
 \author{
 Grace Smith Vidaurre and Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
 }
+\concept{spectrogram creators}

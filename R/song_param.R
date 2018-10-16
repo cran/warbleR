@@ -1,18 +1,17 @@
-#' Measure acoustic parameters at the song level
+#' Calculates acoustic parameters at the song level
 #'
-#' \code{song_param} measures average or extreme values of acoustic parameters of 
-#' elements in a song 
-#' @usage song_param(X = NULL, weight = NULL, song_colm = "song",
-#' mean_indx = NULL, min_indx = NULL, max_indx = NULL, sd = FALSE, 
-#' parallel = 1, pb = TRUE, na.rm = FALSE)
+#' \code{song_param} calculates average or extreme values of acoustic parameters of
+#' elements in a song or other level of organization in the signals 
+#' @usage song_param(X = NULL, song_colm = "song",mean_indx = NULL, min_indx = NULL, 
+#' max_indx = NULL, sd = FALSE, parallel = 1, pb = TRUE, na.rm = FALSE, 
+#' weight = NULL)
 #' @param X 'selection_table', 'extended_selection_table' (created 'by.song') or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 #' be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above.
-#' @param weight Character vector defining 1 or more numeric vectors to weight average
-#' measurements (i.e. song parameters). Default is \code{NULL}. Names of numeric columns in 'X' can also be used. See \code{\link[stats]{weighted.mean}}. 
-#'  for more details. To use unweighted average set 'weight' to \code{NULL}.
-#' @param song_colm Character string with the column name containing song labels. Note that 
+#' @param song_colm Character string with the column name containing song labels. 
+#' It can be used to label any hierarchical level at which parameters need to be calculated (e.g. syllables, phrases).
+#' Note that 
 #' the function assumes that song labels are not repeated within a sound file.
 #' @param mean_indx Numeric vector with the index of the columns that will be averaged. If \code{NULL} the mean of all numeric columns in 'X' is returned.
 #' @param min_indx Numeric vector with the index of the columns for which the minimum 
@@ -26,13 +25,24 @@
 #' variables in which averages are reported. Default is \code{FALSE}.
 #' @param pb Logical argument to control progress bar and messages. Default is \code{TRUE}. 
 #' @param na.rm Logical value indicating whether 'NA' values should be ignored for calculations.
-#' @return A data frame similar to the input 'X' data frame, containing the mean
-#'  values for numeric acoustic parameters. Parameters to average can be defined with
-#'  'mean_indx' (otherwhise all numeric parameters are used). Parameters can be 
-#'  weighted by other parameters in the data set (e.g. duration, frequency range). Note
-#'  that the functions works by default on songs, but can be used at other hierarchical
-#'  levels (e.g. syllables, singing bouts). This function assumes that song labels are
-#'   not repeated within a sound file.  
+#' @param weight Character vector defining 1 or more numeric vectors to weight average
+#' measurements (i.e. song parameters). Names of numeric columns in 'X' can also be used. See \code{\link[stats]{weighted.mean}}. 
+#'  for more details.  Default is \code{NULL} (unweighted average).
+#' @return A data frame similar to the input 'X' data frame, but in this case each row corresponds to a single song. The data frame contains the mean
+#'  values for numeric columns for each song. Columns that will be averaged can be defined with
+#'  'mean_indx' (otherwhise all numeric columns are used). Columns can be 
+#'  weighted by other columns in the data set (e.g. duration, frequency range). In addition, the function returns the following song level parameters: 
+#' \itemize{
+#'    \item \code{duration}: length of song (in s)
+#'    \item \code{num.elements}: number of elements (or song units)
+#'    \item \code{start}: start time of song (in s)
+#'    \item \code{end}: end time of song (in s)
+#'    \item \code{bottom.freq}: lowest 'bottom.freq' from all song elements (in kHz)
+#'    \item \code{top.freq}: highest 'top.freq' from all song elements (in kHz)
+#'    \item \code{freq.range}: difference between song's 'top.freq' and 'bottom.freq' (in kHz)
+#'    \item \code{note.rate}: number of elements per second
+#'    }
+#'  This function assumes that song labels are not repeated within a sound file.  
 #' 
 #' @export
 #' @name song_param
@@ -47,16 +57,15 @@
 #' writeWave(Phae.long1,"Phae.long1.wav")
 #' writeWave(Phae.long2,"Phae.long2.wav")
 #' writeWave(Phae.long3,"Phae.long3.wav")
-#' writeWave(Phae.long4,"Phae.long4.wav") 
 #' 
 #' # add a 'song' column
 #' selec.table$song <- rep(1:4, each = 3)[1:11]
 #' 
 #' # measure acoustic parameters
-#' sp <- specan(selec.table, bp = c(1, 11), 300, fast = TRUE)
+#' sp <- specan(selec.table[1:8, ], bp = c(1, 11), 300, fast = TRUE)
 #' 
 #' # add song data
-#' sp <- merge(sp, selec.table, by = c("sound.files", "selec"))
+#' sp <- merge(sp, selec.table[1:8, ], by = c("sound.files", "selec"))
 #' 
 #' # caculate song-level parameters for all numeric parameters
 #' song_param(X = sp, song_colm = "song", parallel = 1, pb = TRUE)
@@ -78,12 +87,14 @@
 #'mean_indx = 5:9, parallel = 1, pb = FALSE)
 #' }
 #' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on may-8-2018 (MAS)
 
-song_param <- function(X = NULL, weight = NULL, song_colm = "song",
-                       mean_indx = NULL, min_indx = NULL, max_indx = NULL, 
-                       sd = FALSE, parallel = 1, pb = TRUE, na.rm = FALSE)
+song_param <- function(X = NULL, song_colm = "song", mean_indx = NULL, min_indx = NULL, max_indx = NULL, 
+                       sd = FALSE, parallel = 1, pb = TRUE, na.rm = FALSE, weight = NULL)
 {
   # set pb options 
   on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
@@ -93,7 +104,7 @@ song_param <- function(X = NULL, weight = NULL, song_colm = "song",
   argms <- methods::formalArgs(song_param)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -115,13 +126,19 @@ song_param <- function(X = NULL, weight = NULL, song_colm = "song",
   # if extended only by song
   if (is_extended_selection_table(X))
     if (!attributes(X)$by.song$by.song) stop("extended selection tables must be created 'by.song' to be used in song.param()")
-    
+
   #if parallel is not numeric
   if (!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if (any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
   if (!any(names(X) == song_colm)) stop("'song_colm' not found")
-
+  
+  if (song_colm == "sound.files") {
+    X$song <- X$sound.files
+    song_colm <- "song"
+    }
+  
+  
   if (!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
     stop(paste(paste(c("sound.files", "selec", "start", "end")[!(c("sound.files", "selec", 

@@ -46,10 +46,16 @@ lspec2pdf(keep.img = FALSE)
 # check this floder
 getwd()
 }
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+}
 }
 \seealso{
 \code{\link{lspec}}, \code{\link{catalog2pdf}}, 
-https://marce10.github.io/2017-01-07-Create_pdf_files_with_spectrograms_of_full_recordings/
+\href{https://marce10.github.io/2017/01/07/Create_pdf_files_with_spectrograms_of_full_recordings.html}{blog post on spectrogram pdfs}
 }
 \author{
 Marcelo Araya-Salas (\email{araya-salas@cornell.edu})

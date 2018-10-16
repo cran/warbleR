@@ -7,7 +7,8 @@
 frange(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, threshold = 10, 
 wn = "hanning", flim = c(0, 22), bp = NULL, propwidth = FALSE, xl = 1, picsize = 1,
 res = 100, fast.spec = FALSE, ovlp = 50, pal = reverse.gray.colors.2, parallel = 1,
- widths = c(2, 1), main = NULL, img = TRUE, mar = 0.05, path = NULL, pb = TRUE)
+ widths = c(2, 1), main = NULL, img = TRUE, mar = 0.05, path = NULL, pb = TRUE,
+  impute = FALSE)
 }
 \arguments{
 \item{X}{object of class 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
@@ -84,6 +85,9 @@ to set spectrogram limits. Default is 0.05.}
 If \code{NULL} (default) then the current working directory is used.}
 
 \item{pb}{Logical argument to control progress bar and messages. Default is \code{TRUE}.}
+
+\item{impute}{Logical. If \code{TRUE} then missing range values are imputed 
+with the corresponding bandpass value (hence ignored when \code{bp = NULL}). Default is \code{FALSE}.}
 }
 \value{
 The original data frame with an additional 2 columns for low and high frequency values. A plot is produced in the working directory if \code{img = TRUE} (see details).
@@ -111,9 +115,15 @@ writeWave(Phae.long2,"Phae.long2.wav")
 writeWave(Phae.long3,"Phae.long3.wav")
 writeWave(Phae.long4,"Phae.long4.wav")
 
-frange(X = selec.table, wl = 112, fsmooth = 1, threshold = 13, widths = c(4, 1), 
+frange(X = selec.table, wl = 112, fsmooth = 1, threshold = 13, widths = c(4, 1),
 img = TRUE, pb = TRUE, it = "tiff", line = TRUE, mar = 0.1, bp = c(1,10.5), 
 flim = c(0, 11))
+}
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 }
 }
 \seealso{

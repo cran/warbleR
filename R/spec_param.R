@@ -49,9 +49,9 @@
 #'  Outputs are similar to those of \code{\link{catalog}}. The output image files can be put together in a single pdf file with \code{\link{catalog2pdf}}.
 #'   We recommend using low resolution (~60-100) and smaller dimensions (width & height < 10) if
 #'   aiming to generate pdfs (otherwise pdfs could be pretty big).
-#' @seealso \url{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html},
-#' \url{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}
-#' & \code{\link{catalog2pdf}}
+#' @seealso \href{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}{blog post on creating catalogs},
+#' \href{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}{blog post on customizing catalogs}
+#' , \code{\link{catalog2pdf}}
 #' @examples
 #' \dontrun{
 #' # Set temporary working directory
@@ -116,7 +116,7 @@ spec_param <- function(X, length.out = 5, ovlp = 90, wl = c(100, 1000),
   argms <- methods::formalArgs(spec_param)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"

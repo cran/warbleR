@@ -4,7 +4,7 @@
 #' which the start/end times and frequency range of acoustic signals listed in a data frame can be adjusted.
 #' @usage seltailor(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
 #'  osci = TRUE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE, pause = 1,
-#'   comments = TRUE, path = NULL, frange = FALSE, fast.spec = FALSE, ext.window = TRUE,
+#'   comments = TRUE, path = NULL, frange = TRUE, fast.spec = FALSE, ext.window = TRUE,
 #'   width = 15, height = 5, index = NULL, collevels = NULL, 
 #'   title = c("sound.files", "selec"), ts.df = NULL, col = "#E37222", 
 #'   alpha = 0.7, auto.contour = FALSE, ...)
@@ -36,7 +36,7 @@
 #' @param path Character string containing the directory path where the sound files are located.
 #' @param frange Logical argument specifying whether limits on frequency range should be
 #'  recorded. 
-#' If \code{NULL} (default) then only the time limits are recorded.
+#' If \code{TRUE} (default) time and frequency limits are recorded.
 #' @param fast.spec Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
 #' increases performance (much faster), although some options become unavailable, as sc (amplitude scale).
 #' This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
@@ -118,12 +118,16 @@
 #'  frequency value of the "click". 
 #'  
 #' @seealso  \code{\link{manualoc}}
+#' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on jul-5-2016 (MAS)
 
 seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 0.5,
                        osci = TRUE, pal = reverse.gray.colors.2, ovlp = 70, auto.next = FALSE,
-                       pause = 1, comments = TRUE, path = NULL, frange = FALSE, fast.spec = FALSE,
+                       pause = 1, comments = TRUE, path = NULL, frange = TRUE, fast.spec = FALSE,
                        ext.window = TRUE, width = 15, height = 5, index = NULL,
                        collevels = NULL, title = c("sound.files", "selec"), 
                        ts.df = NULL, col = "#E37222", alpha = 0.7, auto.contour = FALSE, ...)
@@ -139,7 +143,7 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
   argms <- methods::formalArgs(seltailor)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
@@ -207,7 +211,7 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
   if (any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
   
   #if end or start are not numeric stop
-  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'end' and 'selec' must be numeric")
+  if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
   if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))
@@ -238,8 +242,12 @@ seltailor <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar = 
     cat("all selections have been analyzed")
     stop() 
   }
-  ncl <- intersect(names(ts.df2), names(X))
-  ncl <- ncl[!ncl %in% c("sound.files", "selec")]
+  
+  if(!is.null(ts.df))
+  {
+    # ncl <- intersect(names(ts.df2), names(X))
+    ncl <- ncl[!ncl %in% c("sound.files", "selec")]
+  }
   }
   
   dn <- 1:nrow(X)

@@ -48,22 +48,24 @@
 #' 
 #' cgs
 #' }
+#' 
+#' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 #last modification on aug-13-2016 (MAS)
 
 coor.graph <- function(X = NULL, only.coor = FALSE, ovlp = TRUE, xl = 1,  res= 80, it = "jpeg",
                         img = TRUE, tlim = NULL, pb = TRUE) { 
   
-  # warning message if ggplot2 is not installed
+  # error message if ggplot2 is not installed
   if (!requireNamespace("ggplot2",quietly = TRUE))
-    stop("'install ggplot2 to use coor.graph()'")
+    stop("must install 'ggplot2' to use coor.graph()")
   
   #### set arguments from options
   # get function arguments
   argms <- methods::formalArgs(coor.graph)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -206,9 +208,9 @@ coor.graph <- function(X = NULL, only.coor = FALSE, ovlp = TRUE, xl = 1,  res= 8
         ggplot2::scale_x_continuous("Time (s)") +
         ggplot2::scale_y_continuous(name = NULL, breaks= c(0.95, 1.55), labels = c(unique(y$indiv)[1],unique(y$indiv)[2])) +
         ggplot2::scale_fill_manual(values=c("#F9766E","#00BFC4",cols), name = "", 
-                          labels=c(as.character(unique(y$indiv)[1]),as.character(unique(y$indiv)[2]), paste("overlap from", ids[1]),
+                          labels = c(as.character(unique(y$indiv)[1]),as.character(unique(y$indiv)[2]), paste("overlap from", ids[1]),
                                    paste("overlap from", ids[2]))) + 
-        ggplot2::theme(legend.position="top") + ggplot2::ggtitle(x)
+        ggplot2::theme(legend.position = "top") + ggplot2::ggtitle(x)
       
 if (img){      if (it == "jpeg") ite <- "coor.singing.jpeg" else ite <- "coor.singing.tiff"
       ggplot2::ggsave(plot = ggp, filename = paste(x, ite, sep = "-"),
@@ -222,10 +224,10 @@ if (img){      if (it == "jpeg") ite <- "coor.singing.jpeg" else ite <- "coor.si
 
 
 ##############################################################################################################
-#' alternative name for \code{\link{coor_graph}}
+#' alternative name for \code{\link{coor.graph}}
 #'
 #' @keywords internal
-#' @details see \code{\link{coor_graph}} for documentation. \code{\link{coor.graph}} will be deprecated in future versions.
+#' @details see \code{\link{coor.graph}} for documentation. \code{\link{coor.graph}} will be deprecated in future versions.
 #' @export
 
 coor_graph <- coor.graph

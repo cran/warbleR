@@ -9,7 +9,6 @@
 #' @export
 #' @name wavdur
 #' @details This function returns the duration (in seconds) of sound files.
-#'   
 #' @examples
 #' {
 #' # Set temporary working directory
@@ -23,6 +22,9 @@
 #' wavdur()
 #' }
 #' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' }
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) 
 #last modification on jul-5-2016 (MAS)
 
@@ -37,7 +39,7 @@ wavdur <- function(files = NULL, path = NULL) {
   argms <- methods::formalArgs(wavdur)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   # rename path for sound files
   names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"

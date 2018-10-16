@@ -4,20 +4,19 @@
 \alias{mp32wav}
 \title{Convert .mp3 files to .wav}
 \usage{
-mp32wav(samp.rate = 44.1, parallel = 1, from = NULL,path = NULL, 
-to = NULL, dest.path = NULL, normalize = NULL, pb = TRUE, overwrite = FALSE)
+mp32wav(samp.rate = 44.1, parallel = 1, path = NULL, 
+to = NULL, dest.path = NULL, bit.depth = 16, pb = TRUE, overwrite = FALSE)
 }
 \arguments{
-\item{samp.rate}{Sampling rate at which the .wav files should be written. The maximum permitted is 44.1 kHz (default). Units should be kHz.}
+\item{samp.rate}{Sampling rate at which the .wav files should be written. The maximum permitted is 44.1 kHz (default). 
+Units should be kHz. If not provided the sample rate of the original .mp3 file is used. Downsampling is done using the
+\code{\link[tuneR]{downsample}} function from tuneR, which seems to generate aliasing. This can be avoided by downsampling after .mp3's have been converted using the \code{\link{fix_wavs}} function (which uses SOX instead).}
 
-\item{parallel}{Numeric. Controls whether parallel computing is applied.
+\item{parallel}{Numeric. Controls whether parallel computing is applied. 
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
 
-\item{from}{Character string containing the directory path where the .mp3 files are located. Will be deprecated in future versions.}
-
 \item{path}{Character string containing the directory path where the .mp3 files are located.
-If \code{NULL} (default) then the current working directory is used. Same as
-'from' (will replace it in future versions).}
+If \code{NULL} (default) then the current working directory is used.}
 
 \item{to}{Character string containing the directory path where the .wav files will be saved. 
 If \code{NULL} (default) then the current working directory is used. Will be deprecated in future versions.}
@@ -25,8 +24,8 @@ If \code{NULL} (default) then the current working directory is used. Will be dep
 \item{dest.path}{Character string containing the directory path where the .wav files will be saved. 
 If \code{NULL} (default) then the current working directory is used. Same as 'to' (will replace it in future versions).}
 
-\item{normalize}{Character string containing the units to be used for amplitude normalization. Check 
-(\code{\link[tuneR]{normalize}}) for details. If NULL (default) no normalization is carried out.}
+\item{bit.depth}{Character string containing the units to be used for amplitude normalization. Check 
+\code{\link[tuneR]{normalize}} for details. Default is 16.}
 
 \item{pb}{Logical argument to control progress bar. Default is \code{TRUE}.}
 
@@ -55,6 +54,12 @@ mp32wav()
 
 #check this folder!!
 getwd()
+}
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 }
 }
 \author{

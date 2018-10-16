@@ -13,8 +13,7 @@
 #' @param flim A numeric vector of length 2 for the frequency limit in kHz of 
 #'   the spectrogram, as in \code{\link[seewave]{spectro}}. Default is c(0, 22).
 #' @param bp numeric vector of length 2 giving the lower and upper limits of the 
-#' frequency bandpass filter (in kHz) used in the acoustic distance methods. Default is c(0, 22). Note that
-#' for XCORR this argument sets the frange argument from the \code{\link{xcorr}} function.  
+#' frequency bandpass filter (in kHz) used in the acoustic distance methods. Default is c(0, 22).
 #' @param mar Numeric vector of length 1. Specifies plot margins around selection in seconds. Default is 0.1.
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram and cross-correlation, default 
 #'   is 512.
@@ -89,7 +88,7 @@
 #' working directory. The file name contains the methods being compared and the 
 #' rownumber of the selections. This function uses internally a modified version
 #' of the \code{\link[seewave]{spectro}} function from seewave package to create spectrograms.
-#' @seealso \url{https://marce10.github.io/2017/02/17/Choosing_the_right_method_for_measuring_acoustic_signal_structure.html}
+#' @seealso \href{https://marce10.github.io/2017/02/17/Choosing_the_right_method_for_measuring_acoustic_signal_structure.html}{blog post on comparing methods}
 #' @examples
 #' \dontrun{
 #' # Set temporary working directory
@@ -146,6 +145,7 @@
 #' #again, all images are saved in the working directory
 #' }
 #' 
+#' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}). It uses 
 #' internally a modified version of the \code{\link[seewave]{spectro}} function from 
 #' seewave package to create spectrograms.
@@ -167,7 +167,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   argms <- methods::formalArgs(compare.methods)
   
   # get warbleR options
-  opt.argms <- .Options$warbleR
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
   options(warn = -1)
   on.exit(options(warn = 0), add = TRUE)
@@ -284,7 +284,7 @@ compare.methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   disim.mats <- list()
   
   if ("XCORR" %in% methods)
-  {xcmat <- xcorr(X, wl = wl, frange = bp, ovlp = ovlp, dens = 0.9, parallel = parallel, pb = pb, na.rm = na.rm, cor.mat = TRUE)
+  {xcmat <- xcorr(X, wl = wl, bp = bp, ovlp = ovlp, dens = 0.9, parallel = parallel, pb = pb, na.rm = na.rm, cor.mat = TRUE)
 
   MDSxcorr <- stats::cmdscale(1-xcmat)  
   MDSxcorr <- scale(MDSxcorr)

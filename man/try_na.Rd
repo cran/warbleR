@@ -19,10 +19,10 @@ Returns an `NA` if any error occurs during the evaluation of a expression.
 If not, it will return the result of the evaluation.
 }
 \description{
-\code{try_na} wrapper for \code{\link[base]{try}} function that returns an NA if an error is found.
+\code{try_na} silly wrapper for \code{\link[base]{try}} function that returns an NA if an error is found.
 }
 \details{
-This is a wrapper on  that returns an `NA` if any error occurs during the evaluation of a expression. See \code{\link[base]{try}} for details.
+This is a silly wrapper on \code{\link[base]{try}} that returns an `NA` if any error occurs during the evaluation of a expression. See \code{\link[base]{try}} for details.
 }
 \examples{
 {
@@ -31,6 +31,12 @@ try_na(crazy78(12))
 
 # try a real function (no error)
 try_na(mean(1:5))
+}
+
+}
+\references{
+{
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 }
 }
 \author{

@@ -33,12 +33,19 @@
 #' writeWave(Phae.long2, "Phae.long2.wav")
 #'
 #'  #run cross correlation first
-#'  xcor<-xcorr(X = selec.table[1:5,], wl =300, frange= c(2, 9), ovlp=90, dens=0.8,
+#'  xcor<-xcorr(X = selec.table[1:5,], wl =300, bp= c(2, 9), ovlp=90, dens=0.8,
 #'  wn= "hanning", cor.method = "pearson", cor.mat = FALSE) 
 #'  
 #'  #plot pairwise scores
 #'   #xcorr.graph(X = xcor, cex.cor = 2, cex.lab = 1, rel.cex = FALSE)
 #' }
+#' 
+#' @references {
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' 
+#' H. Khanna, S.L.L. Gaunt & D.A. McCallum (1997). Digital spectrographic cross-correlation: tests of sensitivity. Bioacoustics 7(3): 209-234
+#' }
+
 #' @seealso \code{\link{xcorr}}
 #' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
 
