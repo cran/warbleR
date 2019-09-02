@@ -42,8 +42,8 @@
 #' @return Data frame with 'sound.files' and 'selec' as in the input data frame, plus the following acoustic parameters: 
 #' \itemize{
 #'    \item \code{duration}: length of signal (in s)
-#'    \item \code{meanfreq}: mean frequency. Weighted average of frequency by amplitude (in kHz)
-#'    \item \code{sd}: standard deviation of frequency weighted by amplitude
+#'    \item \code{meanfreq}: mean frequency (in kHz). Mean of frequency spectrum (i.e. weighted average of frequency by amplitude within supplied band pass).  
+#'    \item \code{sd}: standard deviation of frequency (in kHz).  
 #'    \item \code{freq.median}: median frequency. The frequency at which the signal is divided in two frequency
 #'    intervals of equal energy (in kHz) 
 #'    \item \code{freq.Q25}: first quartile frequency. The frequency at which the signal is divided in two 
@@ -66,7 +66,7 @@
 #'    noisy ~ 1. See \code{\link[seewave]{sh}}
 #'    \item \code{time.ent}: time entropy. Energy distribution on the time envelope. Pure tone ~ 0; 
 #'    noisy ~ 1. See \code{\link[seewave]{th}}
-#'    \item \code{entropy}: spectral entropy. Product of time and spectral entropy \code{sp.ent * time.ent}. 
+#'    \item \code{entropy}: spectrographic entropy. Product of time and spectral entropy \code{sp.ent * time.ent}. 
 #'    See \code{\link[seewave]{H}}
 #'    \item \code{sfm}: spectral flatness. Similar to sp.ent (Pure tone ~ 0; 
 #'    noisy ~ 1). See \code{\link[seewave]{sfm}}
@@ -79,7 +79,7 @@
 #'    \item \code{dfrange}: range of dominant frequency measured across the acoustic signal 
 #'    \item \code{modindx}: modulation index. Calculated as the cumulative absolute
 #'      difference between adjacent measurements of dominant frequencies divided
-#'      by the dominant frequency range. 1 means the signals is not modulated. 
+#'      by the dominant frequency range. 1 means the signal is not modulated. 
 #'    \item \code{startdom}:  dominant frequency measurement at the start of the signal 
 #'    \item \code{enddom}: dominant frequency measurement at the end of the signal 
 #'    \item \code{dfslope}: slope of the change in dominant frequency through time ((enddom-startdom)/duration). Units are kHz/s.  
@@ -110,37 +110,30 @@
 #'  Additional parameters can be provided to the internal function \code{\link[soundgen]{analyze}}, which measures parameters related to harmonicity.
 #' @examples
 #' {
-#' # First set temporary folder
-# setwd(tempdir())
-#' 
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "selec.table"))
-#' writeWave(Phae.long1,"Phae.long1.wav")
-#' writeWave(Phae.long2,"Phae.long2.wav")
-#' writeWave(Phae.long3,"Phae.long3.wav")
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "lbh_selec_table"))
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+#' writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
 #' 
 #' # measure acoustic parameters
-#' sp_param <- specan(X = selec.table[1:8,], pb = FALSE)
+#' sp_param <- specan(X = lbh_selec_table[1:8,], pb = FALSE, path = tempdir())
 #' 
 #' # measuring peakf
-#' sp_param <- specan(X = selec.table[1:8,], pb = FALSE, fast = FALSE)
+#' sp_param <- specan(X = lbh_selec_table[1:8,], pb = FALSE, fast = FALSE, path = tempdir())
 #' 
 #' # measuring harmonic-related parameters using progress bar
-#' sp_param <- specan(X = selec.table[1:8,], harmonicity = TRUE)
+#' sp_param <- specan(X = lbh_selec_table[1:8,], harmonicity = TRUE, path = tempdir())
 #' }
 #' 
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com}) and Grace Smith Vidaurre
 #last modification on mar-13-2018 (MAS)
 
 specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
                    parallel = 1, fast = TRUE, path = NULL, pb = TRUE, ovlp = 50, 
                    wn = "hanning", fsmooth = 0.1, harmonicity = FALSE, nharmonics = 3, ...){
-  
-  # reset working directory 
-  wd <- getwd()
-  on.exit(setwd(wd))
   
   # set pb options 
   on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
@@ -170,9 +163,9 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
-  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
-    setwd(path)
-  }  
+  if (is.null(path)) path <- getwd() else 
+    if (!dir.exists(path)) 
+      stop("'path' provided does not exist") 
   
   #if X is not a data frame
   if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
@@ -189,7 +182,7 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
   if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
-  if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
+  if (any(X$end - X$start <= 0)) stop(paste("Start is higher than or equal to end in", length(which(X$end - X$start <= 0)), "case(s)"))  
   
   #if any selections longer than 20 secs warning
   if (any(X$end - X$start>20)) warning(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))
@@ -207,7 +200,7 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
   
   if (!is_extended_selection_table(X)){
   #return warning if not all sound files were found
-  fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
+  fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     write(file = "", x = paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                   ".wav file(s) not found"))
@@ -232,7 +225,9 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
   spFUN <- function(i, X, bp, wl, threshold) { 
     
     # read wave object
-    r <- read_wave(X = X, index = i)
+    r <- warbleR::read_wave(X = X, path = path, index = i)
+    
+    if (length(r@left) < 7) stop(paste0("too few samples in selection row ", i, ", try check_sels() to find problematic selections"), call. = FALSE)
     
     if (bp[1] == "frange") b <- c(X$bottom.freq[i], X$top.freq[i]) else b <- bp
 
@@ -247,13 +242,15 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
   
     # freq range to measure peak freq  
     # wl is adjusted when very short signals
-    frng <- frd_wrblr_int(wave = r, wl = wl.freq, fsmooth = fsmooth, threshold = threshold, wn = wn, flim = b, bp = bpfr, ovlp = ovlp)
-  
-    # soungen measurements
+    frng <- frd_wrblr_int(wave = r, wl = wl.freq, fsmooth = fsmooth, threshold = threshold, wn = wn, bp = bpfr, ovlp = ovlp)
+    
+      # soungen measurements
     if (harmonicity)
     {
-    sg.param <- soundgen::analyze(x = as.numeric(r@left), samplingRate = r@samp.rate, silence = threshold / 100, overlap = ovlp, windowLength = wl / r@samp.rate * 1000, plot = FALSE, wn = wn, pitchCeiling = b[2] * 1000, cutFreq = b[2] * 1000, nFormants = nharmonics)
+      sg.param <- suppressMessages(try(soundgen::analyze(x = as.numeric(r@left), samplingRate = r@samp.rate, silence = threshold / 100, overlap = ovlp, windowLength = wl / r@samp.rate * 1000, plot = FALSE, wn = wn, pitchCeiling = b[2] * 1000, cutFreq = b[2] * 1000, nFormants = nharmonics), silent = TRUE))
     
+      if (class(sg.param) != "try-error"){
+      
   names(sg.param) <- gsub("^f", "h", names(sg.param))
     
   if (all(is.na(sg.param$pitch))) 
@@ -272,6 +269,14 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
     maxfun<-max(ff, na.rm = TRUE) / 1000} else meanfun <- minfun <- maxfun <- NA
   
   fun.pars <- data.frame(t(c(meanfun = meanfun, minfun = minfun, maxfun = maxfun)))
+      } else {
+      
+      sg.param <- data.frame(t(rep(NA, (nharmonics * 2) + 2)))
+      
+      names(sg.param) <- c(paste0("h", rep(1:nharmonics, each = 2), c("_freq", "_width")), "harmonics", "HNR")
+      
+      fun.pars <- data.frame(meanfun = NA, minfun = NA, maxfun = NA)
+      }
   }
       
     #frequency spectrum analysis
@@ -289,8 +294,7 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
     t.cont <- apply(m, MARGIN = 2, FUN = sum)
     t.cont <- t.cont/sum(t.cont)
     t.cont.cum <- cumsum(t.cont)
-    t.quartiles <- sapply(c(0.25, 0.5, 0.75), function(x) time[length(t.cont.cum[t.cont.cum <= 
-                                                                                       x]) + 1])
+    t.quartiles <- sapply(c(0.25, 0.5, 0.75), function(x) time[length(t.cont.cum[t.cont.cum <=x]) + 1])
     
     #save parameters
     meanfreq <- analysis$mean/1000
@@ -310,30 +314,20 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
     entropy <- sp.ent * time.ent
     sfm <- analysis$sfm
     
-    options(warn = -1)
-    
     #Frequency with amplitude peaks 
     if (!fast) #only if fast is TRUE
       peakf <- seewave::fpeaks(songspec, f = r@samp.rate, wl = wl.freq, nmax = 3, plot = FALSE)[1, 1] else peakf <- NA
     
-    #Fundamental frequency parameters
-  #   if (ff.method == "seewave")
-  #   ff <- seewave::fund(r, f = r@samp.rate, ovlp = ovlp, threshold = threshold, 
-  #                       fmax = b[2] * 1000, plot = FALSE)[, 2] else {
-  #                       if (!any(methods::slotNames(r) == "stereo")) r <- Wave(r) 
-  #     ff <- tuneR::FF(tuneR::periodogram(mono(r, "left"), width = wl, 
-  #       overlap = wl*ovlp/100), peakheight = (100 - threshold) / 100)/1000
-  #                                    }
-  
     #Dominant frecuency parameters
-    y <- seewave::dfreq(r, f = r@samp.rate, wl = ifelse(wl >= length(r@left), length(r@left) - 1, wl), ovlp = ovlp, plot = FALSE, threshold = threshold, bandpass = b * 1000, fftw = TRUE)[, 2]
+    y <- track_harm(wave = r, f = r@samp.rate, wl = if (wl >= length(r@left)) length(r@left) - 2 else wl, ovlp = ovlp, plot = FALSE, threshold = threshold, bandpass = b * 1000, fftw = TRUE,  dfrq = TRUE, adjust.wl = TRUE)[, 2]
     
     #remove NAs
     y <- y[!is.na(y)]
-    
-    #remove values below and above bandpass
+
+    #remove values below and above bandpass plus half a window size
     y <- y[y >= b[1] & y <= b[2] & y != 0]
-    
+
+    #save results in individual objects for each measurement
     if (length(y) > 0)
     {
     meandom <- mean(y, na.rm = TRUE)
@@ -347,9 +341,15 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
     } else meandom <- mindom <- maxdom <- dfrange <- startdom <- enddom <- modindx <- NA
     
     duration <- (X$end[i] - X$start[i])
+    
     if (!is.na(enddom) && !is.na(startdom))
     dfslope <- (enddom -startdom)/duration else dfslope <- NA
+    
+    # extract mean peak freq
     meanpeakf <- frng$meanpeakf 
+    
+    #set to mean peak freq if length is  0
+    if (length(meanpeakf) == 0) meanpeakf <- NA
     
     #save results
     dfres <- data.frame(sound.files = X$sound.files[i], selec = X$selec[i], duration, meanfreq, sd, freq.median, freq.Q25, freq.Q75, freq.IQR, time.median, time.Q25, time.Q75, time.IQR, skew, kurt, sp.ent, time.ent, entropy, sfm, 
@@ -389,6 +389,8 @@ specan <- function(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
   sp <- do.call(rbind, sp)
   
   row.names(sp) <- 1:nrow(sp)
+  
+  sp <- sort_colms(sp)
   
   return(sp)
   }

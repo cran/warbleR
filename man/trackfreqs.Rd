@@ -12,8 +12,8 @@ trackfreqs(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hanning", pal =
   col = c("#E37222B3", "#07889BB3"), pch = c(21, 24),  mar = 0.05, lpos = "topright", 
   it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, 
   pb = TRUE, type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, 
-   fast.spec = FALSE, ff.method = "seewave", frange.detec = FALSE, 
-   fsmooth = 0.1, widths = c(2, 1), freq.continuity = NULL, clip.edges = 2, ...)
+   fast.spec = FALSE, ff.method = "seewave", frange.detec = FALSE, fsmooth = 0.1, 
+   widths = c(2, 1), freq.continuity = NULL, clip.edges = 2, track.harm = FALSE, ...)
 }
 \arguments{
 \item{X}{object of class 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
@@ -165,6 +165,8 @@ outliers(i.e that differ from the frequency of the detections right before and a
 \item{clip.edges}{Integer vector of length 1 to control if how many 'frequency-wise discontinuous' detection would be remove at the start and end of signals (see 
 'freq.continuity' argument). Default is 2. Ignored if \code{freq.continuity = NULL}.}
 
+\item{track.harm}{Logical to control if \code{\link{track_harm}} or a modified version of \code{\link[seewave]{dfreq}} is used for dominant frequency detection. Default is \code{FALSE} (use \code{\link[seewave]{dfreq}}).}
+
 \item{...}{Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments.}
 }
 \value{
@@ -184,35 +186,35 @@ This function provides visualization of frequency measurements as the ones
 }
 \examples{
 {
-#Set temporary working directory
-# setwd(tempdir())
-
 #load data
 data("Cryp.soui")
-writeWave(Cryp.soui, "Cryp.soui.wav") #save sound files 
+writeWave(Cryp.soui, file.path(tempdir(), "Cryp.soui.wav")) #save sound files 
 
 #autodetec location of signals
 ad <- autodetec(threshold = 6, bp = c(1, 3), mindur = 1.2,
-maxdur = 3, img = FALSE, ssmooth = 600, wl = 300, flist = "Cryp.soui.wav")
+maxdur = 3, img = FALSE, ssmooth = 600, wl = 300, flist = "Cryp.soui.wav", 
+path = tempdir())
 
-#track dominant frequency graphs with freq reange detection
+#track dominant frequency graphs with freq range detection
 trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
-bp = c(1, 3), contour = "df", wl = 300, frange = TRUE)
+bp = c(1, 3), contour = "df", wl = 300, frange = TRUE, 
+path = tempdir())
 
 #using users frequency data (custom.contour argument) 
 #first get contours using dfts
 df <- dfts(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, img = FALSE,
-bp = c(1, 3),  wl = 300)
+bp = c(1, 3),  wl = 300, path = tempdir())
 
 # now input the dfts output into trackfreqs         
-trackfreqs(X = ad[!is.na(ad$start),], custom.contour = df ,flim = c(0, 5), ovlp = 90, it = "tiff")
+trackfreqs(X = ad[!is.na(ad$start),], custom.contour = df ,flim = c(0, 5), ovlp = 90, it = "tiff", 
+path = tempdir())
 
 # Check this folder
-getwd()
+tempdir()
 
 #track both frequencies 
 trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
-bp = c(1, 3), contour = "both", wl = 300)
+bp = c(1, 3), contour = "both", wl = 300, path = tempdir())
 
 }
 
@@ -235,6 +237,6 @@ Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{specreator}}
 }
 \author{
-Grace Smith Vidaurre and Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+Grace Smith Vidaurre and Marcelo Araya-Salas (\email{marceloa27@gmail.com})
 }
 \concept{spectrogram creators}

@@ -22,29 +22,57 @@
 #' 
 #' @seealso \code{\link{fixwavs}}, \code{\link{selection_table}} & \code{\link{checksels}}
 #' @examples{
-#' # Set temporary working directory
-#' # First set temporary folder
-#'  # setwd(tempdir())
-#' 
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
-#' writeWave(Phae.long1,"Phae.long1.wav")
-#' writeWave(Phae.long2,"Phae.long2.wav")
-#' writeWave(Phae.long3,"Phae.long3.wav")
-#' writeWave(Phae.long4,"Phae.long4.wav")
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+#' writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+#' writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
 #'  
 #' #get info
-#' wav_info()
+#' wav_info(path = tempdir())
 #' }
 #' 
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on aug-15-2018 (MAS)
 
 wav_info <- function(path = NULL, parallel = 1, pb = TRUE)
 {
   
+  # set pb options 
+  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  #### set arguments from options
+  # get function arguments
+  argms <- methods::formalArgs(rm_sil)
+  
+  # get warbleR options
+  opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
+  
+  # rename path for sound files
+  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
+  
+  # remove options not as default in call and not in function arguments
+  opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
+  
+  # get arguments set in the call
+  call.argms <- as.list(base::match.call())[-1]
+  
+  # remove arguments in options that are in call
+  opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
+  
+  # set options left
+  if (length(opt.argms) > 0)
+    for (q in 1:length(opt.argms))
+      assign(names(opt.argms)[q], opt.argms[[q]])
+  
+  #check path to working directory
+  if (is.null(path)) path <- getwd() else 
+    if (!dir.exists(path)) 
+      stop("'path' provided does not exist") 
+    
   # make a selection table from files
   st <- selection_table(whole.recs = TRUE, path = path, parallel = parallel, pb = pb)
   

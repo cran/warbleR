@@ -22,7 +22,7 @@ Default is \code{FALSE}.}
 \item{max.ovlp}{Numeric vector of length 1 specifying the maximum overlap allowed (in seconds)
 . Default is 0.}
 
-\item{relabel}{Logical. If \code{TRUE} then selections names (selec column) are reset.
+\item{relabel}{Logical. If \code{TRUE} then selections names (selec column) are reset within each sound files.
 Default is \code{FALSE}.}
 
 \item{drop}{Logical. If \code{TRUE}, when 2 or more selections overlap the function will remove 
@@ -56,15 +56,15 @@ overlap only the first one is kept.
 }
 \details{
 This function detects selections within a selection table that overlap in time. Selections must be 
-listed in a data frame similar to \code{\link{selec.table}}.
+listed in a data frame similar to \code{\link{lbh_selec_table}}. Note that row names are set to \code{1:nrow(X)}.
 }
 \examples{
 {
 #no overlap
-ovlp_sels(X =  selec.table)
+ovlp_sels(X =  lbh_selec_table)
 
-# modified selec.table to make the first and second selection overlap
-Y <- selec.table
+# modified lbh_selec_table to make the first and second selection overlap
+Y <- lbh_selec_table
 Y$end[4] <- 1.5
   
  ovlp_sels(X =  Y)
@@ -82,8 +82,8 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 }
 }
 \seealso{
-\code{\link{filtersels}} \code{\link{selec.table}}
+\code{\link{filtersels}} \code{\link{lbh_selec_table}}
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+Marcelo Araya-Salas (\email{marceloa27@gmail.com})
 }

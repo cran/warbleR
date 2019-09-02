@@ -4,13 +4,12 @@
 \alias{mp32wav}
 \title{Convert .mp3 files to .wav}
 \usage{
-mp32wav(samp.rate = 44.1, parallel = 1, path = NULL, 
-to = NULL, dest.path = NULL, bit.depth = 16, pb = TRUE, overwrite = FALSE)
+mp32wav(samp.rate = NULL, parallel = 1, path = NULL, 
+ dest.path = NULL, bit.depth = 16, pb = TRUE, overwrite = FALSE)
 }
 \arguments{
-\item{samp.rate}{Sampling rate at which the .wav files should be written. The maximum permitted is 44.1 kHz (default). 
-Units should be kHz. If not provided the sample rate of the original .mp3 file is used. Downsampling is done using the
-\code{\link[tuneR]{downsample}} function from tuneR, which seems to generate aliasing. This can be avoided by downsampling after .mp3's have been converted using the \code{\link{fix_wavs}} function (which uses SOX instead).}
+\item{samp.rate}{Sampling rate in kHz at which the .wav files should be written. If not provided the sample rate of the original .mp3 file is used. Downsampling is done using the
+\code{\link[bioacoustics]{resample}} function from the \href{https://cran.r-project.org/package=bioacoustics}{bioacoustics package} (which should be installed), which seems to generate aliasing. This can be avoided by downsampling after .mp3's have been converted using the \code{\link{fix_wavs}} function (which uses \href{http://sox.sourceforge.net/sox.html}{SOX} instead). Default is \code{NULL} (e.g. keep original sampling rate).}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied. 
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
@@ -18,11 +17,8 @@ It specifies the number of cores to be used. Default is 1 (i.e. no parallel comp
 \item{path}{Character string containing the directory path where the .mp3 files are located.
 If \code{NULL} (default) then the current working directory is used.}
 
-\item{to}{Character string containing the directory path where the .wav files will be saved. 
-If \code{NULL} (default) then the current working directory is used. Will be deprecated in future versions.}
-
 \item{dest.path}{Character string containing the directory path where the .wav files will be saved. 
-If \code{NULL} (default) then the current working directory is used. Same as 'to' (will replace it in future versions).}
+If \code{NULL} (default) then the folder containing the sound files will be used.}
 
 \item{bit.depth}{Character string containing the units to be used for amplitude normalization. Check 
 \code{\link[tuneR]{normalize}} for details. Default is 16.}
@@ -39,21 +35,20 @@ overwritten.}
 \code{mp32wav} converts several .mp3 files in working directory to .wav format
 }
 \details{
+The function will convert all mp3 files in  working directory or 'path' supplied to wav format. \href{https://cran.r-project.org/package=bioacoustics}{bioacoustics package} must be installed when changing sampling rates (i.e. if 'samp.rate' is supplied). Note that sound files are normalized using \code{\link[tuneR]{normalize}} so they can be written by \code{\link[tuneR]{writeWave}}.
+
 convert all .mp3 files in working directory to .wav format. Function used internally to read .mp3 files (\code{\link[tuneR]{readMP3}}) sometimes crashes.
 }
 \examples{
 \dontrun{
-# First set temporary folder
-# setwd(tempdir())
- 
-#Then download mp3 files from xeno-canto
-querxc(qword = "Phaethornis aethopygus", download = TRUE)
+# download mp3 files from xeno-canto
+querxc(qword = "Phaethornis aethopygus", download = TRUE, path = tempdir())
 
 # Convert all files to .wav format
-mp32wav()
+mp32wav(path = tempdir(), dest.path = tempdir())
 
 #check this folder!!
-getwd()
+tempdir()
 }
 
 }
@@ -63,5 +58,5 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 }
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
+Marcelo Araya-Salas (\email{marceloa27@gmail.com}) and Grace Smith Vidaurre
 }

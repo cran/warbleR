@@ -63,20 +63,17 @@
 #' @export
 #' @name color.spectro
 #' @details This function highlights regions of the spectrogram with diferent colors. The regions to be 
-#' highlighted can be provided in a selection table (as the example data 'selec.table') or interactively ('interactive' argument).
+#' highlighted can be provided in a selection table (as the example data 'lbh_selec_table') or interactively ('interactive' argument).
 #' @examples
 #' \dontrun{ 
-#' # First set empty folder
-#' # setwd(tempdir())
-
-#' data(list = c("Phae.long1", "selec.table"))
-#' writeWave(Phae.long1, "Phae.long1.wav") #save sound files 
+#' data(list = c("Phae.long1", "lbh_selec_table"))
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav")) #save sound files 
 #' 
 #'  # subset selection table
-#'  st <- selec.table[selec.table$sound.files == "Phae.long1.wav",]
+#'  st <- lbh_selec_table[lbh_selec_table$sound.files == "Phae.long1.wav",]
 #'  
 #'  # read wave file as an R object
-#'  sgnl <- tuneR::readWave(as.character(st$sound.files[1]))
+#'  sgnl <- tuneR::readWave(file.path(tempdir(), st$sound.files[1]))
 #'  
 #'  # create color column
 #'  st$colors <- c("red2", "blue", "green")
@@ -92,7 +89,7 @@
 #' }
 #' 
 #' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com}) and Grace Smith Vidaurre
 #last modification on jul-5-2016 (MAS)
 
 color.spectro <- function(wave, wl = 512, wn = "hanning", ovlp = 70,
@@ -235,6 +232,7 @@ color.spectro <- function(wave, wl = 512, wn = "hanning", ovlp = 70,
     
     if (!is.null(interactive))
     {
+      write(file = "", x = "Select the signal(s) you want to highlight:")
       xy <- locator(interactive * 2)
       xy <- as.data.frame(xy)
       xy$selec <- rep(1:interactive, each = 2) 

@@ -62,8 +62,8 @@ considerably increases computing time.}
 Data frame with 'sound.files' and 'selec' as in the input data frame, plus the following acoustic parameters: 
 \itemize{
    \item \code{duration}: length of signal (in s)
-   \item \code{meanfreq}: mean frequency. Weighted average of frequency by amplitude (in kHz)
-   \item \code{sd}: standard deviation of frequency weighted by amplitude
+   \item \code{meanfreq}: mean frequency (in kHz). Mean of frequency spectrum (i.e. weighted average of frequency by amplitude within supplied band pass).  
+   \item \code{sd}: standard deviation of frequency (in kHz).  
    \item \code{freq.median}: median frequency. The frequency at which the signal is divided in two frequency
    intervals of equal energy (in kHz) 
    \item \code{freq.Q25}: first quartile frequency. The frequency at which the signal is divided in two 
@@ -86,7 +86,7 @@ time intervals of 25\% and 75\% energy respectively (in s). See \code{\link[seew
    noisy ~ 1. See \code{\link[seewave]{sh}}
    \item \code{time.ent}: time entropy. Energy distribution on the time envelope. Pure tone ~ 0; 
    noisy ~ 1. See \code{\link[seewave]{th}}
-   \item \code{entropy}: spectral entropy. Product of time and spectral entropy \code{sp.ent * time.ent}. 
+   \item \code{entropy}: spectrographic entropy. Product of time and spectral entropy \code{sp.ent * time.ent}. 
    See \code{\link[seewave]{H}}
    \item \code{sfm}: spectral flatness. Similar to sp.ent (Pure tone ~ 0; 
    noisy ~ 1). See \code{\link[seewave]{sfm}}
@@ -99,7 +99,7 @@ time intervals of 25\% and 75\% energy respectively (in s). See \code{\link[seew
    \item \code{dfrange}: range of dominant frequency measured across the acoustic signal 
    \item \code{modindx}: modulation index. Calculated as the cumulative absolute
      difference between adjacent measurements of dominant frequencies divided
-     by the dominant frequency range. 1 means the signals is not modulated. 
+     by the dominant frequency range. 1 means the signal is not modulated. 
    \item \code{startdom}:  dominant frequency measurement at the start of the signal 
    \item \code{enddom}: dominant frequency measurement at the end of the signal 
    \item \code{dfslope}: slope of the change in dominant frequency through time ((enddom-startdom)/duration). Units are kHz/s.  
@@ -135,21 +135,19 @@ The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can be used
 }
 \examples{
 {
-# First set temporary folder
-
-data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "selec.table"))
-writeWave(Phae.long1,"Phae.long1.wav")
-writeWave(Phae.long2,"Phae.long2.wav")
-writeWave(Phae.long3,"Phae.long3.wav")
+data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "lbh_selec_table"))
+writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
 
 # measure acoustic parameters
-sp_param <- specan(X = selec.table[1:8,], pb = FALSE)
+sp_param <- specan(X = lbh_selec_table[1:8,], pb = FALSE, path = tempdir())
 
 # measuring peakf
-sp_param <- specan(X = selec.table[1:8,], pb = FALSE, fast = FALSE)
+sp_param <- specan(X = lbh_selec_table[1:8,], pb = FALSE, fast = FALSE, path = tempdir())
 
 # measuring harmonic-related parameters using progress bar
-sp_param <- specan(X = selec.table[1:8,], harmonicity = TRUE)
+sp_param <- specan(X = lbh_selec_table[1:8,], harmonicity = TRUE, path = tempdir())
 }
 
 }
@@ -159,5 +157,5 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 }
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu}) and Grace Smith Vidaurre
+Marcelo Araya-Salas (\email{marceloa27@gmail.com}) and Grace Smith Vidaurre
 }

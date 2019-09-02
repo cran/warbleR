@@ -1,6 +1,6 @@
-#' Consolidate (sound) files into a single folder
+#' Consolidate (sound) files into a single directory
 #' 
-#' \code{consolidate} copies (sound) files scattered in several directories into a single folder.
+#' \code{consolidate} copies (sound) files scattered in several directories into a single one.
 #' @export consolidate
 #' @usage consolidate(files = NULL, path = NULL, dest.path = NULL, pb = TRUE, file.ext = ".wav$", 
 #' parallel = 1, save.csv = TRUE, ...)
@@ -9,56 +9,59 @@
 #' @param path Character string containing the directory path where the sound files are located. 
 #' 'wav.path' set by \code{\link{warbleR_options}} is ignored. 
 #' If \code{NULL} (default) then the current working directory is used. 
-#' @param dest.path Character string containing the directory path where the cut sound files will be saved.
+#' @param dest.path Character string containing the directory path where the sound files will be saved.
 #' If \code{NULL} (default) then the current working directory is used.
 #' @param pb Logical argument to control progress bar. Default is \code{TRUE}.
 #' @param file.ext Character string defining the file extension for the files to be consolidated. Default is \code{'.wav$'} ignoring case.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
-#' @param save.csv Logical. Controls whether a data frame containing sound file information is saved in the new folder.
-#' @param ... Additional arguments to be passed to the internal \code{\link[base]{file.copy}} function for customizing file copyin. 
-#' @return All (sound) files are consolidated (copied) to a single folder ("consolidated_files"). If  \code{csv = TRUE} (default)
-#' a '.csv' file with the information about file location, old and new names (if any renaming happen) is also saved in the same folder. This data frame is also return as an object in the R environment.  
-#' @family selection manipulation, sound file manipulation
+#' @param save.csv Logical. Controls whether a data frame containing sound file information is saved in the new directory. Default is \code{TRUE}.
+#' @param ... Additional arguments to be passed to the internal \code{\link[base]{file.copy}} function for customizing file copying. 
+#' @return All (sound) files are consolidated (copied) to a single directory ("consolidated_files"). The function returns a data frame with each of the files that were copied in a row and the following information:
+#' \itemize{
+#'  \item \code{original_dir} the path to the original file 
+#'  \item \code{old_name} the name of the original file
+#'  \item \code{new_name} the name of the new file. This will be tthe same as 'old_name' if the name was not duplicated (i.e. no files in other directories with the same name).
+#'  \item \code{file_size_bytes} size of the file in bytes.
+#'  \item \code{duplicate} indicates whether a file is likely to be duplicated (i.e. if files with the same name were found in other directories). If so it will be labeled as 'possible.dupl', otherwise it will contain NAs. 
+#' }
+#' If \code{csv = TRUE} (default)
+#' a 'file_names_info.csv' file with the same iformation as the output data frame is also saved in the consolidated directory.  
+#' @family sound file manipulation
 #' @seealso \code{\link{fixwavs}} for making sound files readable in R 
 #' @name consolidate
-#' @details This function allow users to put files scattered in several folders in a 
-#' single folder. By default it works on sound files in '.wav' format but can work with
+#' @details This function allows users to put files scattered in several directories into a 
+#' single one. By default it works on sound files in '.wav' format but can work with
 #' other type of files (for instance '.txt' selection files).
 #' @examples{ 
-#' # First set empty folder
-#' # setwd(tempdir())
-#' 
 #' # save wav file examples
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
 #' 
-#' # create first folder
-#' dir.create("folder1")
-#' writeWave(Phae.long1, file.path("folder1","Phae.long1.wav"))
-#' writeWave(Phae.long2, file.path("folder1","Phae.long2.wav"))
+#' # create first folder with 2 sound files
+#' dir.create(file.path(tempdir(), "folder1"))
+#' writeWave(Phae.long1, file.path(tempdir(), "folder1", "Phae.long1.wav"))
+#' writeWave(Phae.long2, file.path(tempdir(), "folder1", "Phae.long2.wav"))
 #' 
-#' # create second folder
-#' dir.create("folder2")
-#' writeWave(Phae.long3, file.path("folder2","Phae.long3.wav"))
-#' writeWave(Phae.long4, file.path("folder2","Phae.long4.wav"))
+#' # create second folder with 2 sound files
+#' dir.create(file.path(tempdir(), "folder2"))
+#' writeWave(Phae.long3, file.path(tempdir(), "folder2", "Phae.long3.wav"))
+#' writeWave(Phae.long4, file.path(tempdir(), "folder2", "Phae.long4.wav"))
 #' 
 #' # consolidate in a single folder
-#' consolidate()
+#' # consolidate(path = tempdir(), dest.path = tempdir())
 #' 
-#' # or if tempdir wa used
-#' # consolidate(path = tempdir())
+#' # check this folder
+#' tempdir()
 #' }
 #' 
 #' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on jan-29-2018 (MAS)
 
 consolidate <- function(files = NULL, path = NULL, dest.path = NULL, pb = TRUE, file.ext = ".wav$", 
                         parallel = 1, save.csv = TRUE, ...){
   
-  # reset working directory 
-  wd <- getwd()
-  on.exit(setwd(wd))
+  # reset pb
   on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
   
   #### set arguments from options
@@ -83,14 +86,15 @@ consolidate <- function(files = NULL, path = NULL, dest.path = NULL, pb = TRUE, 
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   # check path to working directory
-  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
-    setwd(path)
-  }  
+  if (is.null(path)) path <- getwd() else 
+    if (!dir.exists(path)) 
+      stop("'path' provided does not exist") 
   
   # check path to working directory
   if (!is.null(dest.path))
-  {if (class(try(setwd(dest.path), silent = TRUE)) == "try-error") stop("'dest.path' provided does not exist")} else 
-    dir.create(dest.path <- file.path(getwd(), "consolidated_folder"), showWarnings = FALSE)
+  {
+    if (!dir.exists(dest.path)) stop("'dest.path' provided does not exist")} else 
+    dir.create(dest.path <- file.path(path, "consolidated_files"), showWarnings = FALSE)
   
   # list files
   if (!is.null(files)){
@@ -124,7 +128,7 @@ consolidate <- function(files = NULL, path = NULL, dest.path = NULL, pb = TRUE, 
     new_name <- gsub("\\", "", new_name, fixed = TRUE)
     
   # create data frame with info from old and new names
-  X <- data.frame(original_dir = gsub("\\.", path, dirname(files)), old_name, new_name, file_size_bytes, stringsAsFactors = FALSE)
+  X <- data.frame(original_dir = gsub("\\.", path, dirname(files), fixed = TRUE), old_name, new_name, file_size_bytes, stringsAsFactors = FALSE)
   
   # label possible duplicates
   X$duplicate <- sapply(paste0(X$old_name, X$file_size_bytes), function(y) if (length(which(paste0(X$old_name, X$file_size_bytes) == y)) > 1) return("possible.dupl") else return(NA))

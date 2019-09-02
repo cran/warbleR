@@ -4,7 +4,7 @@
 \alias{mfcc_stats}
 \title{Calculate descriptive statistics on Mel-frequency cepstral coefficients}
 \usage{
-mfcc_stats(X, ovlp = 50, wl = 512, bp = c(0, 22), path = NULL, numcep = 25, 
+mfcc_stats(X, ovlp = 50, wl = 512, bp = 'frange', path = NULL, numcep = 25, 
 nbands = 40, parallel = 1, pb = TRUE, ...)
 }
 \arguments{
@@ -19,17 +19,15 @@ consecutive windows. Internally this is used to set the 'hoptime' argument in \c
 \item{wl}{A numeric vector of length 1 specifying the spectrogram window length. Default is 512. See 'wl.freq' for setting windows length independenlty in the frequency domain.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
-frequency bandpass filter (in kHz) or "frange" to indicate that values in bottom.freq
-and top.freq columns will be used as bandpass limits. Default is c(0, 22).Lower limit of
- bandpass is not applied to fundamental frequencies.}
+frequency bandpass filter (in kHz) or "frange" (default) to indicate that values in minimum of 'bottom.freq'
+and maximum of 'top.freq' columns will be used as bandpass limits.}
 
 \item{path}{Character string containing the directory path where the sound files are located.}
 
 \item{numcep}{Numeric vector of length 1 controlling the number of cepstra to 
 return (see \code{\link[tuneR]{melfcc}}).}
 
-\item{nbands}{Numeric vector of length 1 controlling the number of warped spectral bands to use (see \code{\link[tuneR]{melfcc}}).
-If \code{NULL} (default) then the current working directory is used.}
+\item{nbands}{Numeric vector of length 1 controlling the number of warped spectral bands to use (see \code{\link[tuneR]{melfcc}}). Default is 40.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
@@ -53,22 +51,19 @@ It also returns the mean and variance for the first and second derivatives of th
 }
 \examples{
 {
-# Set temporary working directory
-# setwd(tempdir())
-
-data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
-writeWave(Phae.long1,"Phae.long1.wav")
-writeWave(Phae.long2,"Phae.long2.wav")
-writeWave(Phae.long3,"Phae.long3.wav")
-writeWave(Phae.long4,"Phae.long4.wav")
+data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
+writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
 
 # run function
-mel_st <- mfcc_stats(X = selec.table, pb = FALSE)
+mel_st <- mfcc_stats(X = lbh_selec_table, pb = FALSE, path = tempdir())
 
 head(mel_st)
 
 # measure 12 coefficients 
-mel_st12 <- mfcc_stats(X = selec.table, numcep = 12, pb = FALSE)
+mel_st12 <- mfcc_stats(X = lbh_selec_table, numcep = 12, pb = FALSE, path = tempdir())
 
  head(mel_st)
 }
@@ -86,5 +81,5 @@ Salamon, J., Jacoby, C., & Bello, J. P. (2014). A dataset and taxonomy for urban
 \code{\link{fixwavs}}, \code{\link{rm_sil}},
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+Marcelo Araya-Salas (\email{marceloa27@gmail.com})
 }

@@ -2,10 +2,10 @@
 #' 
 #' \code{frange} detect frequency range iteratively from signals in a selection table.
 #' @usage frange(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, threshold = 10, 
-#' wn = "hanning", flim = c(0, 22), bp = NULL, propwidth = FALSE, xl = 1, picsize = 1,
-#' res = 100, fast.spec = FALSE, ovlp = 50, pal = reverse.gray.colors.2, parallel = 1,
-#'  widths = c(2, 1), main = NULL, img = TRUE, mar = 0.05, path = NULL, pb = TRUE,
-#'   impute = FALSE)
+#' dB.threshold = NULL, wn = "hanning", flim = c(0, 22), bp = NULL, 
+#' propwidth = FALSE, xl = 1, picsize = 1, res = 100, fast.spec = FALSE, ovlp = 50,
+#' pal = reverse.gray.colors.2, parallel = 1, widths = c(2, 1), main = NULL, 
+#' img = TRUE, mar = 0.05, path = NULL, pb = TRUE, impute = FALSE)
 #' @param X object of class 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can
@@ -19,8 +19,9 @@
 #' @param fsmooth A numeric vector of length 1 to smooth the frequency spectrum with a mean
 #'  sliding window in kHz. This help to average amplitude "hills" to minimize the effect of
 #'  amplitude modulation. Default is 0.1.
-#' @param threshold Amplitude threshold (\%) for fundamental frequency and 
-#'   dominant frequency detection. Default is 10.
+#' @param threshold Amplitude threshold (\%) for frequency range detection. The frequency range (not the cumulative amplitude) is represented as percentage (100\% = highest amplitude). Default is 10. Ignored if 'dB.threshold' is supplied.
+#' @param dB.threshold Amplitude threshold for frequency range detection (in dB). The value indicates the decrease in dB in relation to the highest amplitude (e.g. the peak frequency) in which range will be detected. For instance a dB.threshold = 20 means that the amplitude threshold would be 20 dB below the highest amplitude. If provided 'threshold' is ignored. Default is \code{NULL}. 
+#' Note that the power spectrum is normalized when using a dB scale, so it looks different than the one produced when no dB scale is used (e.g. when using 'threshold' argument).
 #' @param wn Character vector of length 1 specifying window name. Default is 
 #'   "hanning". See function \code{\link[seewave]{ftwindow}} for more options. This is used for calculating the frequency spectrum (using \code{\link[seewave]{meanspec}}) and producing the spectrogram (using \code{\link[seewave]{spectro}}, if \code{img = TRUE}). 
 #' @param flim A numeric vector of length 2 for the frequency limit of 
@@ -65,40 +66,33 @@
 #' @name frange
 #' @details This functions aims to automatize the detection of frequency ranges. The frequency range is calculated as follows:
 #' \itemize{  
-#'  \item bottom.freq = the start frequency of the first amplitude "hill"  
-#'  \item top.freq = the end frequency of the last amplitude "hill"  
+#'  \item bottom.freq = the start frequency of the amplitude 'hill' containing the highest amplitude at the given threshold.  
+#'  \item top.freq = the end frequency of the amplitude 'hill' containing the highest amplitude at the given threshold.
 #'   }
 #'   If \code{img = TRUE} a graph including a spectrogram and a frequency spectrum is 
-#'   produced for each selection (saved as an image file in the working directory). The graph would include gray areas in the frequency ranges exluded by the bandpass ('bp' argument), dotted lines highlighting the detected range.
+#'   generated for each selection (saved as an image file in the working directory). The graph would include gray areas in the frequency ranges exluded by the bandpass ('bp' argument), dotted lines highlighting the detected range. The function \code{\link{frange.detec}} is used internally.
 #' @seealso \code{\link{frange.detec}}, \code{\link{autodetec}}
 #' @examples 
 #' {
-#' # First set temporary folder
-#' # setwd(tempdir())
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+#' writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+#' writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
 #' 
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
-#' writeWave(Phae.long1,"Phae.long1.wav")
-#' writeWave(Phae.long2,"Phae.long2.wav")
-#' writeWave(Phae.long3,"Phae.long3.wav")
-#' writeWave(Phae.long4,"Phae.long4.wav")
-#' 
-#' frange(X = selec.table, wl = 112, fsmooth = 1, threshold = 13, widths = c(4, 1),
+#' frange(X = lbh_selec_table, wl = 112, fsmooth = 1, threshold = 13, widths = c(4, 1),
 #' img = TRUE, pb = TRUE, it = "tiff", line = TRUE, mar = 0.1, bp = c(1,10.5), 
-#' flim = c(0, 11))
+#' flim = c(0, 11), path = tempdir())
 #' }
 #' 
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on mar-12-2018 (MAS)
 
-frange <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, threshold = 10, wn = "hanning", flim = c(0, 22), bp = NULL, propwidth = FALSE, xl = 1, picsize = 1, res = 100, fast.spec = FALSE, ovlp = 50, pal = reverse.gray.colors.2, parallel = 1, widths = c(2, 1), main = NULL, img = TRUE, mar = 0.05, path = NULL, pb = TRUE, impute = FALSE)
+frange <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, threshold = 10, dB.threshold = NULL, wn = "hanning", flim = c(0, 22), bp = NULL, propwidth = FALSE, xl = 1, picsize = 1, res = 100, fast.spec = FALSE, ovlp = 50, pal = reverse.gray.colors.2, parallel = 1, widths = c(2, 1), main = NULL, img = TRUE, mar = 0.05, path = NULL, pb = TRUE, impute = FALSE)
 {
-  # reset working directory 
-  wd <- getwd()
-  on.exit(setwd(wd))
-  
   # set pb options 
   on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
   
@@ -127,9 +121,9 @@ frange <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thresho
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
-  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
-    setwd(path)
-  }  
+  if (is.null(path)) path <- getwd() else 
+    if (!dir.exists(path)) 
+      stop("'path' provided does not exist") 
   
   #if X is not a data frame
   if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
@@ -146,25 +140,15 @@ frange <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thresho
   if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
-  if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
+  if (any(X$end - X$start <= 0)) stop(paste("Start is higher than or equal to end in", length(which(X$end - X$start <= 0)), "case(s)"))  
   
   #if any selections longer than 20 secs warning
   if (any(X$end - X$start>20)) warning(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))
   
-  #wrap img creating function
-  if (it == "jpeg") imgfun <- jpeg else imgfun <- tiff
-  
-  # bp checking
-  if (!is.null(bp))
-  {if (!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else
-  {
-    if (!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")
-  }} 
-  
   #return warning if not all sound files were found
   if (!is_extended_selection_table(X))
   {
-    fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
+    fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                   ".wav file(s) not found"))
@@ -175,11 +159,12 @@ frange <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thresho
     stop("The .wav files are not in the working directory")
   }  else {
     X <- X[d, ]
+    }
   }
-  }
+    
   # internal function to detect freq range
   frangeFUN <- function(X, i, img, bp, wl, fsmooth, threshold, wn, flim, ovlp, fast.spec, pal, widths) {
-    r <- read_wave(X = X, index = i, header = TRUE)
+    r <- warbleR::read_wave(X = X, path = path, index = i, header = TRUE)
     f <- r$sample.rate
     t <- c(X$start[i] - mar, X$end[i] + mar)
     
@@ -197,9 +182,9 @@ frange <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thresho
     
     
     # read rec segment
-    r <- read_wave(X = X, index = i, from = t[1], to = t[2])
+    r <- warbleR::read_wave(X = X, path = path, index = i, from = t[1], to = t[2])
     
-    frng <- frd_wrblr_int(wave = seewave::cutw(r, from = mar1, to = mar2, output = "Wave"), wl = wl, fsmooth = fsmooth, threshold = threshold, wn = wn, flim = flim, bp = bp, ovlp = ovlp)
+    frng <- frd_wrblr_int(wave = seewave::cutw(r, from = mar1, to = mar2, output = "Wave"), wl = wl, fsmooth = fsmooth, threshold = threshold, dB.threshold = dB.threshold, wn = wn, bp = bp, ovlp = ovlp)
     
     if (img)
       {
@@ -208,11 +193,10 @@ frange <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thresho
       pwc <- (13.16) * ((t[2]-t[1])/0.27) * xl * picsize else pwc <- (13.16) * xl * picsize
     
     #call image function
-    imgfun(filename = paste0(X$sound.files[i],"-", X$selec[i], "-", "frange.", it), 
+      img_wrlbr_int(filename = paste0(X$sound.files[i],"-", X$selec[i], "-", "frange.", it), path = path,
            width = pwc, height = (10.16), units = "cm", res = res) 
     
-    
-      frd_plot_wrblr_int(wave = r, detections = frng, wl = wl, threshold = threshold, wn = wn, flim = flim, bp = bp, fast.spec = fast.spec, ovlp = ovlp, pal = pal, widths = widths, main = paste(X$sound.files[i], X$selec[i], sep = "-"), all.detec = F)   
+      frd_plot_wrblr_int(wave = r, detections = frng, wl = wl, wn = wn, flim = flim, bp = bp, fast.spec = fast.spec, ovlp = ovlp, pal = pal, widths = widths, main = paste(X$sound.files[i], X$selec[i], sep = "-"), all.detec = F)   
     
     dev.off()
 }    
@@ -231,7 +215,12 @@ frange <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thresho
   # run loop apply function
   fr <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
   { 
-    frangeFUN(X = X, i = i, img = img, bp = bp, wl = wl, fsmooth = fsmooth, threshold = threshold, wn = wn, flim = flim, ovlp = ovlp, fast.spec = fast.spec, pal = pal, widths = widths)
+    # if bp is frange
+   if (!is.null(bp))
+   {  if (bp[1] == "frange") b <- c(X$bottom.freq[i], X$top.freq[i]) else  b <- bp
+   }  else  b <- bp
+   
+  frangeFUN(X = X, i = i, img = img, bp = b, wl = wl, fsmooth = fsmooth, threshold = threshold, wn = wn, flim = flim, ovlp = ovlp, fast.spec = fast.spec, pal = pal, widths = widths)
   }) 
   
   fr <- do.call(rbind, fr)

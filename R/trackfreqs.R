@@ -10,8 +10,8 @@
 #'   col = c("#E37222B3", "#07889BB3"), pch = c(21, 24),  mar = 0.05, lpos = "topright", 
 #'   it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, 
 #'   pb = TRUE, type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, 
-#'    fast.spec = FALSE, ff.method = "seewave", frange.detec = FALSE, 
-#'    fsmooth = 0.1, widths = c(2, 1), freq.continuity = NULL, clip.edges = 2, ...)
+#'    fast.spec = FALSE, ff.method = "seewave", frange.detec = FALSE, fsmooth = 0.1, 
+#'    widths = c(2, 1), freq.continuity = NULL, clip.edges = 2, track.harm = FALSE, ...)
 #' @param  X object of class 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end).
 #' The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can also be used as the input data frame. 
@@ -116,6 +116,7 @@
 #'  outliers(i.e that differ from the frequency of the detections right before and after) would be removed. Should be given in kHz. Default is \code{NULL}. 
 #' @param clip.edges Integer vector of length 1 to control if how many 'frequency-wise discontinuous' detection would be remove at the start and end of signals (see 
 #' 'freq.continuity' argument). Default is 2. Ignored if \code{freq.continuity = NULL}. 
+#' @param track.harm Logical to control if \code{\link{track_harm}} or a modified version of \code{\link[seewave]{dfreq}} is used for dominant frequency detection. Default is \code{FALSE} (use \code{\link[seewave]{dfreq}}).
 #' @param ... Additional arguments to be passed to the internal spectrogram creating function for customizing graphical output. The function is a modified version of \code{\link[seewave]{spectro}}, so it takes the same arguments.
 #' @return Spectrograms of the signals listed in the input data frame showing the location of 
 #' the dominant and fundamental frequencies.
@@ -132,42 +133,42 @@
 #'   Note that, unlike other warbleR functions that measure frequency contours, track_freqs do not interpolate frequency values.
 #' @examples
 #' {
-#' #Set temporary working directory
-#' # setwd(tempdir())
-#' 
 #' #load data
 #' data("Cryp.soui")
-#' writeWave(Cryp.soui, "Cryp.soui.wav") #save sound files 
+#' writeWave(Cryp.soui, file.path(tempdir(), "Cryp.soui.wav")) #save sound files 
 #' 
 #' #autodetec location of signals
 #' ad <- autodetec(threshold = 6, bp = c(1, 3), mindur = 1.2,
-#' maxdur = 3, img = FALSE, ssmooth = 600, wl = 300, flist = "Cryp.soui.wav")
+#' maxdur = 3, img = FALSE, ssmooth = 600, wl = 300, flist = "Cryp.soui.wav", 
+#' path = tempdir())
 #' 
-#' #track dominant frequency graphs with freq reange detection
+#' #track dominant frequency graphs with freq range detection
 #' trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
-#' bp = c(1, 3), contour = "df", wl = 300, frange = TRUE)
+#' bp = c(1, 3), contour = "df", wl = 300, frange = TRUE, 
+#' path = tempdir())
 #'
 #' #using users frequency data (custom.contour argument) 
 #' #first get contours using dfts
 #' df <- dfts(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, img = FALSE,
-#' bp = c(1, 3),  wl = 300)
+#' bp = c(1, 3),  wl = 300, path = tempdir())
 #'
 #'# now input the dfts output into trackfreqs         
-#'trackfreqs(X = ad[!is.na(ad$start),], custom.contour = df ,flim = c(0, 5), ovlp = 90, it = "tiff")
+#'trackfreqs(X = ad[!is.na(ad$start),], custom.contour = df ,flim = c(0, 5), ovlp = 90, it = "tiff", 
+#'path = tempdir())
 #' 
 #'# Check this folder
-#' getwd()
+#' tempdir()
 #'
 #'#track both frequencies 
 #'trackfreqs(X = ad[!is.na(ad$start),], flim = c(0, 5), ovlp = 90, it = "tiff",
-#' bp = c(1, 3), contour = "both", wl = 300)
+#' bp = c(1, 3), contour = "both", wl = 300, path = tempdir())
 #' 
 #' }
 #' 
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Grace Smith Vidaurre and Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Grace Smith Vidaurre and Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on mar-13-2018 (MAS)
 
 trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
@@ -178,12 +179,8 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
                        it = "jpeg", parallel = 1, path = NULL, img.suffix = NULL, custom.contour = NULL, pb = TRUE,
                        type = "p", leglab = c("Ffreq", "Dfreq"), col.alpha = 0.6, line = TRUE, fast.spec = FALSE, 
                        ff.method = "seewave", frange.detec = FALSE, fsmooth = 0.1, widths = c(2, 1), 
-                       freq.continuity = NULL, clip.edges = 2, ...){     
-  
-  # reset working directory 
-  wd <- getwd()
-  on.exit(setwd(wd))
-  
+                       freq.continuity = NULL, clip.edges = 2, track.harm = FALSE, ...){     
+
   # set pb options 
   on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
   
@@ -212,9 +209,8 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
       assign(names(opt.argms)[q], opt.argms[[q]])
 
   #check path to working directory
-  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
-    setwd(path)
-  }  
+  if (is.null(path)) path <- getwd() else 
+    if (!dir.exists(path)) stop("'path' provided does not exist") 
   
   #if X is not a data frame
   if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
@@ -231,7 +227,7 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
   if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
-  if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
+  if (any(X$end - X$start <= 0)) stop(paste("Start is higher than or equal to end in", length(which(X$end - X$start <= 0)), "case(s)"))  
   
   #if any selections longer than 20 secs stop
   if (any(X$end - X$start>20)) stop(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))  
@@ -252,9 +248,6 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
   #if ff.method argument  
   if (!any(ff.method == "seewave", ff.method == "tuneR")) stop(paste("ff.method", ff.method, "is not recognized"))  
   
-  #wrap img creating function
-  if (it == "jpeg") imgfun <- jpeg else imgfun <- tiff
-  
   #if type not l b or p
   if (!any(type %in% c("p", "l", "b"))) stop(paste("Type", type, "not allowed"))  
   
@@ -272,7 +265,7 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
     #return warning if not all sound files were found
   if (!is_extended_selection_table(X))  
     {
-  recs.wd <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
+  recs.wd <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
     if (length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files))) 
       cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
                     ".wav file(s) not found"))
@@ -295,13 +288,13 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
       
       #check if the info in sound.files and selec columns is the same for X and custom.contour
       #remove custom.contour selections not in X
-      custom.contour <- custom.contour[paste(custom.contour[,c("sound.files")], custom.contour[,c("selec")]) %in% paste(as.data.frame(X)[,c("sound.files")], as.data.frame(X)[,c("selec")])]
+      custom.contour <- custom.contour[paste(custom.contour[ , "sound.files"], custom.contour[ , "selec"]) %in% paste(as.data.frame(X)[ , "sound.files"], as.data.frame(X)[ , "selec"]), ]
       
       #stop if not the same number of selections
       if (nrow(X) > nrow(custom.contour)) stop("selection(s) in X but not in custom.contour")
       
       #order custom.contour as in X
-      custom.contour <- custom.contour[match(paste(custom.contour[,c("sound.files")], custom.contour[,c("selec")]), paste(as.data.frame(X)[,c("sound.files")], as.data.frame(X)[,c("selec")])),]      
+      custom.contour <- custom.contour[match(paste(custom.contour[ , "sound.files"], custom.contour[ , "selec"]), paste(as.data.frame(X)[ , "sound.files"], as.data.frame(X)[ , "selec"])), ]      
     
       # frange.detec <- FALSE
       }
@@ -321,7 +314,7 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
     trackfreFUN <- function(X, i, mar, flim, xl, picsize, wl, wl.freq, cexlab, inner.mar, outer.mar, res, bp, cex, threshold.time, threshold.freq, pch, custom.contour){
       
       # Read sound files, initialize frequency and time limits for spectrogram
-      r <- read_wave(X = X, index = i, header = TRUE)
+      r <- read_wave(X = X, path = path, index = i, header = TRUE)
       f <- r$sample.rate
       t <- c(X$start[i] - mar, X$end[i] + mar)
       
@@ -340,7 +333,7 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
       
       
       # read rec segment
-      r <- read_wave(X = X, index = i, from = t[1], to = t[2])
+      r <- read_wave(X = X, path = path, index = i, from = t[1], to = t[2])
       
       #in case bp its higher than can be due to sampling rate
       if (bp[1] == "frange") bp <- c(X$bottom.freq[i], X$top.freq[i])
@@ -357,7 +350,7 @@ trackfreqs <- function(X, wl = 512, wl.freq = 512, flim = c(0, 22), wn = "hannin
         pwc <- (10.16) * ((t[2]-t[1])/0.27) * xl * picsize else pwc <- (10.16) * xl * picsize
       
       #call image function
-      imgfun(filename = paste0(X$sound.files[i],"-", X$selec[i], "-", img.suffix2), 
+      img_wrlbr_int(filename = paste0(X$sound.files[i],"-", X$selec[i], "-", img.suffix2), path = path,
              width = pwc, height = (10.16) * picsize, units = "cm", res = res) 
       
       # Change relative heights of rows for spectrogram when osci = TRUE
@@ -385,7 +378,7 @@ if (!frange.detec){
         
       }
 } else {
-  frng <- frd_wrblr_int(wave = seewave::cutw(r, from = mar1, to = mar2, output = "Wave"), wl = wl.freq, fsmooth = fsmooth, threshold = threshold.freq, wn = wn, flim = fl, bp = b, ovlp = ovlp)
+  frng <- frd_wrblr_int(wave = seewave::cutw(r, from = mar1, to = mar2, output = "Wave"), wl = wl.freq, fsmooth = fsmooth, threshold = threshold.freq, wn = wn, bp = b, ovlp = ovlp)
   
   if (!all(is.na(frng$frange))) b <- as.numeric(frng$frange) 
   
@@ -457,8 +450,8 @@ if (!frange.detec){
     # Calculate dominant frequency at each time point     
     if (contour %in% c("both", "df") & is.null(custom.contour))
 {    
-      dfreq1 <- seewave::dfreq(r, f = f, wl = wl, ovlp = 70, plot = FALSE, bandpass = b * 1000, fftw = TRUE, 
-                   threshold = threshold.time, tlim = c(mar1, mar2)) 
+      dfreq1 <- track_harm(r, f = f, wl = wl, ovlp = 70, plot = FALSE, bandpass = b * 1000, fftw = TRUE, 
+                   threshold = threshold.time, tlim = c(mar1, mar2), dfrq = !track.harm, adjust.wl = TRUE) 
       dfreq <- matrix(dfreq1[!is.na(dfreq1[,2]),], ncol = 2)  
 
  
@@ -558,7 +551,7 @@ if (!frange.detec){
   if (line){  
     if (any(names(X) == "bottom.freq") & any(names(X) == "top.freq"))
   {   if (!is.na(X$bottom.freq[i]) & !is.na(X$top.freq[i]))
-     if (!frange.detec) polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$bottom.freq[i], X$top.freq[i], X$top.freq[i], X$bottom.freq[i]), lty = 3, border = "blue", lwd = 1.2) else
+     if (!frange.detec) polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$bottom.freq[i], X$top.freq[i], X$top.freq[i], X$bottom.freq[i]), lty = 3, border = col[6], lwd = 1.2) else
           abline(v = c(mar1, mar2), col= col[6], lty = "dashed")
     } else abline(v = c(mar1, mar2), col= col[6], lty = "dashed")
     }

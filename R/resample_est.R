@@ -6,33 +6,31 @@
 #' @param X object of class 'extended_selection_table' (see \code{\link{selection_table}}).
 #' @param samp.rate Numeric vector of length 1 with the sampling rate (in kHz) for output files. Default is \code{NULL}.
 #' @param bit.depth Numeric vector of length 1 with the dynamic interval (i.e. bit depth) for output files.
-#' @param sox Logical to control whether \href{http://sox.sourceforge.net/sox.html}{sox} is used internally for resampling. Sox must be installed. Default is \code{FALSE}. sox is a better option if having aliasing issues after resampling.
+#' @param sox Logical to control whether \href{http://sox.sourceforge.net/sox.html}{SOX} is used internally for resampling. Sox must be installed. Default is \code{FALSE}. \href{http://sox.sourceforge.net/sox.html}{SOX} is a better option if having aliasing issues after resampling.
 #' @param avoid.clip Logical to control whether the volume is automatically 
 #' adjusted to avoid clipping high amplitude samples when resampling. Ignored if
 #'  '\code{sox = FALSE}. Default is \code{TRUE}.
 #' @param pb Logical argument to control progress bar. Default is \code{FALSE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #'  It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
-#' @return  An extended selection table with the modfied wave objects. 
+#' @return  An extended selection table with the modified wave objects. 
 #' @export
 #' @name resample_est
 #' @details This function aims to simplify the process of homogenizing sound 
 #' files (sampling rate and bit depth). This is a necessary step before running 
-#' any further (bio)acoustic analysis.  
-#'   
+#' any further (bio)acoustic analysis. Either \href{http://sox.sourceforge.net/sox.html}{SOX} (if \code{sox = TRUE}) or
+#'  or the \href{https://cran.r-project.org/package=bioacoustics}{bioacoustics package} (if \code{sox = FALSE}) should be installed.
 #' @examples
 #' \dontrun{
-#' # Set temporary working directory
-#' # setwd(tempdir())
-#' 
 #' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec_table"))
-#' writeWave(Phae.long1,"Phae.long1.wav")
-#' writeWave(Phae.long2,"Phae.long2.wav")
-#' writeWave(Phae.long3,"Phae.long3.wav")
-#' writeWave(Phae.long4,"Phae.long4.wav") 
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+#' writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+#' writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav")) 
 #' 
 #' # create extended selection table
-#' X <- selection_table(X = selec.table, extended = TRUE, confirm.extended = FALSE, pb = FALSE)
+#' X <- selection_table(X = lbh_selec_table, extended = TRUE, confirm.extended = FALSE, pb = FALSE, 
+#' path = tempdir())
 #' 
 #' # resample
 #' Y <- resample_est(X)
@@ -42,14 +40,15 @@
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #' #last modification on oct-15-2018 (MAS)
 
 resample_est <- function(X, samp.rate = 44.1, bit.depth = 16, sox = FALSE, avoid.clip = TRUE, pb = FALSE, parallel = 1)
 {
-  # reset working directory 
-  wd <- getwd()
-  on.exit(setwd(wd))
+  
+  # error message if bioacoustics is not installed
+  if (!requireNamespace("bioacoustics",quietly = TRUE) & !sox)
+    stop("must install 'bioacoustics' to use mp32wav() when 'sox = FALSE'")
 
   #check bit.depth
   if (length(bit.depth) >1) stop("'bit.depth' should have a single value")
@@ -110,11 +109,11 @@ resample_est <- function(X, samp.rate = 44.1, bit.depth = 16, sox = FALSE, avoid
     return(x)
     
     }) else {
-     setwd(tempdir())
+     
       
       out <- pbapply::pblapply(attributes(X)$wave.objects, function(x){
       
-        tuneR::writeWave(extensible = FALSE, object = x, filename = "temp.R.file.wav")
+        tuneR::writeWave(extensible = FALSE, object = x, filename = file.path(tempdir(), "temp.R.file.wav"))
    
         cll <- paste0("sox 'temp.R.file.wav' -t wavpcm ", "-b ", bit.depth, " 'temp.R.file2.wav' rate ", samp.rate * 1000, " dither -s") 
         
@@ -122,11 +121,11 @@ resample_est <- function(X, samp.rate = 44.1, bit.depth = 16, sox = FALSE, avoid
           
         # if (x@samp.rate < samp.rate * 1000) cll <- gsub("dither -s$", "resample", cll)
         
-        if (Sys.info()[1] == "Windows") cll <- gsub("'", "", cll)
+        if (Sys.info()[1] == "Windows")  cll <- gsub("'", "\"", cll)
         
         out <- suppressWarnings(system(cll, ignore.stdout = FALSE, intern = TRUE)) 
         
-        x <- tuneR::readWave(filename = "temp.R.file2.wav")
+        x <- warbleR::read_wave(X = "temp.R.file2.wav", path = tempdir())
         
         return(x)
         })
@@ -134,12 +133,21 @@ resample_est <- function(X, samp.rate = 44.1, bit.depth = 16, sox = FALSE, avoid
   }   
 
   # fix attributes
-  attributes(X)$check.res$samp.rate <- samp.rate
+  attributes(X)$check.res$sample.rate <- samp.rate
   attributes(X)$check.res$bits <- bit.depth
-  attributes(X)$check.res$n.samples <- sapply(out, function(x) length(x@left)) 
+  # attributes(X)$check.res$n.samples <- sapply(attributes(X)$check.res$sound.files, function(x) length(x@left)) 
+  attributes(X)$check.res$n.samples <- sapply(X$sound.files, function(x) length(attributes(X)$wave.objects[[which(names(attributes(X)$wave.objects) == x)]]@left)) 
+  
   
   # replace with resampled waves
   attributes(X)$wave.objects <- out
+  
+  if (any(X$top.freq > samp.rate / 2)) 
+  {
+    X$top.freq[X$top.freq > samp.rate / 2] <- samp.rate / 2
+  
+    write(file = "", x = "Some 'top.freq' values higher than nyquist frequency were set to samp.rate/2")  
+  }  
   
   return(X)
 }

@@ -1,6 +1,6 @@
 #' Wrapper for "try" function
 #' 
-#' \code{try_na} silly wrapper for \code{\link[base]{try}} function that returns an NA if an error is found.
+#' \code{try_na} silly wrapper for \code{\link[base]{try}} function that returns an NA if an error is found. TO BE DEPRECATED IN FUTURE VERSIONS.
 #' @usage try_na(expr, silent = TRUE, outFile)
 #' @param expr An R expression to try.
 #' @param silent Logical to control whether the report of error messages is suppressed. Default is \code{TRUE}. 
@@ -22,7 +22,7 @@
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on apr-17-2018 (MAS)
 
 try_na <- function(expr, silent = TRUE, outFile){

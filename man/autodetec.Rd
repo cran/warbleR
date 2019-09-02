@@ -14,8 +14,8 @@ autodetec(X = NULL, threshold = 15, envt = "abs", ssmooth = NULL, msmooth = NULL
 \arguments{
 \item{X}{'selection_table' object or a data frame with columns
 for sound file name (sound.files), selection number (selec), and start and end time of signal
-(start and end). The ouptut of \code{\link{manual_loc}} can 
-also be used as the input data frame.}
+(start and end). If provided the detection will be conducted only within 
+the selections in 'X'.}
 
 \item{threshold}{A numeric vector of length 1 specifying the amplitude threshold for detecting 
 signals (in \%).}
@@ -120,7 +120,7 @@ to work better with 'fast.spec' spectograms. Palette colors \code{\link[monitoR]
 \code{\link[monitoR]{gray.3}} offer 
 decreasing darkness levels.}
 
-\item{...}{Additional arguments to be passed to a modified version of \code{\link[seewave]{spectro}} for customizing
+\item{...}{Additional arguments to be passed internally \code{\link{specreator}} for customizing
 graphical output.}
 }
 \value{
@@ -129,40 +129,41 @@ Image files with spectrograms showing the start and end of the detected signals.
   sound file and selection number.
 }
 \description{
-\code{autodetec} automatically detects the start and end of vocalizations in sound files  based
+\code{autodetec} automatically detects the start and end of vocalizations in sound files based
 on amplitude, duration, and frequency range attributes.
 }
 \details{
-This function determines the start and end of signals in the segments of the sound files listed 
-  in the input data frame. Alternatively, if no data frame is provided, the function detects signals across
-  each entire sound file and creates long spectrograms highlighting the start and of the detected
-  signals for all sound files in the working directory. The input data frame should have the following 
-  columns: c("sound.files","selec","start","end"). The ouptut of \code{\link{manualoc}} can be used as the 
-  input data frame. This function uses a modified version of the \code{\link[seewave]{timer}} function from 
-  seewave package to detect signals.
+This function determines the start and end of signals in the sound file selections listed 
+  in the input data frame ('X'). Alternatively, if no data frame is provided, the function detects signals across
+  each entire sound file. It can also create long spectrograms highlighting the start and of the detected
+  signals for all sound files in the working directory (if \code{img = TRUE}). Sound files should be located in the
+   working directory or the path to the sound files should be provided using the 'path' argument. The input 
+   data frame should have the following columns: c("sound.files","selec","start","end"). The ouptut of 
+   \code{\link{manualoc}} can be used as the input data frame. This function uses a modified version of the 
+   \code{\link[seewave]{timer}} function from seewave package to detect signals.
 }
 \examples{
 \dontrun{
-# Set temporary working directory
-# setwd(tempdir())
+# Save to temporary working directory
+
 
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4"))
-writeWave(Phae.long1,"Phae.long1.wav")
-writeWave(Phae.long2,"Phae.long2.wav")
-writeWave(Phae.long3,"Phae.long3.wav")
-writeWave(Phae.long4,"Phae.long4.wav") 
+writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav")) 
 
 ad <- autodetec(threshold = 5, env = "hil", ssmooth = 300, power=1,
 bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE,
-wl = 300, ls = FALSE, sxrow = 2, rows = 4, mindur = 0.1, maxdur = 1, set = TRUE)
+wl = 300, ls = FALSE, sxrow = 2, rows = 4, mindur = 0.1, maxdur = 1, set = TRUE, path = tempdir())
 
 #run it with different settings
 ad <- autodetec(threshold = 90, env = "abs", ssmooth = 300, power = 1, redo = TRUE,
 bp=c(2,9), xl = 2, picsize = 2, res = 200, flim= c(1,11), osci = TRUE, 
-wl = 300, ls = FALSE,  sxrow = 2, rows = 4, mindur=0.1, maxdur=1, set = TRUE)
+wl = 300, ls = FALSE,  sxrow = 2, rows = 4, mindur=0.1, maxdur=1, set = TRUE, path = tempdir())
 
 #check this folder!!
-getwd()
+tempdir()
 }
 
 }
@@ -172,6 +173,6 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 }
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu}). Implements a
+Marcelo Araya-Salas (\email{marceloa27@gmail.com}). Implements a
 modified version of the timer function from seewave.
 }

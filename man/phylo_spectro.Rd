@@ -4,7 +4,7 @@
 \alias{phylo_spectro}
 \title{Add spectrograms onto phylogenetic trees}
 \usage{
-phylo_spectro(X, tree, type = "fan", par.mar = rep(1, 4), 
+phylo_spectro(X, tree, type = "phylogram", par.mar = rep(1, 4), 
 size = 1, offset = 0, path = NULL, ladder = NULL, horizontal = TRUE, ...)
 }
 \arguments{
@@ -52,25 +52,25 @@ A phylogenetic tree with spectrograms on tree tips is plotted in the current gra
 The function add the spectrograms of sounds annotated in a selection table ('X' argument) onto the tips of a phylogenetic tree. 
 The 'tip.label' column in 'X' is used to match spectrograms and tree tips. The function uses internally the \code{\link[ape]{plot.phylo}} function to plot the tree 
 and the \code{\link{specreator}} function to create the spectrograms. Arguments for both of these functions
-can be provided for further customization. Fitting spectrograms
+can be provided for further customization.
 }
 \examples{
 { 
 \donttest{
 # First set empty folder
-# setwd(tempdir())
+
 
 # save example sound files
-data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "selec.table"))
-writeWave(Phae.long1,"Phae.long1.wav")
-writeWave(Phae.long2,"Phae.long2.wav")
-writeWave(Phae.long3,"Phae.long3.wav")
+data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "lbh_selec_table"))
+writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
 
 # set spectrogram options (can be done at the phylo_spectro() function too)
-warbleR_options(wl = 200, ovlp = 90, flim = "frange")
+warbleR_options(wl = 200, ovlp = 90, flim = "frange", wav.path = tempdir())
 
 # subset example selection table
-X <- selec.table[1:8, ]
+X <- lbh_selec_table[1:8, ]
 
 # create random tree (need ape to be installed)
 set.seed(1)
@@ -126,6 +126,6 @@ Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{trackfreqs}}
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+Marcelo Araya-Salas (\email{marceloa27@gmail.com})
 }
 \concept{spectrogram creators}

@@ -1,7 +1,7 @@
 #' Calculate descriptive statistics on Mel-frequency cepstral coefficients
 #'
 #' \code{mfcc_stats} calculates descriptive statistics on Mel-frequency cepstral coefficients and its derivatives.
-#' @usage mfcc_stats(X, ovlp = 50, wl = 512, bp = c(0, 22), path = NULL, numcep = 25, 
+#' @usage mfcc_stats(X, ovlp = 50, wl = 512, bp = 'frange', path = NULL, numcep = 25, 
 #' nbands = 40, parallel = 1, pb = TRUE, ...)
 #' @param X 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
@@ -11,14 +11,12 @@
 #' consecutive windows. Internally this is used to set the 'hoptime' argument in \code{\link[tuneR]{melfcc}}. Default is 50. 
 #' @param wl A numeric vector of length 1 specifying the spectrogram window length. Default is 512. See 'wl.freq' for setting windows length independenlty in the frequency domain.
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
-#'   frequency bandpass filter (in kHz) or "frange" to indicate that values in bottom.freq
-#'   and top.freq columns will be used as bandpass limits. Default is c(0, 22).Lower limit of
-#'    bandpass is not applied to fundamental frequencies. 
+#'   frequency bandpass filter (in kHz) or "frange" (default) to indicate that values in minimum of 'bottom.freq'
+#'   and maximum of 'top.freq' columns will be used as bandpass limits. 
 #' @param path Character string containing the directory path where the sound files are located. 
 #' @param numcep Numeric vector of length 1 controlling the number of cepstra to 
 #' return (see \code{\link[tuneR]{melfcc}}).
-#' @param nbands Numeric vector of length 1 controlling the number of warped spectral bands to use (see \code{\link[tuneR]{melfcc}}).
-#' If \code{NULL} (default) then the current working directory is used.
+#' @param nbands Numeric vector of length 1 controlling the number of warped spectral bands to use (see \code{\link[tuneR]{melfcc}}). Default is 40.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
 #' @param pb Logical argument to control progress bar and messages. Default is \code{TRUE}.
@@ -33,22 +31,19 @@
 #' It also returns the mean and variance for the first and second derivatives of the coefficients. These parameters are commonly used in acoustic signal processing and detection (e.g. Salamon et al 2014). 
 #' @seealso \code{\link{fixwavs}}, \code{\link{rm_sil}}, 
 #' @examples{
-#' # Set temporary working directory
-#' # setwd(tempdir())
-#' 
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
-#' writeWave(Phae.long1,"Phae.long1.wav")
-#' writeWave(Phae.long2,"Phae.long2.wav")
-#' writeWave(Phae.long3,"Phae.long3.wav")
-#' writeWave(Phae.long4,"Phae.long4.wav")
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+#' writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+#' writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
 #' 
 #' # run function
-#' mel_st <- mfcc_stats(X = selec.table, pb = FALSE)
+#' mel_st <- mfcc_stats(X = lbh_selec_table, pb = FALSE, path = tempdir())
 #' 
 #' head(mel_st)
 #' 
 #' # measure 12 coefficients 
-#' mel_st12 <- mfcc_stats(X = selec.table, numcep = 12, pb = FALSE)
+#' mel_st12 <- mfcc_stats(X = lbh_selec_table, numcep = 12, pb = FALSE, path = tempdir())
 #'
 #'  head(mel_st)
 #' }
@@ -59,15 +54,11 @@
 #' 
 #' Salamon, J., Jacoby, C., & Bello, J. P. (2014). A dataset and taxonomy for urban sound research. In Proceedings of the 22nd ACM international conference on Multimedi. 1041-1044.
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on Jul-30-2018 (MAS)
 
-mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = c(0, 22), path = NULL, 
+mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = 'frange', path = NULL, 
                          numcep = 25, nbands = 40, parallel = 1,  pb = TRUE, ...){
-    
-    # reset working directory 
-    wd <- getwd()
-    on.exit(setwd(wd))
     
     # set pb options 
     on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
@@ -97,9 +88,9 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = c(0, 22), path = NULL,
         assign(names(opt.argms)[q], opt.argms[[q]])
     
     #check path to working directory
-    if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
-      setwd(path)
-    }  
+    if (is.null(path)) path <- getwd() else 
+      if (!dir.exists(path)) 
+        stop("'path' provided does not exist") 
     
     #if X is not a data frame
     if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
@@ -116,7 +107,7 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = c(0, 22), path = NULL,
     if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
     
     #if any start higher than end stop
-    if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
+    if (any(X$end - X$start <= 0)) stop(paste("Start is higher than or equal to end in", length(which(X$end - X$start <= 0)), "case(s)"))  
     
     #if any selections longer than 20 secs warning
     if (any(X$end - X$start>20)) warning(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))
@@ -130,11 +121,13 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = c(0, 22), path = NULL,
       if (any(is.na(c(X$bottom.freq, X$top.freq)))) stop("NAs found in bottom.freq and/or top.freq") 
       if (any(c(X$bottom.freq, X$top.freq) < 0)) stop("Negative values found in bottom.freq and/or top.freq") 
       if (any(X$top.freq - X$bottom.freq < 0)) stop("top.freq should be higher than bottom.freq")
-    }
+    
+          bp <- c(min(X$bottom.freq), max(X$top.freq))
+      }
     
     if (!is_extended_selection_table(X)){
       #return warning if not all sound files were found
-      fs <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
+      fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
       if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
         write(file = "", x = paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                                    ".wav file(s) not found"))
@@ -155,7 +148,7 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = c(0, 22), path = NULL,
     mfcc_FUN <- function(i, X, bp, wl, numcep, nbands){
   
       # read wave file
-      r <- read_wave(X = X, index = i)
+      r <- warbleR::read_wave(X = X, path = path, index = i)
       
       # set bandpass
       if (bp[1] == "frange") b <- c(X$bottom.freq[i], X$top.freq[i]) else b <- bp
@@ -170,22 +163,34 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = c(0, 22), path = NULL,
       if (bpfr[2] > ceiling(r@samp.rate/2000) - 1) bpfr[2] <- ceiling(r@samp.rate/2000) - 1 
     
       # measure MFCCs  
-      m <- melfcc(r, wintime = wl / r@samp.rate, hoptime = wl / r@samp.rate * (1 - (ovlp / 100)), 
-                   numcep = numcep, nbands = nbands, minfreq = bpfr[1] * 1000, maxfreq = bpfr[2] * 1000, ...)  
+      m <- try(melfcc(r, wintime = wl / r@samp.rate, hoptime = wl / r@samp.rate * (1 - (ovlp / 100)), 
+                   numcep = numcep, nbands = nbands, minfreq = bpfr[1] * 1000, maxfreq = bpfr[2] * 1000, ...), silent = TRUE)  
     
+    clm.nms <- paste(rep(c("min", "max", "median", "mean", "var", "skew", "kurt"), each = numcep), paste0("cc", 1:numcep), sep = ".")  
+      
+    # if cepstral coefs were calculated
+    if (class(m) != "try-error") {
        # put them in a data frame  
     outdf <- data.frame(t(c(apply(m, 2, min), apply(m, 2, max), apply(m, 2, stats::median), apply(m, 2, mean), 
-      apply(m, 2, stats::var), apply(m, 2, Sim.DiffProc::skewness), apply(m, 2, Sim.DiffProc::kurtosis))))
+      apply(m, 2, stats::var), apply(m, 2, Sim.DiffProc::skewness), apply(m, 2, Sim.DiffProc::kurtosis))), stringsAsFactors = FALSE)
     
       # name columns
-    names(outdf) <- paste(rep(c("min", "max", "median", "mean", "var", "skew", "kurt"), each = numcep), paste0("cc", 1:numcep), sep = ".")
-    
+    names(outdf) <- clm.nms
+  
       # measure MFCC first and second derivatives var and mean
       m2 <- deltas(m)
       m3 <- deltas(m2)
       vm.d <- c(mean.d1.cc = mean(c(m2)), var.d1.cc = stats::var(c(m2)), mean.d2.cc = mean(c(m3)), var.d2.cc = stats::var(c(m3)))
       
-      return(cbind(X[i, c("sound.files", "selec")], outdf, t(vm.d)))
+      out.df <- cbind(X[i, c("sound.files", "selec")], outdf, t(vm.d), stringsAsFactors = FALSE)
+      
+      } else  {
+        out.df <-  data.frame(X[i, c("sound.files", "selec")], t(rep(NA, length(clm.nms) + 4)))
+        
+        names(out.df)[-c(1:2)] <- c(clm.nms, "mean.d1.cc", "var.d1.cc", "mean.d2.cc", "var.d2.cc")
+      }
+    
+    return(out.df)
     }
   
     # set pb options 
@@ -206,6 +211,13 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = c(0, 22), path = NULL,
     
     # fix row names
     row.names(ccs) <- 1:nrow(ccs)
+    
+    # convert to numeric in case there is any non-numeric value
+    # if(anyNA(ccs)){
+      ccs$sound.files <- X$sound.files  
+      ccs$selec <- X$selec
+      ccs[, -c(1, 2)] <-  data.frame(apply(ccs[, -c(1, 2)], 2, as.numeric))
+    # }  
     
     return(ccs)
 }

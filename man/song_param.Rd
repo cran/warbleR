@@ -4,9 +4,9 @@
 \alias{song_param}
 \title{Calculates acoustic parameters at the song level}
 \usage{
-song_param(X = NULL, song_colm = "song",mean_indx = NULL, min_indx = NULL, 
-max_indx = NULL, sd = FALSE, parallel = 1, pb = TRUE, na.rm = FALSE, 
-weight = NULL)
+song_param(X = NULL, song_colm = "song",mean_colm = NULL, min_colm = NULL, 
+max_colm = NULL, elm_colm = NULL, elm_fun = NULL, sd = FALSE, parallel = 1, pb = TRUE, 
+na.rm = FALSE, weight = NULL)
 }
 \arguments{
 \item{X}{'selection_table', 'extended_selection_table' (created 'by.song') or data frame with the following columns: 1) "sound.files": name of the .wav 
@@ -19,14 +19,17 @@ It can be used to label any hierarchical level at which parameters need to be ca
 Note that 
 the function assumes that song labels are not repeated within a sound file.}
 
-\item{mean_indx}{Numeric vector with the index of the columns that will be averaged. If \code{NULL} the mean of all numeric columns in 'X' is returned.}
+\item{mean_colm}{Numeric vector with the index of the columns that will be averaged. If \code{NULL} the mean of all numeric columns in 'X' is returned.}
 
-\item{min_indx}{Numeric vector with the index of the columns for which the minimum 
+\item{min_colm}{Character vector with the name(s) of the columns for which the minimum 
 value is needed. Default is \code{NULL}.}
 
-\item{max_indx}{Numeric vector with the index of the columns for which the maximum 
-value is needed. Default is \code{NULL}.
-If  \code{NULL} the mean of all numeric columns in 'X' is returned.}
+\item{max_colm}{Character vector with the name(s) of the columns for which the maximum 
+value is needed. Default is \code{NULL}.}
+
+\item{elm_colm}{Character vector with the name(s) of the columns identifying the element labels (i.e. element types). If supplied 'unq.elms' and 'mean.elm.count' are returned. Default is \code{NULL}.}
+
+\item{elm_fun}{Function to be applied to the sequence of elements composing a song. Default is \code{NULL}. Ignored if 'elm_colm' is not supplied. The name of the column containing the function's output is "elm_fun'.}
 
 \item{sd}{Logical value indicating whether standard deviaton is also returned for
 variables in which averages are reported. Default is \code{FALSE}.}
@@ -43,66 +46,70 @@ measurements (i.e. song parameters). Names of numeric columns in 'X' can also be
  for more details.  Default is \code{NULL} (unweighted average).}
 }
 \value{
-A data frame similar to the input 'X' data frame, but in this case each row corresponds to a single song. The data frame contains the mean
+A data frame similar to the input 'X' data frame, but in this case each row corresponds to a single song. The data frame contains the mean or extreme
  values for numeric columns for each song. Columns that will be averaged can be defined with
- 'mean_indx' (otherwhise all numeric columns are used). Columns can be 
+ 'mean_colm' (otherwhise all numeric columns are used). Columns can be 
  weighted by other columns in the data set (e.g. duration, frequency range). In addition, the function returns the following song level parameters: 
 \itemize{
-   \item \code{duration}: length of song (in s)
-   \item \code{num.elements}: number of elements (or song units)
+   \item \code{elm.duration}: mean length of elements (in s)
+   \item \code{song.duration}: length of song (in s)
+   \item \code{num.elms}: number of elements (or song units)
    \item \code{start}: start time of song (in s)
    \item \code{end}: end time of song (in s)
    \item \code{bottom.freq}: lowest 'bottom.freq' from all song elements (in kHz)
    \item \code{top.freq}: highest 'top.freq' from all song elements (in kHz)
    \item \code{freq.range}: difference between song's 'top.freq' and 'bottom.freq' (in kHz)
-   \item \code{note.rate}: number of elements per second
+   \item \code{song.rate}: number of elements per second (NA if only 1 element)
+   \item \code{gap.duration}: average length of gaps (i.e. silences) in between elements
+   (in s, NA if only 1 element)
+   \item \code{elm.types}: number of element types (i.e. number of unique types, only if 'elm_colm' is supplied)
+   \item \code{mean.elm.count}: mean number of times element types are found (only if 'elm_colm' is supplied)
    }
- This function assumes that song labels are not repeated within a sound file.
+   This function assumes that song labels are not repeated within a sound file.
 }
 \description{
-\code{song_param} calculates average or extreme values of acoustic parameters of
-elements in a song or other level of organization in the signals
+\code{song_param} calculates descriptive statistics of songs or other higher levels of organization in the signals.
 }
 \details{
-The function removes silence segments (i.e. segments with very low amplitude values) from wave files.
+The function calculates average or extreme values of acoustic parameters of
+elements in a song or other level of organization in the signals.
 }
 \examples{
 {
-# Set temporary working directory
-
 # get warbleR sound file examples
-data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
-writeWave(Phae.long1,"Phae.long1.wav")
-writeWave(Phae.long2,"Phae.long2.wav")
-writeWave(Phae.long3,"Phae.long3.wav")
+data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
+writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
 
 # add a 'song' column
-selec.table$song <- rep(1:4, each = 3)[1:11]
+lbh_selec_table$song <- rep(1:4, each = 3)[1:11]
 
 # measure acoustic parameters
-sp <- specan(selec.table[1:8, ], bp = c(1, 11), 300, fast = TRUE)
+sp <- specan(lbh_selec_table[1:8, ], bp = c(1, 11), 300, fast = TRUE, path = tempdir())
 
 # add song data
-sp <- merge(sp, selec.table[1:8, ], by = c("sound.files", "selec"))
+sp <- merge(sp, lbh_selec_table[1:8, ], by = c("sound.files", "selec"))
 
 # caculate song-level parameters for all numeric parameters
 song_param(X = sp, song_colm = "song", parallel = 1, pb = TRUE)
 
-# caculate song-level parameters selecting parameters with mean_indx
-song_param(X = sp, song_colm = "song",mean_indx = 5:10, parallel = 1, pb = TRUE)
+# caculate song-level parameters selecting parameters with mean_colm
+song_param(X = sp, song_colm = "song",mean_colm = c("dfrange", "duration"), parallel = 1, pb = TRUE)
 
-# caculate song-level parameters for selecting parameters with mean_indx, max_indx
-# and min_indx and weighted by duration
+# caculate song-level parameters for selecting parameters with mean_colm, max_colm
+# and min_colm and weighted by duration
 song_param(X = sp, weight = "duration", song_colm = "song",
-mean_indx = 5:6, min_indx = 7:8, max_indx = 9:10, parallel = 1, pb = TRUE)
+mean_colm =  c("dfrange", "duration"), min_colm =  "mindom", max_colm = "maxdom", 
+  parallel = 1, pb = TRUE)
 
 # with two weights 
 song_param(X = sp, weight = c("duration", "dfrange"), song_colm = "song",
-mean_indx = 5:9, parallel = 1, pb = TRUE)
+mean_colm = c("kurt", "sp.ent"), parallel = 1, pb = TRUE)
 
 # with two weights no progress bar
 song_param(X = sp, weight = c("duration", "dfrange"), song_colm = "song",
-mean_indx = 5:9, parallel = 1, pb = FALSE)
+mean_colm = c("kurt", "sp.ent"), parallel = 1, pb = FALSE)
 }
 
 }
@@ -112,8 +119,8 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 }
 }
 \seealso{
-\code{\link{fixwavs}}, \code{\link{autodetec}},
+\code{\link{specan}}
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+Marcelo Araya-Salas (\email{marceloa27@gmail.com})
 }

@@ -1,3 +1,41 @@
+# *warbleR 1.1.16*
+
+## New functions:
+* sort_colms: moves required colms to left side of data frame. Originally found in Rraven package 
+* split_wavs: splits sound files in shorter segments
+
+## Changes and additions:
+
+* 'to' replaced by 'dest.path' argument removed in mp32wav() 
+* read_wave() can also read regular .wav files
+* quer_ml() temporarily removed while ebird-macaulay API is updated
+* fix_wavs() now can use bioacoustics package or SOX for resampling
+* global options (from warbleR_options()) are now taken by wav_info() 
+* 'coor.test()' now returns 0 for coordination score when the ratio is undefined 
+* 'dB.threshold' argument in 'frange()' and 'frange_detec()' for detecting frequency range based on a dB scale 
+* 'min_indx' and 'max_indx' argument in 'song_param()' renamed as 'min_colm' and 'max_colm' and now take names instead of indexes
+* more accurate dominant frequency detection in 'dfts()', 'trackfreqs()' and 'specan()'
+* 'elm_colm' and  'elm_fun' argument to calculate element level parameters
+* 'unq.elemts' and 'mean.elemt.count' parameters added to 'song_param()' output
+* more error messages in check_sels()
+* more info about file input in 'auto_detec()' documentation
+* add 'frange' for bp in 'dfts()'
+* 2 new methods available in 'compare.methods()'
+* more error messages in check_sels()
+* more info about file input in 'auto_detec()' documentation
+* 'frange' available as bandpass in 'dfts()' and 'mfcc_stats()'
+* 'bioacoustics' dependency changed to 'suggested package'
+* 'mfcc_stats()' return NAs instead of error when MFCC can't be calculated
+
+
+## Bug fixes:
+
+* x_corr() on extended selection tables with extra column names generated and error
+* system() commands for windows in 'fix_wavs()' and 'resample_est()'
+* normalization when downsapling in 'mp32wav()' was required
+* error when creating extended selection tables 'by song' and 'song' column tags are repeated across sound files (selection_table())
+</br>
+
 # *warbleR 1.1.15*
 
 ## New functions:

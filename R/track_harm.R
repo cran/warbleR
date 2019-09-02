@@ -36,24 +36,11 @@
 #' @details This is a modified version of seewave's \code{\link[seewave]{dfreq}} function that allows to track the frequency 
 #' contour of a dominant harmonic even when the highest amplitude jumps between harmonics. The arguments and default values of the
 #' original \code{\link[seewave]{dfreq}} function have been kept unchanged to facilitate switching between the 2 functions.
-#' @examples
-#' {
-#' #Set temporary working directory
-#' # setwd(tempdir())
-#' 
-#' #load data
-#' 
-#'# Check this folder
-#' getwd()
-#'
-#'#track both frequencies 
-#' 
-#' }
 #' 
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Jerome Sueur, modified by Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Jerome Sueur, modified by Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on feb-22-2018 (MAS)
 
 track_harm <- function (wave, f, wl = 512, wn = "hanning", ovlp = 0, fftw = FALSE, 
@@ -88,10 +75,6 @@ track_harm <- function (wave, f, wl = 512, wn = "hanning", ovlp = 0, fftw = FALS
       stop("number of samples lower than 'wl' (i.e. no enough samples) \n check 'adjust.wl' argument")
   } 
   
-  if (dfrq) seewave::dfreq(wave, f, wl, wn, ovlp, fftw, at, tlim, threshold, bandpass, 
-                 clip, plot, xlab, ylab, ylim) else {
-
-                
   if (!is.null(at) && ovlp != 0) 
     stop("The 'ovlp' argument cannot bue used in conjunction with the arguement 'at'.")
   if (!is.null(clip)) {
@@ -138,11 +121,24 @@ track_harm <- function (wave, f, wl = 512, wn = "hanning", ovlp = 0, fftw = FALS
       stop("The first element of 'bandpass' has to be inferior to the second element, i.e. bandpass[1] < bandpass[2]")
     if (bandpass[1] == bandpass[2]) 
       stop("The limits of the bandpass have to be different")
-    lowlimit <- round((wl * bandpass[1])/f)
-    upperlimit <- round((wl * bandpass[2])/f)
-    y1[-(lowlimit:upperlimit), ] <- 0
-  }
+    
+    # lowlimit <- round((wl * bandpass[1])/f)
+    # upperlimit <- round((wl * bandpass[2])/f)
+    # y1[-(lowlimit:upperlimit), ] <- 0
+  
+    # freq values for each freq window   (using mid point of each window)
+    freq.val <- ((1:nrow(y1) * f / wl) - (f / (wl * 2))) 
+    
+    y1[freq.val < bandpass[1] | freq.val > bandpass[2]] <- 0
+    }
 
+  if (dfrq){
+    
+    maxi <- apply(y1, MARGIN = 2, FUN = max)
+    y2 <- apply(y1, MARGIN = 2, FUN = which.max)
+    
+  } else {
+  
   # find peaks close to first dom freq
   maxi <- NULL
   y2 <- NULL
@@ -165,16 +161,22 @@ track_harm <- function (wave, f, wl = 512, wn = "hanning", ovlp = 0, fftw = FALS
     y2[i] <- pks[which.min(pks[ , 3]), 2]    
     }
   }
+  }
   
   y2[which(maxi == 0)] <- NA
   if (!is.null(clip)) {
     maxi <- apply(y1, MARGIN = 2, FUN = max)
     y2[which(maxi < clip)] <- NA
   }
-  y <- (f * y2)/(1000 * wl) - f/(1000 * wl)
+  # y <- (f * y2)/(1000 * wl) - f/(1000 * wl)
+  y <- freq.val[y2]
+  
   if (!is.null(at)) {
     y <- c(NA, y, NA)
   }
+    
+  y <- y / 1000                     
+  
   if (plot) {
     plot(x = x, y = y, xaxs = "i", xlab = xlab, yaxs = "i", 
          ylab = ylab, ylim = ylim, ...)
@@ -183,4 +185,4 @@ track_harm <- function (wave, f, wl = 512, wn = "hanning", ovlp = 0, fftw = FALS
   else return(cbind(x, y))
   }
   
-} 
+

@@ -39,7 +39,7 @@
 #' @param pb Logical argument to control progress bar. Default is \code{TRUE}.
 #' @param clip.edges Logical argument to control whether edges (start or end of signal) in
 #' which amplitude values above the threshold were not detected will be removed. If 
-#' \code{TRUE} (default) this edges will be excluded and signal contour will be calculated on the
+#' \code{TRUE} (default) this edges will be excluded and contours will be calculated on the
 #' remainging values. Note that DTW cannot be applied if missing values (e.i. when amplitude is not detected).
 #' @param window.type	\code{\link[dtw]{dtw}} windowing control parameter. Character: "none", "itakura", or a function (see \code{\link[dtw]{dtw}}).
 #' @param open.end \code{\link[dtw]{dtw}} control parameter. Performs 
@@ -72,23 +72,20 @@
 #'  frequency  measures. If 'img' is  \code{TRUE} the function also produces image files
 #'  with the spectrograms of the signals listed in the input data frame showing the
 #'  location of the dominant frequencies.
-#' @examples{
-#' # set the temp directory
-#' # setwd(tempdir())
-#' 
+#' @examples {
 #' #load data
-#' data(list = c("Phae.long1", "Phae.long2","selec.table"))
-#' writeWave(Phae.long2, "Phae.long2.wav") #save sound files 
-#' writeWave(Phae.long1, "Phae.long1.wav")
+#' data(list = c("Phae.long1", "Phae.long2","lbh_selec_table"))
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav")) #save sound files 
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
 #' 
 #' # run function 
-#' dfDTW(selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300)
+#' dfDTW(lbh_selec_table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300, path = tempdir())
 #' }
 #' 
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on nov-31-2016 (MAS)
 
 dfDTW <-  function(X = NULL, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", ovlp = 70, 
@@ -161,7 +158,7 @@ dfDTW <-  function(X = NULL, wl = 512, wl.freq = 512, length.out = 20, wn = "han
   if (any(is.na(mat))) stop("missing values in time series (frequency was not detected at
                            the start and/or end of the signal)")
   
-  if (!pb & is.null(ts.df)) write(file = "", x = "calculating DTW distances (step 2 of 2, no progress bar):")
+  if (pb & is.null(ts.df)) write(file = "", x = "calculating DTW distances (step 2 of 2, no progress bar):")
   dm <- dtw::dtwDist(mat, mat, window.type = window.type, open.end = open.end)    
   
   rownames(dm) <- colnames(dm) <- paste(res$sound.files, res$selec, sep = "-")

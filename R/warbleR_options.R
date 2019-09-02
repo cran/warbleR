@@ -41,31 +41,29 @@
 #'    }
 #' @examples
 #' {
-#' # First set temporary folder
-#' # setwd(tempdir())
-#' 
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
-#' writeWave(Phae.long1,"Phae.long1.wav")
-#' writeWave(Phae.long2,"Phae.long2.wav")
-#' writeWave(Phae.long3,"Phae.long3.wav")
-#' writeWave(Phae.long4,"Phae.long4.wav")
+#' # load data and save in temporary working directory
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+#' writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+#' writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
 #' 
 #' # sig2noise with progress bar (by default is TRUE)
-#' a <- sig2noise(X = selec.table, mar = 0.1)
+#' a <- sig2noise(X = lbh_selec_table, mar = 0.1, path = tempdir())
 #' 
 #' # set progress bar to FALSE with warbleR_options
-#' warbleR_options(pb = FALSE)
+#' warbleR_options(pb = FALSE, path = tempdir())
 #' 
 #' # sig2noise without progress bar
-#' a <- sig2noise(X = selec.table, mar = 0.1)
+#' a <- sig2noise(X = lbh_selec_table, mar = 0.1)
 #' 
 #' # sig2noise with progress bar by setting it within the function call (overwritting options)
-#' a <- sig2noise(X = selec.table, pb = TRUE, mar = 0.1)
+#' a <- sig2noise(X = lbh_selec_table, pb = TRUE, mar = 0.1)
 #' 
 #' # sig2noise without progress bar using warbleR_options setting again
-#' a <- sig2noise(X = selec.table, mar = 0.1)
+#' a <- sig2noise(X = lbh_selec_table, mar = 0.1)
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 # last modification on apr-18-2018 (MAS)
 
 warbleR_options <- function(reset = FALSE, ...){
@@ -73,11 +71,14 @@ warbleR_options <- function(reset = FALSE, ...){
   argms <- list(...)
   
   if (length(argms) > 0) {
-    if (!is.null(argms$wav.path)) if (!dir.exists(argms$wav.path)) stop("provided 'wav.path' doesn't exist")
+    if (!is.null(argms$wav.path)) if (!dir.exists(argms$wav.path)) stop("provided 'wav.path' doesn't exist") else
+      argms$wav.path <- path.expand(argms$wav.path)
     
-    if (!is.null(argms$img.path)) if (!dir.exists(argms$img.path)) stop("provided 'dest.path' doesn't exist")
+    if (!is.null(argms$img.path)) if (!dir.exists(argms$img.path)) stop("provided 'dest.path' doesn't exist") else
+      argms$img.path <- path.expand(argms$img.path)
     
-    if (!is.null(argms$dest.path)) if (!dir.exists(argms$dest.path)) stop("provided 'dest.path' doesn't exist")
+    if (!is.null(argms$dest.path)) if (!dir.exists(argms$dest.path)) stop("provided 'dest.path' doesn't exist") else
+      argms$dest.path <- path.expand(argms$dest.path)
     
     if (length(argms) > 0) {
       if (length(argms) == 1 && is.list(argms[[1]])) {

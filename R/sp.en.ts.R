@@ -2,7 +2,7 @@
 #' 
 #' \code{sp.en.ts} spectral entropy across signals as a time series.
 #' of signals selected by \code{\link{manualoc}} or \code{\link{sp.en.ts}}.
-#' @usage sp.en.ts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = NULL,
+#' @usage sp.en.ts(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, bp = "frange",
 #'   threshold = 15, img = TRUE, parallel = 1, path = NULL, img.suffix = "sp.en.ts",
 #'    pb = TRUE, clip.edges = FALSE, leglab = "sp.en.ts", sp.en.range = c(2, 10), ...)
 #' @param  X object of class 'selection_table', 'extended_selection_table' or data 
@@ -20,7 +20,8 @@
 #' @param ovlp Numeric vector of length 1 specifying \% of overlap between two 
 #'   consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70. 
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
-#'   frequency bandpass filter (in kHz). Default is \code{NULL}.
+#'   frequency bandpass filter (in kHz). If 'frange' (default) then the
+#'   'bottom.freq' and 'top.freq' columns are used bandpass limits.
 #' @param threshold amplitude threshold (\%) for dominant frequency detection. Default is 15.
 #' @param img Logical argument. If \code{FALSE}, image files are not produced. Default is \code{TRUE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
@@ -61,39 +62,33 @@
 #' 
 #' @examples
 #' {
-#' # set the temp directory
-#' # setwd(tempdir())
-#' 
 #' #load data
-#' data(list = c("Phae.long1", "Phae.long2",  "Phae.long3",  "Phae.long4","selec.table"))
-#' writeWave(Phae.long2, "Phae.long2.wav") #save sound files 
-#' writeWave(Phae.long1, "Phae.long1.wav")
-#' writeWave(Phae.long3, "Phae.long3.wav") #save sound files 
-#' writeWave(Phae.long4, "Phae.long4.wav")
+#' data(list = c("Phae.long1", "Phae.long2",  "Phae.long3",  "Phae.long4","lbh_selec_table"))
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav")) #save sound files 
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+#' writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav")) #save sound files 
+#' writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
 #' 
 #' # without clip edges
-#' sp.en.ts(X = selec.table, threshold = 10, bp = NULL, clip.edges = FALSE, length.out = 10,
-#'  type = "b", sp.en.range = c(-25, 10))
+#' sp.en.ts(X = lbh_selec_table, threshold = 10, clip.edges = FALSE, length.out = 10,
+#'  type = "b", sp.en.range = c(-25, 10), path = tempdir())
 #' 
 #' # with clip edges and length.out 10
-#' sp.en.ts(X = selec.table, threshold = 10, bp = c(2, 12), clip.edges = TRUE, length.out = 10)
+#' sp.en.ts(X = lbh_selec_table, threshold = 10, bp = c(2, 12), clip.edges = TRUE, length.out = 10, 
+#' path = tempdir())
 #' 
 #' }
 #' 
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on mar-13-2018 (MAS)
 
 sp.en.ts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70, 
-                  bp = NULL, threshold = 15, img = TRUE, parallel = 1,
+                  bp = "frange", threshold = 15, img = TRUE, parallel = 1,
                   path = NULL, img.suffix = "sp.en.ts", pb = TRUE, clip.edges = FALSE,
                   leglab = "sp.en.ts", sp.en.range = c(2, 10), ...){     
-
-  # reset working directory 
-  wd <- getwd()
-  on.exit(setwd(wd))
   
   # set pb options 
   on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
@@ -123,9 +118,9 @@ sp.en.ts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
-  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
-    setwd(path)
-  }  
+  if (is.null(path)) path <- getwd() else 
+    if (!dir.exists(path)) 
+      stop("'path' provided does not exist") 
   
   #if X is not a data frame
   if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
@@ -143,15 +138,22 @@ sp.en.ts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
-  if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
+  if (any(X$end - X$start <= 0)) stop(paste("Start is higher than or equal to end in", length(which(X$end - X$start <= 0)), "case(s)"))  
   
   #if any selections longer than 20 secs stop
   if (any(X$end - X$start>20)) stop(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))  
   options( show.error.messages = TRUE)
   
-  #if bp is not vector or length!=2 stop
-  if (!is.null(bp)) {if (!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
-    if (!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")}}
+  # bp checking
+  if (bp[1] != "frange")
+  {if (!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
+    if (!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")} 
+  } else
+  {if (!any(names(X) == "bottom.freq") & !any(names(X) == "top.freq")) stop("'bp' = frange requires bottom.freq and top.freq columns in X")
+    if (any(is.na(c(X$bottom.freq, X$top.freq)))) stop("NAs found in bottom.freq and/or top.freq") 
+    if (any(c(X$bottom.freq, X$top.freq) < 0)) stop("Negative values found in bottom.freq and/or top.freq") 
+    if (any(X$top.freq - X$bottom.freq < 0)) stop("top.freq should be higher than low.f")
+  }
   
   #if sp.en.range is not vector or length!=2 stop
   if (!is.vector(sp.en.range)) stop("'sp.en.range' must be a numeric vector of length 2") else
@@ -164,7 +166,7 @@ sp.en.ts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   #return warning if not all sound files were found
   if (!is_extended_selection_table(X))
   {
-  recs.wd <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
+  recs.wd <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files)) & pb) 
     cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
                   ".wav file(s) not found"))
@@ -187,15 +189,18 @@ sp.en.ts <-  function(X, wl = 512, length.out = 20, wn = "hanning", ovlp = 70,
   sp.en.tsFUN <- function(X, i, bp, wl, threshold, sp.en.range){
     
     # Read sound files to get sample rate and length
-    r <- read_wave(X = X, index = i, header = TRUE)
+    r <- warbleR::read_wave(X = X, path = path, index = i, header = TRUE)
     f <- r$sample.rate
 
+    # if bp is frange
+    if (bp[1] == "frange") bp <- c(X$bottom.freq[i], X$top.freq[i])
+    
     #in case bp its higher than can be due to sampling rate
     b<- bp 
     if (!is.null(b)) {if (b[2] > ceiling(f/2000) - 1) b[2] <- ceiling(f/2000) - 1 
     b <- b * 1000}
     
-      r <- read_wave(X = X, index = i)
+      r <- warbleR::read_wave(X = X, path = path, index = i)
     
       #filter if this was needed
       if (!is.null(bp)) r <- ffilter(wave = r, from = b[1], to = b[2]) 

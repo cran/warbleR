@@ -18,7 +18,7 @@
 #' @param wav.size Logical argument to control if the size of the wave object 
 #'  when the selection is imported into R (as when using \code{\link[tuneR]{readWave}}
 #'  is calculated and added as a column. Size is return in MB. Default is \code{FALSE}.
-#' @return A data frame including the columns in the input data frame (X) and 7 additional columns:
+#' @return A data frame including the columns in the input data frame (X) and the following additional columns:
 #' \itemize{
 #'    \item \code{check.res}: diagnose for each selection 
 #'    \item \code{duration}: duration of selection in seconds
@@ -29,38 +29,51 @@
 #'    \item \code{bits}: bit depth
 #'    \item \code{sound.file.samples}: number of samples in the sound file
 #'    }
-#' @details This function checks 1) if the selections listed in the data frame correspond to .wav files
-#' in the working directory, 2) if the sound files can be read and if so, 3) if the start and end time
-#' of the selections are found within the duration of the sound files. Note that the sound files 
-#' should be in the working directory (or the directory provided in 'path').
-#' This is useful for avoiding errors in dowstream functions (e.g. \code{\link{specan}}, \code{\link{xcorr}}, \code{\link{catalog}}, \code{\link{dfDTW}}). Note that corrupt files can be
-#' fixed using \code{\link{fixwavs}}) ('sox' must be installed to be able to run this function).
+#' @details This function checks the information in a selection data frame or selection table (i.e. data frame with annotations on sound files) 
+#' to avoid problems in any warbleR analysis downstream. It specifically checks if:
+#' \itemize{
+#'    \item 'X' is an object of class 'data.frame' or 'selection_table' (see \code{\link{selection_table}}) and contains 
+#'    the required columns to be used on any warbleR function ('sound.files', 'selec', 'start', 'end', if not returns an error) 
+#'    \item  'sound.files' in 'X' correspond to .wav files in the working directory or in the provided 'path'
+#'     (if no file is found returns an error, if some files are not found returns error info in the ouput data frame)
+#'    \item time ('start', 'end') and frequency ('bottom.freq', 'top.freq', if provided) limit parameters are numeric and 
+#'    don't contain NAs (if not returns an error)
+#'    \item there are no duplicated selection labels ('selec') within a sound file (if not returns an error)
+#'    \item sound files can be read (error info in the ouput data frame)
+#'    \item the start and end time of the selections are found within the duration of the sound files (error info in the ouput data frame)
+#'    \item sound files can be read (error info in the ouput data frame)
+#'    \item sound files header is not corrupted (only if \code{header = TRUE}, error info in the ouput data frame)    
+#'    \item selection time position (start and end) doesn't exceeds sound file length (error info in the ouput data frame)
+#'    \item 'top.freq' is lower than half the sample rate (nyquist frequency, error info in the ouput data frame)
+#'    \item negative values aren't found in time or frequency limit parameters (error info in the ouput data frame)
+#'    \item 'start' higher than 'end' or 'bottom.freq' higher than 'top.freq' (error info in the ouput data frame)
+#'    \item 'channel' value is not higher than number of channels in sound files (error info in the ouput data frame)
+#' } 
+#' The function returns a data frame that includes the information in 'X' plus additional columns about the format of sound
+#' files (see 'Value') as well as the result of the checks ('check.res' column, value is 'OK' if everything is fine).
+#' Sound files should be in the working directory (or the directory provided in 'path'). Corrupt files can be fixed using 
+#' \code{\link{fixwavs}}.
 #' @seealso \code{\link{checkwavs}}
 #' @export
 #' @name checksels
 #' @export
 #' @examples{
-#' # First set temporary folder
-#' # setwd(tempdir())
-#' 
 #' # save wav file examples
-#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "selec.table"))
-#' writeWave(Phae.long1,"Phae.long1.wav")
-#' writeWave(Phae.long2,"Phae.long2.wav")
-#' writeWave(Phae.long3,"Phae.long3.wav")
+#' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "lbh_selec_table"))
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+#' writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
 #' 
-#' checksels(X = selec.table)
+#' checksels(X = lbh_selec_table, path = tempdir())
 #' }
 #' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu})
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
 #last modification on jul-5-2016 (MAS)
 
 checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE, 
                       pb = TRUE, wav.size = FALSE){
   
-  # reset working directory 
-  wd <- getwd()
-  on.exit(setwd(wd))
+  # reset pbapply pb
   on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
   
   #### set arguments from options
@@ -88,9 +101,9 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
-  if (is.null(path)) path <- getwd() else {if (!dir.exists(path)) stop("'path' provided does not exist") else
-    setwd(path)
-  }  
+  if (is.null(path)) path <- getwd() else 
+    if (!dir.exists(path)) 
+      stop("'path' provided does not exist") 
   
   #if X is not a data frame
   if (all(!any(is.data.frame(X), is_selection_table(X)))) stop("X is not of a class 'data.frame' or 'selection_table'")
@@ -111,51 +124,52 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
   # check for duplicates
   if (any(duplicated(X[, c("sound.files", "selec")]))) stop("Duplicated selection labels for one or more sound files")
   
-  #if any start higher than end stop
-  if (any(X$end - X$start < 0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start < 0)), "case(s)"))  
-  
   #check additional columns
   if (!"channel" %in% colnames(X)) 
-  {#cat("\n sound file channel for analysis assumed to be 1 (left) for all selections (channel column not found)")
+  {
     X$channel <- 1
   } else {
     if (!is.numeric(X$channel)) stop("'channel' must be numeric")
-    if (any(is.na(X$channel))) {cat("NAs in 'channel', assumed to be channel 1")
+    if (any(is.na(X$channel))) {cat("NAs in 'channel', assumed to be channel 1 \n")
       X$channel[is.na(X$channel)] <- 1   
     }}
   
   #check if files are in working directory
-  files <- file.exists(as.character(unique(X$sound.files)))
+  files <- file.exists(file.path(path, unique(X$sound.files)))
   if (all(!files)) 
     stop("no .wav files found")
   
   # update to new frequency range column names
-  if (any(grepl("low.freq|high.freq", names(X)))) { 
+  if (any(grepl("low.freq|high.freq", names(X)))) {
     names(X)[names(X) == "low.freq"] <- "bottom.freq"
     names(X)[names(X) == "high.freq"] <- "top.freq"
-  }
+    cat("'low.freq' and 'high.freq' renamed as 'bottom.freq' and 'top.freq' \n")
+    }
   
-  #check frequency range columns
-  if ("top.freq" %in% colnames(X)) 
-  {
-    frq.rng <- X$top.freq - X$bottom.freq
-    #if any start higher than end stop
-    if (any(frq.rng < 0)) stop(paste("The bottom frequency is higher than the top frequency in", length(which(frq.rng < 0)), "case(s)"))  
-    if (any(X$bottom.freq < 0)) stop("bottom frequency lower than 0 for some selections")  
-  }    
+  # check if freq lim are numeric
+  if (any(names(X) == "bottom.freq"))
+    if (class(X$bottom.freq) != "numeric") stop("'bottom.freq' is not numeric")
   
-  #function to run over each sound file
-  csFUN <- function(x, X){
+  if (any(names(X) == "top.freq"))
+    if (class(X$top.freq) != "numeric") stop("'top.freq' is not numeric")
+  
+  # check if NAs in freq limits
+  if (any(names(X) %in% c("bottom.freq", "top.freq")))
+  if (any(is.na(c(X$bottom.freq, X$top.freq)))) stop("NAs found in 'top.freq' and/or 'bottom.freq' \n")  
+  
+  # function to run over each sound file
+  csFUN <- function(x, X, pth){
     Y <- as.data.frame(X[X$sound.files == x, , drop = FALSE])
     
-    if (file.exists(as.character(x))){
-      rec <- try(suppressWarnings(tuneR::readWave(as.character(x), header = TRUE)), silent = TRUE)
+    if (file.exists(file.path(pth, x))){
+      rec <- try(suppressWarnings(warbleR::read_wave(X= x, path = pth, header = TRUE)), silent = TRUE)
       
+      # if it was read
       if (!class(rec) == "try-error")
       {
         if (check.header) # look for mismatchs between file header & file content  
         {
-          recfull <- try(suppressWarnings(tuneR::readWave(as.character(x), header = FALSE)), silent = TRUE)
+          recfull <- try(suppressWarnings(warbleR::read_wave(X = x, path = pth, header = FALSE)), silent = TRUE)
           if (any(methods::slotNames(recfull) == "stereo")) 
           {
             if (rec$channels == 2) channel.check <- ifelse(recfull@stereo, FALSE, TRUE) else
@@ -166,7 +180,6 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
             channel.check <- FALSE
             samples.check <- ifelse(rec$samples == length(recfull@.Data), FALSE, TRUE)
           }
-          
           
           if (any(rec$sample.rate != recfull@samp.rate, rec$bits != recfull@bit, channel.check, samples.check))
           {
@@ -185,7 +198,7 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
             if (any(Y$end > maxdur))  Y$check.res[Y$end > maxdur] <- "exceeds sound file length"
             Y$duration <- Y$end - Y$start
             Y$min.n.samples <- floor(Y$duration * rec$sample.rate)
-            Y$sample.rate <- rec$sample.rate/1000
+            Y$sample.rate <- rec$sample.rate / 1000
             Y$channels <- rec$channels
             Y$bits <- rec$bits
             Y$sound.file.samples <- rec$samples
@@ -199,7 +212,7 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
         if (any(Y$end > maxdur))  Y$check.res[Y$end > maxdur] <- "exceeds sound file length"
         Y$duration <- Y$end - Y$start
         Y$min.n.samples <- floor(Y$duration * rec$sample.rate)
-        Y$sample.rate <- rec$sample.rate/1000
+        Y$sample.rate <- rec$sample.rate / 1000
         Y$channels <- rec$channels
         Y$bits <- rec$bits
         Y$sound.file.samples <- rec$samples
@@ -234,7 +247,7 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
   # run loop apply function
   out <- pbapply::pblapply(X = unique(X$sound.files), cl = cl, FUN = function(x) 
   { 
-    csFUN(x, X)
+    csFUN(x, X, pth = path)
   }) 
   
   res <- do.call(rbind, out)
@@ -242,17 +255,39 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
   
   if ("top.freq" %in% names(res))
   {   
+    # nyquist frequency
     try(res$check.res <- ifelse((res$sample.rate/2) - res$top.freq < 0 & !is.na(res$sample.rate), gsub("OK\\|", "", paste(res$check.res, "'Top.freq' higher than half the sample rate", sep = "|")), res$check.res), silent = TRUE)
     
-    if (any((((res$sample.rate[!is.na(res$duration)])/2) - res$top.freq[!is.na(res$duration)]) < 0)) cat("\n 'top.freq' higher than half the sample rate in some selections")     
-  } 
+    # if bottom.freq is negative
+    res$check.res <- ifelse(res$bottom.freq < 0, gsub("OK\\|", "", paste(res$check.res, "Negative values in 'bottom.freq'", sep = "|")), res$check.res)
+    
+    # if fre range is equal or lower than 0
+    res$check.res <- ifelse(res$top.freq - res$bottom.freq <= 0, gsub("OK\\|", "", paste(res$check.res, "'bottom.freq' is equal or higher than the 'top.freq'", sep = "|")), res$check.res)
+    } 
   
-  if (any(res$channel[!is.na(res$duration)] > res$channels[!is.na(res$duration)])) {cat("\n some selections listed as having more than 1 channel found in sound files with only 1 channel; channel field relabeled as '1'") 
+  # if start higher or equal than end
+  res$check.res <- ifelse(res$end - res$start <= 0, gsub("OK\\|", "", paste(res$check.res, "'start' is equal or higher than the 'end'", sep = "|")), res$check.res)
+  
+  # if start is negative
+  res$check.res <- ifelse(res$start < 0, gsub("OK\\|", "", paste(res$check.res, "Negative values in 'start'", sep = "|")), res$check.res)
+  
+  # if channel number is equal or smaller than the number of channels in the wav file
+  if (any(res$channel[!is.na(res$duration)] > res$channels[!is.na(res$duration)])) {cat("\n some selections listed as having more than 1 channel found in sound files with only 1 channel; channel field relabeled as '1' \n") 
     res$channel[!is.na(res$duration)][any(res$channel[!is.na(res$duration)] > res$channels[!is.na(res$duration)])] <- 1
   }
   
   if (wav.size) res$wav.size <- round(res$bits  * res$channel * res$sample.rate * res$duration / 4) / 1024
+  
+  # inform result
+  if (all(res$check.res == "OK")) 
+  {
+    if (any(res$min.n.samples < 20))
+      cat("all selections are OK but some have very few samples (less than 20, potentially problematic for some analyses) \nCheck 'min.n.samples' column") else
+        cat("all selections are OK \n")   
+  }
+    else cat(paste(sum(res$check.res != "OK"), "selection(s) are not OK \n"))
 
+  # return data frame
   return(res) 
 }
 

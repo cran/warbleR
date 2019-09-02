@@ -19,7 +19,7 @@ Returns an `NA` if any error occurs during the evaluation of a expression.
 If not, it will return the result of the evaluation.
 }
 \description{
-\code{try_na} silly wrapper for \code{\link[base]{try}} function that returns an NA if an error is found.
+\code{try_na} silly wrapper for \code{\link[base]{try}} function that returns an NA if an error is found. TO BE DEPRECATED IN FUTURE VERSIONS.
 }
 \details{
 This is a silly wrapper on \code{\link[base]{try}} that returns an `NA` if any error occurs during the evaluation of a expression. See \code{\link[base]{try}} for details.
@@ -40,5 +40,5 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 }
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+Marcelo Araya-Salas (\email{marceloa27@gmail.com})
 }

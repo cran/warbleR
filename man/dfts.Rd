@@ -5,7 +5,7 @@
 \title{Extract the dominant frequency values as a time series}
 \usage{
 dfts(X, wl = 512, wl.freq = 512, length.out = 20, wn = "hanning", ovlp = 70,
-bp = c(0, 22), threshold = 15, threshold.time = NULL, threshold.freq = NULL, 
+bp = c(0, 22), threshold = 0, threshold.time = NULL, threshold.freq = NULL, 
 img = TRUE, parallel = 1, path = NULL, img.suffix = "dfts", pb = TRUE,
 clip.edges = FALSE, leglab = "dfts", frange.detec = FALSE, fsmooth = 0.1,
  raw.contour = FALSE, track.harm = FALSE, adjust.wl = TRUE, ...)
@@ -32,9 +32,10 @@ frequency desired (the length of the time series).}
 consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
-frequency bandpass filter (in kHz). Default is c(0, 22).}
+frequency bandpass filter (in kHz). Default is c(0, 22). If 'frange' then the
+'bottom.freq' and 'top.freq' columns are used bandpass limits.}
 
-\item{threshold}{amplitude threshold (\%) for dominant frequency detection. Default is 15. Note that amplitude 
+\item{threshold}{amplitude threshold (\%) for dominant frequency detection. Default is 0. Note that amplitude 
 threshold for time and frequency domains can be defined independently. See "threshold.time" and "threshold.freq" 
 arguments.}
 
@@ -72,7 +73,7 @@ sliding window (in kHz) used for frequency range detection (when \code{frange.de
 amplitude modulation. Default is 0.1.}
 
 \item{raw.contour}{Logical. If \code{TRUE} then a list with the original contours 
-(i.e. without interpolating values to make all contours of equal length) is returned.}
+(i.e. without interpolating values to make all contours of equal length) is returned (and no images are produced).}
 
 \item{track.harm}{Logical. If true warbleR's \code{\link{track_harm}} function is 
 used to track frequency contours. Otherwise seewave's \code{\link[seewave]{dfreq}} is used by default.}
@@ -95,31 +96,30 @@ of signals selected by \code{\link{manualoc}} or \code{\link{autodetec}}.
 \details{
 This function extracts the dominant frequency values as a time series. 
 The function uses the \code{\link[stats]{approx}} function to interpolate values between dominant frequency 
-measures. If there are no frequencies above the amplitude theshold at the begining or end 
+measures. If there are no frequencies above the amplitude threshold at the begining or end 
  of the signals then NAs will be generated. On the other hand, if there are no frequencies 
- above the amplitude theshold in time windows in between the signal in which amplitude was 
+ above the amplitude threshold in time windows in between the signal in which amplitude was 
  detected then the values of the adjacent will be interpolated 
  to fill out the missing values (e.g. no NAs in between detected amplitude segments).
 }
 \examples{
 {
-# set the temp directory
-# setwd(tempdir())
-
 #load data
-data(list = c("Phae.long1", "Phae.long2","selec.table"))
-writeWave(Phae.long2, "Phae.long2.wav") #save sound files 
-writeWave(Phae.long1, "Phae.long1.wav")
+data(list = c("Phae.long1", "Phae.long2","lbh_selec_table"))
+writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav")) #save sound files 
+writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
 
 # run function 
-dfts(X = selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300, pb = FALSE)
+dfts(X = lbh_selec_table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300, pb = FALSE,
+ path = tempdir())
 
 # note a NA in the row 4 column 3 (dfreq-1)
 # this can be removed by clipping edges (removing NAs at the start and/or end 
 # when no freq was detected) 
 
-dfts(X = selec.table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300, pb = FALSE, 
-clip.edges = TRUE)
+dfts(X = lbh_selec_table, length.out = 30, flim = c(1, 12), bp = c(2, 9), wl = 300, pb = FALSE, 
+clip.edges = TRUE, 
+path = tempdir())
 }
 
 }
@@ -139,6 +139,6 @@ Other spectrogram creators: \code{\link{color.spectro}},
   \code{\link{trackfreqs}}
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+Marcelo Araya-Salas (\email{marceloa27@gmail.com})
 }
 \concept{spectrogram creators}

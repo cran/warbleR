@@ -5,7 +5,7 @@
 #' ovlp = 70, inner.mar = c(5, 4, 4, 2), outer.mar = c(0, 0, 0, 0), picsize = 1, res = 100, 
 #' cexlab = 1, propwidth = FALSE, xl = 1, osci = FALSE, gr = FALSE,  sc = FALSE, line = TRUE,
 #' col = adjustcolor("#E37222", 0.6), lty = 3, mar = 0.05, it = "jpeg", parallel = 1, 
-#' path = NULL, pb = TRUE, fast.spec = FALSE, by.song = NULL, sel.labels = "selec", 
+#' path = NULL, pb = TRUE, fast.spec = FALSE, by.song = NULL, sel.labels = "selec",
 #' title.labels = NULL, dest.path = NULL, ...)
 #' @param X 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signals (start and end). 
@@ -15,7 +15,9 @@
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
 #' @param flim A numeric vector of length 2 for the frequency limit (in kHz) of 
-#'   the spectrogram, as in \code{\link[seewave]{spectro}}. Default is c(0, 22).
+#'   the spectrogram, as in \code{\link[seewave]{spectro}}. The function also 
+#'   accepts 'frange' (default) which produces spectrograms with a frequency 
+#'   limit around the range of each signal (adding a 1 kHz margin).  
 #' @param wn Character vector of length 1 specifying window name. Default is 
 #'   "hanning". See function \code{\link[seewave]{ftwindow}} for more options.
 #' @param pal A color palette function to be used to assign colors in the 
@@ -67,12 +69,12 @@
 #'   offer decreasing darkness levels.
 #' @param by.song Character string with the column name containing song labels. If
 #' provide a single spectrogram containinig all elements for each song will be produce. Note that 
-#' the function assumes that song labels are not repeated within a sound file. If \code{NULL} (default), spectrograms are produced for single selections.
-#' @param sel.labels Character string with the name of the column for selection 
+#' the function assumes that each song has a unique label within a sound file. If \code{NULL} (default), spectrograms are produced for single selections.
+#' @param sel.labels Character string with the name of the column(s) for selection 
 #' labeling. Ignored if 'by.song' is \code{NULL}. Default is 'selec'. Set to \code{NULL} to remove labels.
 #' @param title.labels Character string with the name(s) of the column(s) to use as title. Default is \code{NULL} (no title). Only sound file and song included if 'by.song' is provided.
 #' @param dest.path Character string containing the directory path where the cut sound files will be saved.
-#' If \code{NULL} (default) then the current working directory is used.
+#' If \code{NULL} (default) then the folder containing the sound files will be used instead.
 #' @param ... Additional arguments to be passed to the internal spectrogram 
 #' creating function for customizing graphical output. The function is a modified 
 #' version of \code{\link[seewave]{spectro}}, so it takes the same arguments. 
@@ -91,25 +93,22 @@
 #' high background noise levels. 
 #' @examples
 #' { 
-#' # First set empty folder
-#' # setwd(tempdir())
-#' 
 #' # load and save data
-#' data(list = c("Phae.long1", "Phae.long2","selec.table"))
-#' writeWave(Phae.long1, "Phae.long1.wav") #save sound files
-#' writeWave(Phae.long2, "Phae.long2.wav")
+#' data(list = c("Phae.long1", "Phae.long2","lbh_selec_table"))
+#' writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav")) #save sound files
+#' writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
 #' 
 #' # make spectrograms
-#' specreator(X = selec.table, flim = c(0, 11), res = 300, mar = 0.05, wl = 300)
+#' specreator(X = lbh_selec_table, flim = c(0, 11), res = 300, mar = 0.05, wl = 300, path = tempdir())
 #'  
 #' # check this folder
-#' getwd()
+#' tempdir()
 #' }
 #' 
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{araya-salas@@cornell.edu}) and Grace Smith Vidaurre
+#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com}) and Grace Smith Vidaurre
 #last modification on mar-13-2018 (MAS)
 
 specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = reverse.gray.colors.2, ovlp = 70, 
@@ -117,10 +116,6 @@ specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rever
                         cexlab = 1, propwidth = FALSE, xl = 1, osci = FALSE,  gr = FALSE,
                        sc = FALSE, line = TRUE, col = adjustcolor("#E37222", 0.6), lty = 3, mar = 0.05, 
                        it = "jpeg", parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, by.song = NULL, sel.labels = "selec", title.labels = NULL, dest.path = NULL, ...){
-  
-  # reset working directory 
-  wd <- getwd()
-  on.exit(setwd(wd))
   
   # set pb options 
   on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
@@ -151,10 +146,10 @@ specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rever
   
   #check path to working directory
   if (is.null(path)) path <- getwd() else 
-    if (!dir.exists(path)) stop("'path' provided does not exist") else setwd(path)
+    if (!dir.exists(path)) stop("'path' provided does not exist") 
 
-  #check dest.path to working directory
-  if (is.null(dest.path)) dest.path <- getwd() else 
+    #check dest.path to working directory
+  if (is.null(dest.path)) dest.path <- path else 
     if (!dir.exists(dest.path)) stop("'dest.path' provided does not exist") 
   
   #if X is not a data frame
@@ -176,18 +171,24 @@ specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rever
   if (all(class(X$end) != "numeric" & class(X$start) != "numeric")) stop("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
-  if (any(X$end - X$start<0)) stop(paste("The start is higher than the end in", length(which(X$end - X$start<0)), "case(s)"))  
+  if (any(X$end - X$start <= 0)) stop(paste("The start is higher than or equal to the end in", length(which(X$end - X$start <= 0)), "case(s)"))  
   
-  options(show.error.messages = TRUE)
+  # flim checking
+  if (flim[1] != "frange")
+  {if (!is.vector(flim)) stop("'flim' must be a numeric vector of length 2") else{
+    if (!length(flim) == 2) stop("'flim' must be a numeric vector of length 2")} 
+  } else
+  {if (!any(names(X) == "bottom.freq") & !any(names(X) == "top.freq")) stop("'flim' = frange requires bottom.freq and top.freq columns in X")
+    if (any(is.na(c(X$bottom.freq, X$top.freq)))) stop("NAs found in bottom.freq and/or top.freq") 
+    if (any(c(X$bottom.freq, X$top.freq) < 0)) stop("Negative values found in bottom.freq and/or top.freq") 
+    if (any(X$top.freq - X$bottom.freq <= 0)) stop("top.freq should be higher than bottom.freq")
+  }
   
   #if it argument is not "jpeg" or "tiff" 
   if (!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))  
   
   # error if not title.labels character
   if (!is.character(title.labels) & !is.null(title.labels)) stop("'title.labels' must be a character string")
-  
-  #wrap img creating function
-  if (it == "jpeg") imgfun <- jpeg else imgfun <- tiff
   
   #missing label columns
   if (!all(title.labels %in% colnames(X)))
@@ -197,7 +198,7 @@ specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rever
   #return warning if not all sound files were found
   if (!is_extended_selection_table(X))
   {
-    recs.wd <- list.files(pattern = "\\.wav$", ignore.case = TRUE)
+    recs.wd <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files))) 
     (paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
            ".wav file(s) not found"))
@@ -222,6 +223,8 @@ specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rever
     Y <- X
     X <- song_param(X = Y, song_colm = by.song, pb = FALSE)
     X$selec <- 1
+    
+    # fix extended selection table again
     if (is_extended_selection_table(Y)) X <- fix_extended_selection_table(X, Y)
     } else Y <- NULL
   
@@ -229,7 +232,7 @@ specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rever
   specreFUN <- function(X, Y, i, mar, flim, xl, picsize, res, wl, ovlp, cexlab, by.song, sel.labels, pal, dest.path){
     
     # Read sound files, initialize frequency and time limits for spectrogram
-    r <- read_wave(X = X, index = i, header = TRUE)
+    r <- warbleR::read_wave(X = X, path = path, index = i, header = TRUE)
     f <- r$sample.rate
     t <- c(X$start[i] - mar, X$end[i] + mar)
     
@@ -256,7 +259,7 @@ specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rever
     
     if (is.null(by.song)) fn <- paste(X$sound.files[i], "-", X$selec[i], ".", it, sep = "") else fn <- paste(X$sound.files[i], "-", X[i, by.song], ".", it, sep = "")
    
-     imgfun(filename = file.path(dest.path, fn), 
+    img_wrlbr_int(filename = fn, path = dest.path, 
            width = pwc, height = (10.16) * picsize, units = "cm", res = res) 
     
     # Change relative heights of rows for spectrogram when osci = TRUE
@@ -269,8 +272,8 @@ specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rever
     par(mar = inner.mar)
     par(oma = outer.mar)
     
-    # Generate spectrogram using seewave 
-  spectro_wrblr_int(wave = read_wave(X = X, index = i, from = t[1], to = t[2]), f = f, wl = wl, ovlp = ovlp, heights = hts, wn = "hanning", 
+    # Generate spectrogram using spectro_wrblr_int (modified from seewave::spectro)
+  spectro_wrblr_int(wave = warbleR::read_wave(X = X, path = path, index = i, from = t[1], to = t[2]), f = f, wl = wl, ovlp = ovlp, heights = hts, wn = "hanning",
                      widths = wts, palette = pal, osc = osci, grid = gr, scale = sc, collab = "black", 
                      cexlab = cexlab, cex.axis = 1, flim = fl, tlab = "Time (s)", 
                      flab = "Frequency (kHz)", alab = "", trel = FALSE, fast.spec = fast.spec, ...)
@@ -285,27 +288,31 @@ specreator <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rever
     # Plot lines to visualize selections (start and end of signal)
     if (line){  
       if (any(names(X) == "bottom.freq") & any(names(X) == "top.freq"))
-      {   if (!is.na(X$bottom.freq[i]) & !is.na(X$top.freq[i])) {
-        polygon(x = rep(c(mar1, mar2), each = 2), y = c(X$bottom.freq[i], X$top.freq[i], X$top.freq[i], X$bottom.freq[i]), lty = lty, border = col, lwd = 1.2)
-        
+      {   
         if (!is.null(by.song))
         {
-          W <- Y[Y$sound.files == X$sound.files[i] & Y[, by.song] == X[i, by.song], ]
+          W <- Y[Y$sound.files == X$sound.files[i] & Y[, by.song] == X[i, by.song], ,  drop= FALSE]
           W$start <- W$start - X$start[i] + mar1
           W$end <- W$end - X$start[i] + mar1
+        } else 
+        { W <- X[i, , drop = FALSE]
+          W$start <- mar1    
+          W$end <- mar2
+          }
           
-          for(e in 1:nrow(W))  
+        for(e in 1:nrow(W))  
           {
-            polygon(x = rep(c(W$start[e], W$end[e]), each = 2), y = c(W$bottom.freq[e], W$top.freq[e], W$top.freq[e], W$bottom.freq[e]), lty = lty, border = "#07889B", col = adjustcolor("#07889B", alpha.f = 0.15), lwd = 1.2)
+            # if freq columns are not provided
+            ys <- if (is.null(W$top.freq)) fl[c(1, 2, 2, 1)] else
+              c(W$bottom.freq[e], W$top.freq[e], W$top.freq[e], W$bottom.freq[e])
+            
+            #plot polygon
+            polygon(x = rep(c(W$start[e], W$end[e]), each = 2), y = ys, lty = lty, border = "#07889B", col = adjustcolor("#07889B", alpha.f = 0.15), lwd = 1.2)
           
-            if (!is.null(sel.labels)) text(labels= W[e, sel.labels], x = (W$end[e] + W$start[e])/2, y = W$top.freq[e], pos = 3)
+            if (!is.null(sel.labels)) text(labels= paste(W[e, sel.labels], collapse = "-"), x = (W$end[e] + W$start[e])/2, y = if (is.null(W$top.freq)) fl[2] - 2*((fl[2] - fl[1])/12) else W$top.freq[e], pos = 3)
             }  
         }
-        
-        } else
-          abline(v = c(mar1, mar2), col= col, lty = lty)
-        
-        } else abline(v = c(mar1, mar2), col= col, lty = lty)
+      
     }
     dev.off()
   }

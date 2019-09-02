@@ -14,7 +14,7 @@ sox = FALSE, avoid.clip = TRUE, pb = FALSE, parallel = 1)
 
 \item{bit.depth}{Numeric vector of length 1 with the dynamic interval (i.e. bit depth) for output files.}
 
-\item{sox}{Logical to control whether \href{http://sox.sourceforge.net/sox.html}{sox} is used internally for resampling. Sox must be installed. Default is \code{FALSE}. sox is a better option if having aliasing issues after resampling.}
+\item{sox}{Logical to control whether \href{http://sox.sourceforge.net/sox.html}{SOX} is used internally for resampling. Sox must be installed. Default is \code{FALSE}. \href{http://sox.sourceforge.net/sox.html}{SOX} is a better option if having aliasing issues after resampling.}
 
 \item{avoid.clip}{Logical to control whether the volume is automatically 
 adjusted to avoid clipping high amplitude samples when resampling. Ignored if
@@ -26,7 +26,7 @@ adjusted to avoid clipping high amplitude samples when resampling. Ignored if
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
 }
 \value{
-An extended selection table with the modfied wave objects.
+An extended selection table with the modified wave objects.
 }
 \description{
 \code{resample_est} changes sampling rate and bit depth of wave objects in a extended selection table.
@@ -34,21 +34,20 @@ An extended selection table with the modfied wave objects.
 \details{
 This function aims to simplify the process of homogenizing sound 
 files (sampling rate and bit depth). This is a necessary step before running 
-any further (bio)acoustic analysis.
+any further (bio)acoustic analysis. Either \href{http://sox.sourceforge.net/sox.html}{SOX} (if \code{sox = TRUE}) or
+ or the \href{https://cran.r-project.org/package=bioacoustics}{bioacoustics package} (if \code{sox = FALSE}) should be installed.
 }
 \examples{
 \dontrun{
-# Set temporary working directory
-# setwd(tempdir())
-
 data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec_table"))
-writeWave(Phae.long1,"Phae.long1.wav")
-writeWave(Phae.long2,"Phae.long2.wav")
-writeWave(Phae.long3,"Phae.long3.wav")
-writeWave(Phae.long4,"Phae.long4.wav") 
+writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav")) 
 
 # create extended selection table
-X <- selection_table(X = selec.table, extended = TRUE, confirm.extended = FALSE, pb = FALSE)
+X <- selection_table(X = lbh_selec_table, extended = TRUE, confirm.extended = FALSE, pb = FALSE, 
+path = tempdir())
 
 # resample
 Y <- resample_est(X)
@@ -64,6 +63,6 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 \code{\link{mp32wav}}, \code{\link{fix_wavs}}
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+Marcelo Araya-Salas (\email{marceloa27@gmail.com})
 #last modification on oct-15-2018 (MAS)
 }

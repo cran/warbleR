@@ -6,11 +6,11 @@
 \usage{
 lspec(X = NULL, flim = c(0,22), sxrow = 5, rows = 10, collevels = seq(-40, 0, 1), 
 ovlp = 50, parallel = 1, wl = 512, gr = FALSE, pal = reverse.gray.colors.2, 
-cex = 1, it = "jpeg", flist = NULL, redo = TRUE, path = NULL, pb = TRUE, 
-fast.spec = FALSE)
+cex = 1, it = "jpeg", flist = NULL, overwrite = TRUE, path = NULL, pb = TRUE, 
+fast.spec = FALSE, labels = "selec", horizontal = FALSE, song = NULL)
 }
 \arguments{
-\item{X}{'selection_table' object or data frame with results from \code{\link{manualoc}} or any data frame with columns
+\item{X}{'selection_table' object or any data frame with columns
 for sound file name (sound.files), selection number (selec), and start and end time of signal
 (start and end). If given, two red dotted lines are plotted at the 
 start and end of a selection and the selections are labeled with the selection number 
@@ -54,7 +54,7 @@ is 512.}
 \item{flist}{character vector or factor indicating the subset of files that will be analyzed. Ignored
 if X is provided.}
 
-\item{redo}{Logical argument. If \code{TRUE} all selections will be analyzed again 
+\item{overwrite}{Logical argument. If \code{TRUE} all selections will be analyzed again 
 when code is rerun. If \code{FALSE} only the selections that do not have a image 
 file in the working directory will be analyzed. Default is \code{FALSE}.}
 
@@ -70,6 +70,15 @@ This option is indicated for signals with high background noise levels. Palette 
 to work better with 'fast' spectograms. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
 \code{\link[monitoR]{gray.3}} offer 
 decreasing darkness levels.}
+
+\item{labels}{Character string with the name of the column(s) for selection 
+labeling. Default is 'selec'. Set to \code{NULL} to remove labels.}
+
+\item{horizontal}{Logical. Controls if the images are produced as horizontal or vertical pages. Default is \code{FALSE}.}
+
+\item{song}{Character string with the name of the column to used as a label a for higher 
+orgnization level in the song (similar to 'song_colm' in \code{\link{song_param}}). If supplied then lines above the selections belonging to the same
+'song' are plotted. Ignored if 'X' is not provided.}
 }
 \value{
 image files with spectrograms of whole sound files in the working directory. Multiple pages
@@ -82,28 +91,29 @@ can be returned, depending on the length of each sound file.
 \details{
 The function creates spectrograms for complete sound files, printing
   the name of the sound files and the "page" number (p1-p2...) at the upper 
-  right corner of the image files. If results from \code{\link{manualoc}} are 
-  supplied (or an equivalent data frame), the function delimits and labels the selections. 
+  right corner of the image files. If 'X' is
+  supplied, the function delimits and labels the selections. 
   This function aims to facilitate visual inspection of multiple files as well as visual classification 
   of vocalization units and the analysis of animal vocal sequences.
 }
 \examples{
 \dontrun{
-# Set temporary working directory
-# setwd(tempdir())
+# Save to temporary working directory
+
 
 # save sound file examples
-data(list = c("Phae.long1", "Phae.long2","selec.table"))
-writeWave(Phae.long1,"Phae.long1.wav") 
-writeWave(Phae.long2,"Phae.long2.wav")
+data(list = c("Phae.long1", "Phae.long2","lbh_selec_table"))
+writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav")) 
+writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
 
-lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors, wl = 300)
+lspec(sxrow = 2, rows = 8, pal = reverse.heat.colors, wl = 300, path = tempdir())
 
 # including selections
-lspec(sxrow = 2, rows = 8, X = selec.table, pal = reverse.heat.colors, redo = TRUE, wl = 300)
+lspec(sxrow = 2, rows = 8, X = lbh_selec_table, pal = reverse.heat.colors, overwrite = TRUE,
+ wl = 300, path = tempdir())
 
 #check this floder
-getwd()
+,tempdir()
 }
 
 }
@@ -117,5 +127,5 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 \href{https://marce10.github.io/2017/01/07/Create_pdf_files_with_spectrograms_of_full_recordings.html}{blog post on spectrogram pdfs}
 }
 \author{
-Marcelo Araya-Salas (\email{araya-salas@cornell.edu})
+Marcelo Araya-Salas (\email{marceloa27@gmail.com})
 }
