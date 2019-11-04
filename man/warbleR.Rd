@@ -11,7 +11,7 @@ warbleR is intended to facilitate the analysis of the structure of animal acoust
 \details{
 The main features of the package are:
   \itemize{
-  \item The use of loops to apply tasks through acoustic signals referenced in a selection box
+  \item The use of loops to apply tasks through acoustic signals referenced in a selection table
   \item The production of images in the working folder with spectrograms that allow to organize data and verify acoustic analyzes
   }
   
@@ -139,11 +139,9 @@ License: GPL (>= 2)
   
   \code{\link{catalog2pdf}}: Combine catalog images to single pdf files
   
-  \code{\link{coor.graph}}: Creat graphs of coordinated singing 
+  \code{\link{coor.graph}}: Create graphs of coordinated singing 
   
   \code{\link{color.spectro}}: Highlight spectrogram regions
-  
-  \code{\link{xcorr.graph}}: Pairwise cross-correlation of multiple signals
   
   \code{\link{lspec}}: Produce spectrograms of whole recordings split into 
   multiple rows

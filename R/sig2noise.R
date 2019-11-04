@@ -5,7 +5,7 @@
 #' in.dB = TRUE, before = FALSE, lim.dB = TRUE, bp = NULL, wl = 10)
 #' @param X object of class 'selection_table', 'extended_selection_table' or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
-#' (start and end). The ouptut of \code{\link{manual_loc}} can also be used as the input data frame.
+#' (start and end). The output of \code{\link{manual_loc}} can also be used as the input data frame.
 #' @param mar numeric vector of length 1. Specifies the margins adjacent to
 #'   the start and end points of selection over which to measure noise.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
@@ -175,7 +175,7 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
     
     r <- warbleR::read_wave(X = X, path = path, index = y, from = stn, to = enn)
     
-    # add band-pass frequnecy filter
+    # add band-pass frequency filter
     if (!is.null(bp)) {
       
       if (bp[1] == "frange") bp <- c(X$bottom.freq[y], X$top.freq[y])

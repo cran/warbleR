@@ -4,7 +4,7 @@
 #'
 #' The main features of the package are:
 #'   \itemize{
-#'   \item The use of loops to apply tasks through acoustic signals referenced in a selection box
+#'   \item The use of loops to apply tasks through acoustic signals referenced in a selection table
 #'   \item The production of images in the working folder with spectrograms that allow to organize data and verify acoustic analyzes
 #'   }
 #'   
@@ -123,11 +123,9 @@
 #'   
 #'   \code{\link{catalog2pdf}}: Combine catalog images to single pdf files
 #'   
-#'   \code{\link{coor.graph}}: Creat graphs of coordinated singing 
+#'   \code{\link{coor.graph}}: Create graphs of coordinated singing 
 #'   
 #'   \code{\link{color.spectro}}: Highlight spectrogram regions
-#'   
-#'   \code{\link{xcorr.graph}}: Pairwise cross-correlation of multiple signals
 #'   
 #'   \code{\link{lspec}}: Produce spectrograms of whole recordings split into 
 #'   multiple rows
@@ -144,7 +142,6 @@
 #' @exportClass selection_table
 #' @exportClass extended_selection_table
 #' @import NatureSounds
-#' @import maps
 #' @import rjson
 #' @import RCurl
 #' @import pbapply
@@ -155,16 +152,12 @@
 #' @import grDevices
 #' @import utils
 #' @import parallel
-#' @import iterators
-#' @import bitops
-#' @import jpeg
-# @importFrom bioacoustics resample
+#' @importFrom maps map map.axes
 #' @importFrom methods formalArgs new
 #' @importFrom pracma findpeaks
 #' @importFrom Sim.DiffProc BB GBM
 #' @importFrom methods slotNames
 #' @importFrom dtw dtwDist
-#' @importFrom soundgen analyze
 #' @importFrom stats cor dist aggregate approx ave prcomp time ts predict smooth.spline complete.cases spline weighted.mean na.omit var sd rlnorm
 #' 
 #' @author Marcelo Araya-Salas & Grace Smith Vidaurre

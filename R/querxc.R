@@ -112,7 +112,7 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
   
   #check internet connection
   a <- try(RCurl::getURL("www.xeno-canto.org"), silent = TRUE)
-  if (substr(a[1],0,5) == "Error") stop("No connection to xeno-canto.org (check your internet connection!)")
+  if (class(a) == "try-error") stop("No connection to xeno-canto.org (check your internet connection!)")
   
   if (a == "Could not connect to the database")  stop("xeno-canto.org website is apparently down")
   
@@ -177,26 +177,61 @@ querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Sp
           return(x)
         })
         
-        e <- do.call(rbind, d2)
+        # determine all column names in all pages
+        cnms <- unique(unlist(lapply(d2, names)))    
+        
+        # add columns that are missing to each selection table
+        d3 <- lapply(d2, function(X)
+        {
+          nms <- names(X)
+          if (length(nms) != length(cnms))  
+            for(i in cnms[!cnms %in% nms]) {
+              X <- data.frame(X,  NA, stringsAsFactors = FALSE, check.names = FALSE)
+              names(X)[ncol(X)] <- i
+            }
+          return(X)
+        })
+        
+        e <- do.call(rbind, d3)
         
         return(e)
       }
       ) 
         
+        # determine all column names in all pages
+        cnms <- unique(unlist(lapply(f, names)))    
+        
+        # add columns that are missing to each selection table
+        f2 <- lapply(f, function(X)
+        {
+          nms <- names(X)
+          if (length(nms) != length(cnms))  
+            for(i in cnms[!cnms %in% nms]) {
+              X <- data.frame(X,  NA, stringsAsFactors = FALSE, check.names = FALSE)
+              names(X)[ncol(X)] <- i
+            }
+          return(X)
+        })  
+        
       # save results in a single data frame  
-      results <- do.call(rbind, f)
+      results <- do.call(rbind, f2)
       
       # convert factors to characters
       indx <- sapply(results, is.factor)
       results[indx] <- lapply(results[indx], as.character)
       
-      #order columns
+    #order columns
     results <- results[ ,order(match(names(results), nms))]
     
-    names(results) <- c("Recording_ID", "Genus", "Specific_epithet", "Subspecies", "English_name", "Recordist", 
-                        "Country", "Locality", "Latitude", "Longitude", "Vocalization_type", "Audio_file", "License",
-                        "Url", "Quality", "Time", "Date")[1:ncol(results)]
+    names(results)[match(c("id", "gen", "sp", "ssp", "en", "rec", "cnt", "loc", "lat", "lng", "alt", "type", "file", "lic", "url", "q", "length", "time", "date", "uploaded", "rmk", "bird.seen", "playback.used"), names(results))] <- c("Recording_ID", "Genus", "Specific_epithet", "Subspecies", "English_name", "Recordist", 
+                        "Country", "Locality", "Latitude", "Longitude", "Altitude", "Vocalization_type", "Audio_file", "License",
+                        "Url", "Quality", "Length", "Time", "Date", "Uploaded", "Remarks", "Bird_seen","Playback_used")[which(c("id", "gen", "sp", "ssp", "en", "rec", "cnt", "loc", "lat", "lng", "alt", "type", "file", "lic", "url", "q", "length", "time", "date", "uploaded", "rmk", "bird.seen", "playback.used") %in% names(results))]
   
+    # rename also columns
+    names(results) <- gsub("also", "Other_species", names(results))
+    # rename
+    names(results) <- gsub("sono.", "Spectrogram_", names(results))
+    
     #remove duplicates
     results <- results[!duplicated(results$Recording_ID), ]
     

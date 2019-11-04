@@ -7,7 +7,7 @@ rm(list = ls())
 out <- sapply(paste('package:', names(sessionInfo()$otherPkgs), sep = ""), function(x) try(detach(x, unload = FALSE, character.only = TRUE), silent = TRUE))
 
 # load packages
-X <- c("warbleR", "Rraven", "knitr")
+X <- c("warbleR", "knitr")
 invisible(lapply(X, library, character.only = TRUE))
 # library(kableExtra)
 

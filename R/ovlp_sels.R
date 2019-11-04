@@ -6,7 +6,7 @@
 #' indx.row = FALSE, parallel = 1)
 #' @param X 'selection_table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
-#' end time of selections. The ouptut of \code{\link{manualoc}} or \code{\link{autodetec}} can 
+#' end time of selections. The output of \code{\link{manualoc}} or \code{\link{autodetec}} can 
 #' be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above.
 #' @param index Logical. Indicates if only the index of the overlapping selections would be returned.
 #' Default is \code{FALSE}.
@@ -161,7 +161,7 @@ for(w in 1:nrow(out2)){
   if (w == 1) lbls[w] <- max(out2) + 1 else
     if (length(which(out2[ w, ] != 0)) >= 2) {
       wh.mn <- which(out2[ w, ] != 0)
-  lbls[w] <- lbls[wh.mn[- length(wh.mn)]]
+  lbls[w] <- lbls[wh.mn[- length(wh.mn)][1]]
       }  else   lbls[w] <- max(lbls, na.rm = TRUE) + 1 
 }
 

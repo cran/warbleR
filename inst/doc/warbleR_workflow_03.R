@@ -7,7 +7,7 @@ rm(list = ls())
 out <- sapply(paste('package:', names(sessionInfo()$otherPkgs), sep = ""), function(x) try(detach(x, unload = FALSE, character.only = TRUE), silent = TRUE))
 
 # load packages
-X <- c("warbleR", "Rraven", "knitr")
+X <- c("warbleR", "knitr")
 invisible(lapply(X, library, character.only = TRUE))
 # library(kableExtra)
 
@@ -286,17 +286,8 @@ params <- read.csv("acoustic_parameters.csv")
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
-#  xc <- xcorr(Phae.hisnrt, wl = 300, na.rm = FALSE, bp = c(2,10))
+#  xc <- xcorr(Phae.hisnrt, wl = 300, na.rm = FALSE)
 #  str(xc)
-#  
-
-## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
-#  
-#  xc <- xcorr(Phae.hisnrt, wl = 300, na.rm = FALSE, bp = c(2,10), cor.mat = FALSE)
-#  
-#  jpeg("xcorr_graph.jpeg", width = 30, height = 30, units = "cm", res = 200)
-#  xcorr.graph(xc, cex.cor = 1, cex.lab = 1, cex.axis.lab = 1)
-#  dev.off()
 #  
 
 ## ---- eval=TRUE, dpi=220----------------------------------------------------------------------------------------------------------------------------

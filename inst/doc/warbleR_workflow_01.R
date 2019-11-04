@@ -7,7 +7,7 @@ rm(list = ls())
 out <- sapply(paste('package:', names(sessionInfo()$otherPkgs), sep = ""), function(x) try(detach(x, unload = FALSE, character.only = TRUE), silent = TRUE))
 
 # load packages
-X <- c("warbleR", "Rraven", "knitr")
+X <- c("warbleR", "knitr")
 invisible(lapply(X, library, character.only = TRUE))
 # library(kableExtra)
 
@@ -26,6 +26,11 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 
 #website to fix gifs
 #https://ezgif.com/optimize
+
+vgn.path <- getwd()
+
+# read data example for Rraven code
+sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 
 
 ## ---- echo = TRUE, eval=FALSE-----------------------------------------------------------------------------------------------------------------------
@@ -109,6 +114,22 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  # Check out the structure of resulting the data frame
 #  str(Phae)
 #  
+
+## ---- eval = TRUE, echo = FALSE, message = FALSE----------------------------------------------------------------------------------------------------
+
+# Phae <- querxc(qword = "Phaethornis", download = FALSE) 
+
+# write.csv(Phae, file = "~/Dropbox/warbleR/vignettes/Phae.XC.csv", row.names = FALSE)
+
+Phae <- read.csv(file.path(vgn.path, "Phae.XC.csv"), stringsAsFactors = FALSE)
+
+# Check out the structure of resulting the data frame
+str(Phae)
+
+
+
+## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+#  
 #  # Query xeno-canto for all Phaethornis longirostris recordings
 #  Phae.lon <- querxc(qword = "Phaethornis longirostris", download = FALSE)
 #  
@@ -116,9 +137,16 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  str(Phae.lon)
 #  
 
-## ---- eval=TRUE, echo=FALSE, message=FALSE----------------------------------------------------------------------------------------------------------
+## ---- eval = TRUE, echo = FALSE, message = FALSE----------------------------------------------------------------------------------------------------
 
-Phae.lon <- querxc(qword = "Phaethornis longirostris", download = FALSE) 
+# Phae.lon <- querxc(qword = "Phaethornis longirostris", download = FALSE)
+
+# write.csv(Phae.lon, file = "~/Dropbox/warbleR/vignettes/Phae.lon.XC.csv", row.names = FALSE)
+
+Phae.lon <- read.csv(file.path(vgn.path, "Phae.lon.XC.csv"), stringsAsFactors = FALSE)
+
+# Check out the structure of resulting the data frame
+str(Phae.lon)
 
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
