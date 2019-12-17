@@ -1,3 +1,20 @@
+# *warbleR 1.1.19*
+
+## Changes and additions:
+
+* remove duplicated sound file names in spectrogram() images when 'by.song' 
+* replace all class(.) == , by is(., *)
+* new argument 'fill' to control the fill color of boxes in 'specreator()'
+
+## New functions:
+
+* new function rename_waves_est() to rename wave objects in extended selection tables
+
+
+## Bug fixes:
+
+* box/lines plotting when no frequency columns are supplied
+
 # *warbleR 1.1.18*
 
 ## Changes and additions:

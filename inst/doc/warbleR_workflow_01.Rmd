@@ -1,5 +1,6 @@
 ---
 title: <center><font size="7"><b>warbleR&#58; Import sound files and select signals</b></font></center>
+pagetitle: Import sound files and select signals
 author: 
 - <center><a href="http://marceloarayasalas.weebly.com/">Marcelo Araya-Salas, PhD</a></center>
 - <center><a href="http://smith-vidaurre.com/">Grace Smith-Vidaurre</a></center>
