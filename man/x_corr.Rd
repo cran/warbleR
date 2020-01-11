@@ -8,7 +8,7 @@ x_corr(
   X = NULL,
   wl = 512,
   bp = "pairwise.freq.range",
-  ovlp = 90,
+  ovlp = 70,
   dens = NULL,
   wn = "hanning",
   cor.method = "pearson",
@@ -16,8 +16,11 @@ x_corr(
   path = NULL,
   pb = TRUE,
   na.rm = FALSE,
-  cor.mat = TRUE,
-  compare.matrix = NULL
+  cor.mat = NULL,
+  output = "cor.mat",
+  compare.matrix = NULL,
+  type = "spectrogram",
+  nbands = 40
 )
 }
 \description{

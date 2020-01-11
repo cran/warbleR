@@ -2,15 +2,17 @@
 % Please edit documentation in R/xcorr.R
 \name{xcorr}
 \alias{xcorr}
-\title{Spectrogram cross-correlation}
+\title{Time-frequency cross-correlation}
 \usage{
-xcorr(X, wl =512, bp = "pairwise.freq.range", ovlp = 90, dens = NULL, wn='hanning', 
+xcorr(X, wl =512, bp = "pairwise.freq.range", ovlp = 70, dens = NULL, wn='hanning', 
 cor.method = "pearson", parallel = 1, path = NULL, pb = TRUE, na.rm = FALSE,
- cor.mat = TRUE, compare.matrix = NULL)
+ cor.mat = NULL, output = "cor.mat", compare.matrix = NULL, type = "spectrogram", 
+ nbands = 40)
 }
 \arguments{
 \item{X}{'selection_table', 'extended_selection_table' or data frame containing columns for sound files (sound.files), 
-selection number (selec), and start and end time of signal (start and end).}
+selection number (selec), and start and end time of signal (start and end). 
+All selections must have the same sampling rate.}
 
 \item{wl}{A numeric vector of length 1 specifying the window length of the spectrogram, default 
 is 512.}
@@ -20,7 +22,7 @@ frequency bandpass filter (in kHz) or "pairwise.freq.range" (default) to indicat
 and highest top.freq columns for the signals involved in a pairwise comparison will be used as bandpass limits.}
 
 \item{ovlp}{Numeric vector of length 1 specifying \% of overlap between two 
-consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 90. High values of ovlp 
+consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70. High values of ovlp 
 slow down the function but produce more accurate results.}
 
 \item{dens}{DEPRECATED.}
@@ -40,21 +42,27 @@ If \code{NULL} (default) then the current working directory is used.}
 \item{na.rm}{Logical. If \code{TRUE} all NAs produced when pairwise cross-correlations failed are removed from the 
 results. This means that all selections with at least 1 cross-correlation that failed are excluded.}
 
-\item{cor.mat}{Logical. If \code{TRUE} only the correlation matrix is returned. Default is \code{TRUE}.}
+\item{cor.mat}{DEPRECATED. Use 'cor.mat' instead.}
+
+\item{output}{Character vector of length 1 to determine if only the correlation matrix is returned ('cormat') or a list ('list') containing 1) the correlation matrix and 2) a data frame with correlation values at each sliding step for each comparison.}
 
 \item{compare.matrix}{A character matrix with 2 columns indicating the selections to be compared (column 1 vs column 2). The columns must contained the ID of the selection, which is given by combining the 'sound.files' and 'selec' columns of 'X',  separated by '-' (i.e. \code{paste(X$sound.files, X$selec, sep = "-")}). Default is \code{NULL}. If supplied only those comparisons will be calculated (as opposed to all pairwise comparisons as the default behavior) and the output will be a data frame composed of the supplied matrix and the correspondent cross-correlation values.}
+
+\item{type}{A character vector of length 1 specifying the type of cross-correlation; either "spectrogram" (i.e. spectrographic cross-correlation; internally using \code{\link[seewave]{spectro}}; default) or "mfcc" (Mel cepstral coefficient cross-correlation; internally using \code{\link[tuneR]{melfcc}}).}
+
+\item{nbands}{Numeric vector of length 1 controlling the number of warped spectral bands to calculate when using \code{type = "mfcc"} (see \code{\link[tuneR]{melfcc}}). Default is 40.}
 }
 \value{
-If corr.mat is \code{TRUE} the function returns a matrix with 
-the maximum (peak) correlation for each pairwise comparison. Otherwise it will return a list that includes 1) a data frame with the correlation statistic for each "sliding" step, 2) a matrix with 
-the maximum correlation for each pairwise comparison, and 3) the frequency range.
+If \code{output = "cor.mat"} the function returns a matrix with 
+the maximum (peak) correlation for each pairwise comparison (if 'compare.matrix' is not supplied) or the peak correlation for each comparison in the supplied 'compare.matrix'. Otherwise it will return a list that includes 1) a matrix with 
+the maximum correlation for each pairwise comparison ('max.xcorr.matrix') and 2) a data frame with the correlation statistic for each "sliding" step ('scores').
 }
 \description{
-\code{xcorr} estimates the similarity of two spectrograms by means of spectrographic cross-correlation
+\code{xcorr} estimates the similarity of two sound waves by means of time-frequency cross-correlation
 }
 \details{
-This function calculates the pairwise similarity of multiple signals by means of spectrogram cross-correlation.
-This method "slides" one spectrogram over the other calculating a correlation of the amplitude values at each step.
+This function calculates the pairwise similarity of multiple signals by means of time-frequency cross-correlation. Spectrographic cross-correlation (SPCC) and Mel frequency cepstral coefficients (mfcc) can be applied to create time-frequency representations of sound. 
+This method "slides" the spectrogram of the sorthest selection over the longest one calculating a correlation of the amplitude values at each step.
 The function runs pairwise cross-correlations on several signals and returns a list including the correlation statistic
 for each "sliding" step as well as the maximum (peak) correlation for each pairwise comparison. To accomplish this the margins
 of the signals are expanded by half the duration of the signal both before and after the provided time coordinates. 
@@ -70,9 +78,13 @@ writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
 writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
 writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
 writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
-# run cross correlation
+
+# run cross correlation on spectrograms (SPCC)
 xcor <- xcorr(X = lbh_selec_table, wl = 300, ovlp = 90, path = tempdir())
 
+# run cross correlation on Mel cepstral coefficients (mfccs)
+xcor <- xcorr(X = lbh_selec_table, wl = 300, ovlp = 90, path = tempdir(), type = "mfcc")
+  
 # using the 'compare.matrix' argument to specify pairwise comparisons
 # create matrix with ID of signals to compare
 cmp.mt <- cbind(
@@ -89,6 +101,8 @@ wl = 300, ovlp = 90, path = tempdir())
 Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 
 H. Khanna, S.L.L. Gaunt & D.A. McCallum (1997). Digital spectrographic cross-correlation: tests of sensitivity. Bioacoustics 7(3): 209-234
+
+Lyon, R. H., & Ordubadi, A. (1982). Use of cepstra in acoustical signal analysis. Journal of Mechanical Design, 104(2), 303-306.
 }
 }
 \seealso{

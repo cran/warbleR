@@ -31,7 +31,10 @@
 #'   
 #'   \code{\link{querxc}}: Download recordings and/or metadata from 'Xeno-Canto'
 #'   
+#'   \code{\link{find_annotations}}: Obtain annotations from 'audioblast.org' data base
+#'   
 #'   \code{\link{sim_songs}}: Simulate animal vocalizations
+#'   
 #'   
 #' @section Managing sound files:
 #'   
@@ -105,6 +108,8 @@
 #'   \code{\link{ffDTW}}: Calculate acoustic dissimilarity using dynamic time warping
 #'   on fundamental frequency contours
 #'   
+#'   \code{\link{wpd_features}}: Measure wavelet packet decomposition features 
+#'   
 #'   \code{\link{compare.methods}}: Produce graphs to visually assess performance of acoustic 
 #'   distance measurements 
 #'   
@@ -158,7 +163,7 @@
 #' @importFrom Sim.DiffProc BB GBM
 #' @importFrom methods slotNames
 #' @importFrom dtw dtwDist
-#' @importFrom stats cor dist aggregate approx ave prcomp time ts predict smooth.spline complete.cases spline weighted.mean na.omit var sd rlnorm
+#' @importFrom stats cor dist aggregate approx ave prcomp time ts predict smooth.spline complete.cases spline weighted.mean na.omit var sd rlnorm fft
 #' 
 #' @author Marcelo Araya-Salas & Grace Smith Vidaurre
 #'   

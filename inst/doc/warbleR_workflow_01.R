@@ -92,7 +92,7 @@ sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Import selections
-#  sels <- imp_raven(sound.file.col = "Begin.File", ext.case = "lower", all.data = FALSE, freq.cols = FALSE)
+#  sels <- imp_raven(all.data = FALSE, freq.cols = FALSE, warbler.format = TRUE)
 #  str(sels)
 #  
 #  # Write out the imported selections as a .csv for later use

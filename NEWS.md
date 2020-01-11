@@ -1,3 +1,20 @@
+# *warbleR 1.1.20*
+
+## Changes and additions:
+
+* mfcc cross-correlation implemented in 'xcorr()' (argument 'type') 
+* argument 'cor.mat' in 'xcorr()' has been deprecated 
+* new argument 'output' in 'xcorr()'
+* new example data 'comp_matrix' and 'lbh_selec_table2' for using on 'find_peaks()'
+* 'xcorr()' can run cross-correlation over whole sound files
+* 'seltailor()' can take now extended selection tables
+
+## New functions:
+
+* new function 'image_to_wave()' to convert images into wave objects
+* new function 'find_peaks()' to detect signals on sound files using 'xcorr()' output
+
+
 # *warbleR 1.1.19*
 
 ## Changes and additions:
