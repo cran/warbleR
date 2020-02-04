@@ -144,6 +144,7 @@ xcorr <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ovlp = 70, den
   
   # dens deprecated
   if (!is.null(dens))  write(file = "", x = "'dens' has been deprecated and will be ignored")
+  
   # dens deprecated
   if (!is.null(cor.mat))  write(file = "", x = "'dens' has been deprecated and will be ignored")
   
@@ -188,7 +189,7 @@ xcorr <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ovlp = 70, den
   
   # keep only selections in supplied compare.matrix to improve performance
   if (!is.null(compare.matrix))
-  X <- X[X$selection.id %in% unique(c(compare.matrix)), ]
+  X <- X[X$selection.id %in% unique(c(compare.matrix)), , drop = FALSE]
     
   # generate all possible combinations of selections, keep one with the orignal order of rows to create cor.table output
   if (is.null(compare.matrix))
@@ -232,9 +233,8 @@ xcorr <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ovlp = 70, den
           
           #get intersect of column names
           int.nms <- intersect(names(X), names(wvdr))
-          
-          # overwrite X
-          X <- rbind(X[, int.nms], wvdr[, int.nms])
+            
+          X <- rbind(as.data.frame(X)[, int.nms, drop = FALSE], wvdr[, int.nms])
           
           # change complete file names in compare matrix
           for (i in complt.sf)
@@ -248,7 +248,10 @@ xcorr <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ovlp = 70, den
   
   #create spectrograms
      if (pb) 
-       write(file = "", x = paste0("creating spectrogram matrices (step 1 of ", max.stps,"):"))
+      if (type == "spectrogram")
+       write(file = "", x = paste0("creating spectrogram matrices (step 1 of ", max.stps,"):")) else
+         write(file = "", x = paste0("creating MFCC matrices (step 1 of ", max.stps,"):"))
+      
   
   # set pb options 
   pbapply::pboptions(type = ifelse(pb, "timer", "none"))
@@ -268,7 +271,8 @@ xcorr <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ovlp = 70, den
     if (type == "mfcc")
       {
       # calculate MFCCs
-      spc <- melfcc(clp, nbands = nbnds, dcttype = "t3", fbtype = "htkmel", spec_out = TRUE)
+ spc <- melfcc(clp, nbands = nbnds, hoptime =  (wlg / clp@samp.rate) * (ovl / 100), wintime =  wlg / clp@samp.rate, dcttype = "t3", fbtype = "htkmel", spec_out = TRUE)
+      
       # change name of target element so it maches spectrogram output names
       names(spc)[2] <- "amp" 
       
