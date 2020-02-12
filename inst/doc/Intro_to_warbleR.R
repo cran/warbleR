@@ -284,11 +284,6 @@ is_extended_selection_table(mrg_ext_st)
 #  autoplot(mbmrk.snr) + ggtitle("sig2noise")
 #  
 
-## ----microbenchmark, out.width = "700px", echo = FALSE, fig.align= "center"-----------------------
-
-knitr::include_graphics("microbenchmark.png")
-
-
 ## -------------------------------------------------------------------------------------------------
 
 data("Phae.long.est")
