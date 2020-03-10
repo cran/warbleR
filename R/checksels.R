@@ -2,7 +2,7 @@
 #' 
 #' \code{checksels} checks whether selections can be read by subsequent functions.
 #' @usage checksels(X, parallel = 1, path = NULL, check.header = FALSE, pb = TRUE,
-#' wav.size = FALSE)
+#' wav.size = FALSE, verbose = TRUE)
 #' @param X 'selection_table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. Alternatively, a 'selection_table' class object can be input to double check selections. The output of \code{\link{manualoc}} or \code{\link{autodetec}} can 
@@ -18,6 +18,7 @@
 #' @param wav.size Logical argument to control if the size of the wave object 
 #'  when the selection is imported into R (as when using \code{\link[tuneR]{readWave}}
 #'  is calculated and added as a column. Size is return in MB. Default is \code{FALSE}.
+#' @param verbose Logical to control whether the 'path' is printed in the console. Defaut is \code{TRUE}.
 #' @return A data frame including the columns in the input data frame (X) and the following additional columns:
 #' \itemize{
 #'    \item \code{check.res}: diagnose for each selection 
@@ -71,7 +72,7 @@
 #last modification on jul-5-2016 (MAS)
 
 checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE, 
-                      pb = TRUE, wav.size = FALSE){
+                      pb = TRUE, wav.size = FALSE, verbose = TRUE){
   
   # reset pbapply pb
   on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
@@ -103,7 +104,8 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
   #check path to working directory
   if (is.null(path)) path <- getwd() else 
     if (!dir.exists(path)) 
-      stop("'path' provided does not exist") 
+      stop("'path' provided does not exist") else
+        path <- normalizePath(path)
   
   #if X is not a data frame
   if (all(!any(is.data.frame(X), is_selection_table(X)))) stop("X is not of a class 'data.frame' or 'selection_table'")
@@ -278,6 +280,7 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
   
   if (wav.size) res$wav.size <- round(res$bits  * res$channel * res$sample.rate * res$duration / 4) / 1024
   
+  if(verbose){
   # inform result
   if (all(res$check.res == "OK")) 
   {
@@ -286,7 +289,7 @@ checksels <- function(X = NULL, parallel =  1, path = NULL, check.header = FALSE
         cat("all selections are OK \n")   
   }
     else cat(paste(sum(res$check.res != "OK"), "selection(s) are not OK \n"))
-
+}
   # return data frame
   return(res) 
 }

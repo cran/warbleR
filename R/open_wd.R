@@ -4,7 +4,7 @@
 #' @usage open_wd(path = getwd(), verbose = TRUE)
 #' @param path Directory path to be opened. By default it's the working directory. 
 #' 'wav.path' set by \code{\link{warbleR_options}} is ignored in this case.
-#' @param verbose Logical to control whether the 'path' is printed in the console. 
+#' @param verbose Logical to control whether the 'path' is printed in the console. Defaut is \code{TRUE}.
 #' @family data manipulation
 #' @seealso \code{\link{move.imgs}} 
 #' @export
@@ -26,7 +26,8 @@
 open_wd <- function(path = getwd(), verbose = TRUE){
   
   #check path to working directory
-  if (!dir.exists(path)) stop("'path' provided does not exist") 
+  if (!dir.exists(path)) stop("'path' provided does not exist") else
+    path <- normalizePath(path)
   
     if (.Platform['OS.type'] == "windows"){
     shell.exec(path)
