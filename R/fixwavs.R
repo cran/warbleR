@@ -44,7 +44,7 @@
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
+#' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 # last modification on oct-22-2018 (MAS)
 
 fixwavs <- function(checksels = NULL, files = NULL, samp.rate = NULL, bit.depth = NULL, path = NULL, mono = FALSE, sox = FALSE)
@@ -144,13 +144,15 @@ fix_bio_FUN <- function(x) {
 fix_sox_FUN <- function(x)
 {
   
+  x <- normalizePath(file.path(path, x))
+  
   #name  and path of original file
   cll <- paste0("sox '", x, "' -t wavpcm")
   
   if (!is.null(bit.depth))
     cll <- paste(cll, paste("-b", bit.depth))
   
-  cll <- paste0(cll, " converted_sound_files/'", x, "'")
+  cll <- paste0(cll, " '", file.path(normalizePath(path), "converted_sound_files/", basename(x)), "'")
   
   if (!is.null(samp.rate))
     cll <- paste(cll, "rate", samp.rate * 1000)

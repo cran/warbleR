@@ -1,3 +1,25 @@
+# *warbleR 1.1.24*
+
+## Changes and additions:
+
+* `lspec()` allow to set resolution and custom dimensions of output image ifles
+* `split_wavs()` can now save selections in a data frame of selection table as sound files
+* `read_wave()` can now read .wav and .mp3 files from URLs
+* 'strength' argument to control color in `color_spectro()`
+* 'method' option to create spectrograms on the fly in `xcorr()`
+* 'img' argument in `autodetec()` is being soft-deprecated
+* `lspec()` now takes output from `xcorr()`, `find_peaks()` and `autodetec()` and plots cross-correlation scores or envelopes along with spectrograms
+* 'download' option available in `find_annotations()`
+* 'leaflet' interactive maps in `xc_maps()`
+* 'split_wavs()' new argument 'only.sels' to only return selection tables
+* 'color_spectro()' frequency range is not restricted by the selection table top and bottom frequency
+
+## Bug fixes:
+* Trivial bug when downloading files in `quer_xc()`
+* Fixed number of segments when using 'sgmts' argument in 'split_wavs()', it used to return 'sgmts - 1' segments.
+* Fix mismatch in `specreator()` spectrograms and oscillograms
+* Fix bug when no detections in `x_corr()` 
+
 # *warbleR 1.1.23*
 
 ## Changes and additions:
@@ -7,6 +29,7 @@
 ## Bug fixes:
 
 * fix 'spectrograms()' when plotting extended selection tables 'by song'
+* fix 'compare_methods()' when less than 100 rows in 'X'
 
 
 # *warbleR 1.1.22*

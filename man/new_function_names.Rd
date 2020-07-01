@@ -4,7 +4,9 @@
 \name{new_function_names}
 \alias{new_function_names}
 \title{Data frame detailing function name changes}
-\format{An object of class \code{data.frame} with 26 rows and 2 columns.}
+\format{
+An object of class \code{data.frame} with 26 rows and 2 columns.
+}
 \usage{
 data(new_function_names)
 }
@@ -12,6 +14,6 @@ data(new_function_names)
 A data frame containing the old and new names for \code{\link{warbleR}} functions
 }
 \author{
-Marcelo Araya-Salas (\email{marceloa27@gmail.com})
+Marcelo Araya-Salas (\email{marcelo.araya@ucr.ac.cr})
 }
 \keyword{datasets}

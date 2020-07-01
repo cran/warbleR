@@ -148,8 +148,6 @@
 #'   
 #'   \code{\link{phylo_spectro}}: Add spectrograms onto phylogenetic trees
 #'   
-#' @exportClass selection_table
-#' @exportClass extended_selection_table
 #' @import NatureSounds
 #' @import rjson
 #' @import RCurl
@@ -161,17 +159,13 @@
 #' @import grDevices
 #' @import utils
 #' @import parallel
-#' @importFrom maps map map.axes
-#' @importFrom methods formalArgs new is
-#' @importFrom pracma findpeaks
-#' @importFrom Sim.DiffProc BB GBM
-#' @importFrom methods slotNames
+#' @importFrom methods formalArgs new is slotNames
 #' @importFrom dtw dtwDist
 #' @importFrom stats cor dist aggregate approx ave prcomp time ts predict smooth.spline complete.cases spline weighted.mean na.omit var sd rlnorm fft
 #' 
 #' @author Marcelo Araya-Salas & Grace Smith Vidaurre
 #'   
-#'   Maintainer: Marcelo Araya-Salas (\email{marceloa27@@gmail.com})
+#'   Maintainer: Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 #'   
 #' @docType package
 #' @name warbleR

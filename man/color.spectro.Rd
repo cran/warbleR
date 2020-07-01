@@ -6,10 +6,11 @@
 \usage{
 color.spectro(wave, wl = 512, wn = "hanning", ovlp = 70,
 dB = "max0", collevels = NULL, selec.col = "red2", col.clm = NULL, 
-base.col = "black", bg.col = "white", cexlab = 1, cexaxis = 1, tlab = "Time (s)", 
-flab = "Frequency (kHz)", title = NULL, axisX = TRUE, axisY = TRUE,
-flim = NULL, rm.zero = FALSE, X = NULL, fast.spec = FALSE, t.mar = NULL, f.mar = NULL,
-interactive = NULL, add = FALSE)
+base.col = "black", bg.col = "white", strength = 1, 
+cexlab = 1, cexaxis = 1, tlab = "Time (s)", flab = "Frequency (kHz)", 
+title = NULL, axisX = TRUE, axisY = TRUE, flim = NULL, 
+rm.zero = FALSE, X = NULL, fast.spec = FALSE, t.mar = NULL, 
+f.mar = NULL, interactive = NULL, add = FALSE)
 }
 \arguments{
 \item{wave}{A 'wave' object produced by  \code{\link[tuneR]{readWave}} or similar functions.}
@@ -42,6 +43,8 @@ Default is 'black'.}
 \item{bg.col}{Character vector of length 1 specifying the background color for both base
 and highlighted spectrograms. Default is 'white'.}
 
+\item{strength}{Numeric vector of length 1 controlling the strength of the highlighting color (actually how many times it is repeated in the internal color palette). Must be a positive integer. Default is 1.}
+
 \item{cexlab}{Numeric vector of length 1 specifying the relative size of axis 
 labels. See \code{\link[seewave]{spectro}}. Default is 1.}
 
@@ -68,10 +71,10 @@ the spectrogram, as in \code{\link[seewave]{spectro}}. Default is \code{NULL}.}
 
 \item{fast.spec}{Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
 increases performance (much faster), although some options become unavailable, as collevels, and sc (amplitude scale).
-This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
-\code{\link[monitoR]{gray.3}}, \code{\link[monitoR]{topo.1}} and \code{\link[monitoR]{rainbow.1}} (which should be imported from the package monitoR) seem
-to work better with 'fast' spectrograms. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
-\code{\link[monitoR]{gray.3}} offer 
+This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR:specCols]{gray.1}}, \code{\link[monitoR:specCols]{gray.2}}, 
+\code{\link[monitoR:specCols]{gray.3}}, \code{\link[monitoR:specCols]{topo.1}} and \code{\link[monitoR:specCols]{rainbow.1}} (which should be imported from the package monitoR) seem
+to work better with 'fast' spectrograms. Palette colors \code{\link[monitoR:specCols]{gray.1}}, \code{\link[monitoR:specCols]{gray.2}}, 
+\code{\link[monitoR:specCols]{gray.3}} offer 
 decreasing darkness levels.}
 
 \item{t.mar}{Numeric vector of length 1. Specifies the margins adjacent to the start and end points to be added when highlighting selection. Default is \code{NULL}.}
@@ -110,12 +113,12 @@ writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav")) #save sound files
  st$colors <- c("red2", "blue", "green")
  
  # highlight selections
- color.spectro(wave = sgnl, wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5), 
+ color.spectro(wave = sgnl, wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-40, 0, 5), 
  dB = "B", X = st, col.clm = "colors", base.col = "skyblue",  t.mar = 0.07, f.mar = 0.1, 
  interactive = NULL)
  
  # interactive (selected manually: you have to select them by clicking on the spectrogram)
- color.spectro(wave = sgnl, wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5),
+ color.spectro(wave = sgnl, wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-40, 0, 5),
   dB = "B", col.clm = "colors", t.mar = 0.07, f.mar = 1, interactive = 2)
 }
 
@@ -141,6 +144,6 @@ Other spectrogram creators:
 \code{\link{trackfreqs}()}
 }
 \author{
-Marcelo Araya-Salas (\email{marceloa27@gmail.com}) and Grace Smith Vidaurre
+Marcelo Araya-Salas (\email{marcelo.araya@ucr.ac.cr}) and Grace Smith Vidaurre
 }
 \concept{spectrogram creators}

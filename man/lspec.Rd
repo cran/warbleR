@@ -7,14 +7,13 @@
 lspec(X = NULL, flim = c(0,22), sxrow = 5, rows = 10, collevels = seq(-40, 0, 1), 
 ovlp = 50, parallel = 1, wl = 512, gr = FALSE, pal = reverse.gray.colors.2, 
 cex = 1, it = "jpeg", flist = NULL, overwrite = TRUE, path = NULL, pb = TRUE, 
-fast.spec = FALSE, labels = "selec", horizontal = FALSE, song = NULL)
+fast.spec = FALSE, labels = "selec", horizontal = FALSE, song = NULL, ...)
 }
 \arguments{
 \item{X}{'selection_table' object or any data frame with columns
 for sound file name (sound.files), selection number (selec), and start and end time of signal
-(start and end). If given, two red dotted lines are plotted at the 
-start and end of a selection and the selections are labeled with the selection number 
-(and selection comment, if available). Default is \code{NULL}.}
+(start and end). If given, a transparent box is  plotted around each selection and the selections are labeled with the selection number 
+(and selection comment, if available). Default is \code{NULL}.Alternatively, it can also take the output of \code{\link{xcorr}} or \code{\link{autodetec}} (when 'output' is a 'list', see \code{\link{xcorr}} or \code{\link{autodetec}}). If supplied a secondary row is displayed under each spectrogram showing the detection (either cross-correlation scores or wave envelopes) values across time.}
 
 \item{flim}{A numeric vector of length 2 indicating the highest and lowest 
 frequency limits (kHz) of the spectrogram, as in 
@@ -65,10 +64,10 @@ If \code{NULL} (default) then the current working directory is used.}
 
 \item{fast.spec}{Logical. If \code{TRUE} then image function is used internally to create spectrograms, which substantially 
 increases performance (much faster), although some options become unavailable, as collevels, and sc (amplitude scale).
-This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
-\code{\link[monitoR]{gray.3}}, \code{\link[monitoR]{topo.1}} and \code{\link[monitoR]{rainbow.1}} (which should be imported from the package monitoR) seem
-to work better with 'fast' spectrograms. Palette colors \code{\link[monitoR]{gray.1}}, \code{\link[monitoR]{gray.2}}, 
-\code{\link[monitoR]{gray.3}} offer 
+This option is indicated for signals with high background noise levels. Palette colors \code{\link[monitoR:specCols]{gray.1}}, \code{\link[monitoR:specCols]{gray.2}}, 
+\code{\link[monitoR:specCols]{gray.3}}, \code{\link[monitoR:specCols]{topo.1}} and \code{\link[monitoR:specCols]{rainbow.1}} (which should be imported from the package monitoR) seem
+to work better with 'fast' spectrograms. Palette colors \code{\link[monitoR:specCols]{gray.1}}, \code{\link[monitoR:specCols]{gray.2}}, 
+\code{\link[monitoR:specCols]{gray.3}} offer 
 decreasing darkness levels.}
 
 \item{labels}{Character string with the name of the column(s) for selection 
@@ -79,6 +78,8 @@ labeling. Default is 'selec'. Set to \code{NULL} to remove labels.}
 \item{song}{Character string with the name of the column to used as a label a for higher 
 organization level in the song (similar to 'song_colm' in \code{\link{song_param}}). If supplied then lines above the selections belonging to the same
 'song' are plotted. Ignored if 'X' is not provided.}
+
+\item{...}{Additional arguments for image formatting. It accepts 'width', 'height' (which will overwrite 'horizontal') and 'res' as in \code{\link[grDevices]{png}}.}
 }
 \value{
 image files with spectrograms of whole sound files in the working directory. Multiple pages
@@ -123,9 +124,9 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 }
 }
 \seealso{
-\code{\link{lspec2pdf}}, \code{\link{catalog2pdf}}, 
+\code{\link{lspec2pdf}}, \code{\link{catalog2pdf}}, \code{\link{xcorr}}, \code{\link{autodetec}}
 \href{https://marce10.github.io/2017/01/07/Create_pdf_files_with_spectrograms_of_full_recordings.html}{blog post on spectrogram pdfs}
 }
 \author{
-Marcelo Araya-Salas (\email{marceloa27@gmail.com})
+Marcelo Araya-Salas (\email{marcelo.araya@ucr.ac.cr})
 }

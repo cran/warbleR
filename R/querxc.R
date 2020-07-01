@@ -72,7 +72,7 @@
 #' @references {
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' }
-#' @author Marcelo Araya-Salas (\email{marceloa27@@gmail.com}) 
+#' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr}) 
 #last modification on nov-16-2016 (MAS)
 
 querxc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Specific_epithet"), 
@@ -289,10 +289,10 @@ if (pb) write(file = "", x ="double-checking downloaded files")
    
    #check if some files have no data
     fl <- list.files(path = path, pattern = ".mp3$")
-    size0 <- fl[file.size(fl) == 0]
+    size0 <- fl[file.size(file.path(path, fl)) == 0]
    
     #if so redo those files
-    if (length(size0) > 1)
+    if (length(size0) > 0)
   {  Y <- results[results$sound.files %in% size0, ]
      unlink(size0)
      

@@ -5,7 +5,7 @@
 \title{Remove silence in wave files}
 \usage{
 rm_sil(path = NULL, min.sil.dur = 2, img = TRUE, it = "jpeg", flim = c(0, 12), 
-flist = NULL, parallel = 1, pb = TRUE)
+files = NULL, flist = NULL, parallel = 1, pb = TRUE)
 }
 \arguments{
 \item{path}{Character string containing the directory path where the sound files are located. 
@@ -22,8 +22,10 @@ If \code{NULL} (default) then the current working directory is used.}
 frequency limits (kHz) of the spectrogram as in 
 \code{\link[seewave]{spectro}}. Default is c(0,12). Ignored if `img = FALSE`.}
 
-\item{flist}{character vector or factor indicating the subset of files that will be analyzed. If not provided
+\item{files}{character vector or factor indicating the subset of files that will be analyzed. If not provided
 then all wave files in the working directory (or path) will be processed.}
+
+\item{flist}{DEPRECATED. Please use 'files' instead.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
@@ -41,30 +43,6 @@ that were removed are also saved.
 \details{
 The function removes silence segments (i.e. segments with very low amplitude values) from wave files.
 }
-\examples{
-{
-# save sound file examples
-data(list = c("Phae.long1", "Phae.long2","lbh_selec_table"))
-sil <- silence(samp.rate = 22500, duration = 3, xunit = "time")
-
-wv1 <- pastew(pastew(Phae.long1, sil, f = 22500, output = "Wave"), 
-Phae.long2, f = 22500, output = "Wave")
-
-#check silence in between amplitude peaks
-env(wv1)
-
- #save wave file
- writeWave(object = wv1, filename = file.path(tempdir(), "wv1.wav"),
-  extensible = FALSE)
-
-#remove silence
-rm_sil(flist = "wv1.wav", pb = FALSE, path = tempdir())
-
-#check this floder
-tempdir()
-}
-
-}
 \references{
 {
 Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
@@ -74,5 +52,5 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 \code{\link{fixwavs}}, \code{\link{autodetec}}
 }
 \author{
-Marcelo Araya-Salas (\email{marceloa27@gmail.com})
+Marcelo Araya-Salas (\email{marcelo.araya@ucr.ac.cr})
 }
