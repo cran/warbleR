@@ -41,7 +41,7 @@
 #'    \item \code{bottom.freq}: lowest 'bottom.freq' from all song elements (in kHz)
 #'    \item \code{top.freq}: highest 'top.freq' from all song elements (in kHz)
 #'    \item \code{freq.range}: difference between song's 'top.freq' and 'bottom.freq' (in kHz)
-#'    \item \code{song.rate}: number of elements per second (NA if only 1 element)
+#'    \item \code{song.rate}: number of elements per second (NA if only 1 element). Calculated as the number of elements in the 'song' divided by the duration of the song. In this case song duration is calculated as the time between the start of the first element and the start of the last element, which provides a rate that is less affected by the duration of individual elements. Note that this calculation is different than that from 'song.duration' above.
 #'    \item \code{gap.duration}: average length of gaps (i.e. silences) in between elements
 #'    (in s, NA if only 1 element)
 #'    \item \code{elm.types}: number of element types (i.e. number of unique types, only if 'elm_colm' is supplied)
@@ -62,7 +62,8 @@
 #' writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
 #' 
 #' # add a 'song' column
-#' lbh_selec_table$song <- rep(1:4, each = 3)[1:11]
+#' lbh_selec_table$song <- c("song1", "song1", "song1", "song2", 
+#'   "song2", "song3", "song3", "song3", "song4", "song4", "song4")
 #' 
 #' # measure acoustic parameters
 #' sp <- specan(lbh_selec_table[1:8, ], bp = c(1, 11), 300, fast = TRUE, path = tempdir())
@@ -97,7 +98,7 @@
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 #last modification on may-8-2018 (MAS)
 
-song_param <- function(X = NULL, song_colm = "song", mean_colm = NULL, min_colm = NULL, max_colm = NULL,  elm_colm = NULL, elm_fun = NULL,
+song_param <- function(X = NULL, song_colm = "song", mean_colm = NULL, min_colm = NULL, max_colm = NULL, elm_colm = NULL, elm_fun = NULL,
                        sd = FALSE, parallel = 1, pb = TRUE, na.rm = FALSE, weight = NULL)
 {
   # set pb options 
@@ -149,12 +150,14 @@ song_param <- function(X = NULL, song_colm = "song", mean_colm = NULL, min_colm 
   
   if (!is.null(elm_colm) & !is.null(elm_fun) & if(!is.null(elm_fun)) !is.function(get(as.character(quote(elm_fun)))) else FALSE) stop("'elm_fun' not found")
   
-  
   if (song_colm == "sound.files") {
     X$song <- X$sound.files
     song_colm <- "song"
     }
   
+  # stop if any song is found in more than 1 sound file
+  # if (any(tapply(X$sound.files, X[,song_colm], function(x) length(unique(x))) > 1))
+  #  stop("At least 1 'song' is found in multiple sound files, which is not allowed. \n Try `tapply(X$sound.files, X$song, function(x) length(unique(x)))` to find 'problematic' songs (those higher than 1)")  
   
   if (!all(c("sound.files", "selec", 
             "start", "end") %in% colnames(X))) 
@@ -227,13 +230,13 @@ song_param <- function(X = NULL, song_colm = "song", mean_colm = NULL, min_colm 
     try(Z$freq.range <- Z$top.freq - Z$bottom.freq, silent = TRUE)
       }
     Z$song.duration <- Z$end - Z$start
-    Z$song.rate <- if(Z$num.elms == 1) NA else Z$num.elms / Z$song.duration
-    Z$gap.duration <- if(Z$num.elms == 1) NA else mean(Y$end[-nrow(Y)] - Y$start[-1])
+    Z$song.rate <- if(Z$num.elms == 1) NA else Z$num.elms / (Y$start[nrow(Y)] - Y$start[1])
+    Z$gap.duration <- if(Z$num.elms == 1) NA else mean(Y$start[-1] - Y$end[-nrow(Y)])
     
     if(sd) {
-      Z$sd.gap.duration <- if(Z$num.elms == 1) NA else sd(Y$end[-nrow(Y)] - Y$start[-1])
+      Z$sd.gap.duration <- if(Z$num.elms == 1) NA else sd(Y$start[-1] - Y$end[-nrow(Y)])
       Z$sd.elm.duration <- sd(Y$end - Y$start)
-      }
+    }
     
     # add element parameters
     if (!is.null(elm_colm))
@@ -272,8 +275,15 @@ song_param <- function(X = NULL, song_colm = "song", mean_colm = NULL, min_colm 
   # run loop apply function
   out <- pbapply::pblapply(unique(X$.....SONGX...), cl = cl, function(i) 
   { 
+    # subset by song label
     Y <- X[X$.....SONGX... == i, , drop = FALSE]
+    
+    # order Y by start
+    Y <- Y[order(Y$start), ]
+    
+    # make it a data frame just in case
     Y <- as.data.frame(Y)
+    
     return(songparam.FUN(Y, song_colm, mean_colm, min_colm, max_colm, weight, na.rm)) 
   }) 
 

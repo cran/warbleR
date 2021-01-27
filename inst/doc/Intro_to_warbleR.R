@@ -301,7 +301,7 @@ table(Phae.long.est$lek.song.type)
 #  
 #  wf <- wf[-c(2, 7, 8, 10, 12, 16, 17, 19, 20, 23, 24, 28, 31, 32, 33, 38, 42, 43, 44, 47, 50, 53, 59, 64, 66, 68, 68, 72, 74, 80, 81, 85, 90, 93, 94, 96)]
 #  
-#  df <- data.frame(funciones = wf, `Obtener-preparar grabaciones` = "", `Anotar` = "", `Medir` = "",  `Revision` = "", `Inspección visual` = "", `Análisis estadístico` = "", `Otros` = "")
+#  df <- data.frame(funciones = wf, `Obtener-preparar grabaciones` = "", `Anotar` = "", `Medir` = "",  `Revision` = "", `Inspeccion visual` = "", `Analisis estadistico` = "", `Otros` = "")
 #  
 #  df2 <- edit(df)
 #  
@@ -318,11 +318,11 @@ table(Phae.long.est$lek.song.type)
 #  
 #  df4 <- df4[df4$Obtener.preparar.grabaciones != "borrar", ]
 #  
-#  names(df4) <- c("Función", "Obtener-preparar grabaciones", "Anotar", "Organizar anotaciones", "Medir estructura", "Verificar", "Inspección visual", "Análisis estadístico", "Otros")
+#  names(df4) <- c("Funcion", "Obtener-preparar grabaciones", "Anotar", "Organizar anotaciones", "Medir estructura", "Verificar", "Inspeccion visual", "Analisis estadistico", "Otros")
 #  
 #  rownames(df4) <- 1:nrow(df4)
 #  
-#  df5 <- df4[order(df4$`Obtener-preparar grabaciones`, df4$Anotar, df4$`Organizar anotaciones`, df4$`Medir estructura`, df4$Verificar, df4$`Inspección visual`, df4$`Análisis estadístico`, df4$Otros, decreasing = TRUE),]
+#  df5 <- df4[order(df4$`Obtener-preparar grabaciones`, df4$Anotar, df4$`Organizar anotaciones`, df4$`Medir estructura`, df4$Verificar, df4$`Inspeccion visual`, df4$`Analisis estadistico`, df4$Otros, decreasing = TRUE),]
 #  
 #  df4 <- df4[c(5, 8, 18, 29, 34, 35, 37, 38, 39, 55, 56, 26, 1, 19, 40, 46, 4, 11, 16, 17, 24, 25, 32, 41, 45, 7, 12, 13, 14, 15, 23, 27, 30, 42, 47, 48, 57, 2,  3, 28, 44, 50, 51, 52, 58, 9, 10, 21, 22, 59, 6, 20, 31, 33, 36, 43, 49, 53, 54), ]
 #  
@@ -420,7 +420,7 @@ table(Phae.long.est$lek.song.type)
 
 ## ---- echo = FALSE, eval = FALSE------------------------------------------------------------------
 #  
-#  cf2 <- cf[cf$`Inspección visual` == "x",  c("Function", "Description", "Works on", "Output")]
+#  cf2 <- cf[cf$`Inspeccion visual` == "x",  c("Function", "Description", "Works on", "Output")]
 #  
 #  cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
 #  
@@ -437,7 +437,7 @@ table(Phae.long.est$lek.song.type)
 
 ## ---- echo = FALSE, eval = FALSE------------------------------------------------------------------
 #  
-#  cf2 <- cf[cf$`Análisis estadístico` == "x" | cf$Otros == "x",  c("Function", "Description", "Works on", "Output")]
+#  cf2 <- cf[cf$`Analisis estadistico` == "x" | cf$Otros == "x",  c("Function", "Description", "Works on", "Output")]
 #  
 #  cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
 #  

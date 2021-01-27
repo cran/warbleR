@@ -1,3 +1,26 @@
+# *warbleR 1.1.25*
+
+## Bug fixes:
+
+* Negative gaps values in `song_param()`
+
+## New functions:
+
+* 'optimize_autodetec()' for tunning detection parameters in 'autodetec()'
+* 'envelope()' a C-compiled version of 'seewave::env()'
+* new function 'find_peaks()' to detect signals on sound files using 'xcorr()' output
+* 'read_sound_file()' to read wav, wav and mp3 files as well as wave objects in extended selection tables
+
+## Changes and additions:
+
+* Remove bioacoustics::resample() as it was deprecated (mp32wav() and fixwavs() affected)
+* Remove comment columns in 'lbh_selec_table'
+* Selection table printing method uses huxtable package for text coloring
+* 'suffix' argument added to `lspec()`
+* `autodetec()` does not create image files with spectrograms any more
+* new arguments added to `autodetec()`: 'hold.time' for merging selections, 'thinning' for decreasing envelope size
+* error when having "songs" across multiple files in `song_param()`
+
 # *warbleR 1.1.24*
 
 ## Changes and additions:
@@ -15,6 +38,8 @@
 * 'color_spectro()' frequency range is not restricted by the selection table top and bottom frequency
 
 ## Bug fixes:
+
+* Negative gaps values in `song_param()`
 * Trivial bug when downloading files in `quer_xc()`
 * Fixed number of segments when using 'sgmts' argument in 'split_wavs()', it used to return 'sgmts - 1' segments.
 * Fix mismatch in `specreator()` spectrograms and oscillograms

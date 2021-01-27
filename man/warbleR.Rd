@@ -48,6 +48,10 @@ License: GPL (>= 2)
 \section{Managing sound files}{
 
   
+  \code{\link{read_wave}}: Read wave files into 'wave' objects
+  
+  \code{\link{read_sound_file}}: Read sound files into 'wave' objects
+  
   \code{\link{selection_table}}: Create 'selection_table' class objects
   
   \code{\link{mp32wav}}: Convert several .mp3 files in working directory to .wav
@@ -114,7 +118,7 @@ License: GPL (>= 2)
   
   \code{\link{find_peaks}}: Find peaks in cross-correlation scores from \code{\link{xcorr}}
   
-  \code{\link{find_annotations}}: Download sound file annotations and metadata from \href{https://audioblast.org/annotations/}{audioblast.org}.
+  \code{\link{find_annotations}}: Download sound file annotations and metadata from 'audioblast.org'.
   
   \code{\link{sp.en.ts}}: Extract the spectral entropy values across the signal as a time series
   

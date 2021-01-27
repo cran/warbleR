@@ -38,6 +38,10 @@
 #'   
 #' @section Managing sound files:
 #'   
+#'   \code{\link{read_wave}}: Read wave files into 'wave' objects
+#'   
+#'   \code{\link{read_sound_file}}: Read sound files into 'wave' objects
+#'   
 #'   \code{\link{selection_table}}: Create 'selection_table' class objects
 #'   
 #'   \code{\link{mp32wav}}: Convert several .mp3 files in working directory to .wav
@@ -102,7 +106,7 @@
 #'   
 #'   \code{\link{find_peaks}}: Find peaks in cross-correlation scores from \code{\link{xcorr}}
 #'   
-#'   \code{\link{find_annotations}}: Download sound file annotations and metadata from \href{https://audioblast.org/annotations/}{audioblast.org}.
+#'   \code{\link{find_annotations}}: Download sound file annotations and metadata from 'audioblast.org'.
 #'   
 #'   \code{\link{sp.en.ts}}: Extract the spectral entropy values across the signal as a time series
 #'   
@@ -159,10 +163,14 @@
 #' @import grDevices
 #' @import utils
 #' @import parallel
-#' @importFrom methods formalArgs new is slotNames
+# @importFrom huxtable theme_basic as_hux set_text_color
+# @importFrom crayon silver bold cyan italic red
+#' @importFrom methods formalArgs new is slotNames slot
 #' @importFrom dtw dtwDist
+#' @importFrom Rcpp evalCpp
+#' @importFrom Rcpp sourceCpp
 #' @importFrom stats cor dist aggregate approx ave prcomp time ts predict smooth.spline complete.cases spline weighted.mean na.omit var sd rlnorm fft
-#' 
+#' @importClassesFrom tuneR Wave
 #' @author Marcelo Araya-Salas & Grace Smith Vidaurre
 #'   
 #'   Maintainer: Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
