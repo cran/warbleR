@@ -9,7 +9,7 @@
 #' end time of selections. Columns for 'top.freq', 'bottom.freq' and 'channel' are optional. Note that, when 'channel' is
 #' not provided the first channel (i.e. left channel) would be used by default. 
 #' Frequency parameters (including top and bottom frequency) should be provided in kHz. Alternatively, a 'selection_table' class object can be input to double check selections. 
-#' The output of \code{\link{manualoc}} or \code{\link{autodetec}} can 
+#' The output of \code{\link{auto_detec}} can 
 #' be used as the input object for other \code{\link{warbleR}} functions.
 #' @param max.dur the maximum duration of expected for a selection  (ie. end - start). If surpassed then an error message 
 #' will be generated. Useful for detecting errors in selection tables.
@@ -17,7 +17,7 @@
 #' If \code{NULL} (default) then the current working directory is used.
 #' @param whole.recs Logical. If \code{TRUE} the function will create a selection 
 #' table for all sound files in the working directory (or "path") with `start = 0` 
-#' and `end = wavdur()`. Default is if \code{FALSE}. Note that this will not create
+#' and `end = duration_wavs()`. Default is if \code{FALSE}. Note that this will not create
 #' a extended selection table. If provided 'X' is ignored.  
 #' @param extended Logical. If \code{TRUE}, the function will create an object of class 'extended_selection_table' 
 #' which included the wave objects of the selections as an additional attribute ('wave.objects') to the data set. This is 
@@ -40,11 +40,11 @@
 #' @param pb Logical argument to control progress bar and messages. Default is \code{TRUE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied. 
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
-#' @param ... Additional arguments to be passed to \code{\link{checksels}} for customizing
+#' @param ... Additional arguments to be passed to \code{\link{check_sels}} for customizing
 #' checking routine.
 #' @return An object of class selection_table which includes the original data frame plus the following additional attributes:
 #' \itemize{
-#'    \item 1) A data frame with the output of \code{\link{checksels}} run on the input data frame. If a extended selection table is created it will also include the original values in the input data frame for each selections. This are used by downstream warbleR functions to improve efficiency and avoid
+#'    \item 1) A data frame with the output of \code{\link{check_sels}} run on the input data frame. If a extended selection table is created it will also include the original values in the input data frame for each selections. This are used by downstream warbleR functions to improve efficiency and avoid
 #' errors due to missing or mislabeled data, or selection out of the ranges of the original sound files. 
 #'    \item 2) A list indicating if the selection table has been created by song (see 'by.song argument).
 #'    \item 3) If a extended selection table is created a list containing the wave objects for each selection (or song if 'by.song').
@@ -58,8 +58,8 @@
 #'    }
 #' If no errors are found the a selection table or extended selection table will be generated. 
 #' Note that the sound files should be in the working directory (or the directory provided in 'path').
-#' This is useful for avoiding errors in downstream functions (e.g. \code{\link{specan}}, \code{\link{xcorr}}, \code{\link{catalog}}, \code{\link{dfDTW}}). Note also that corrupt files can be
-#' fixed using \code{\link{fixwavs}} ('sox' must be installed to be able to run this function).
+#' This is useful for avoiding errors in downstream functions (e.g. \code{\link{spectro_analysis}}, \code{\link{cross_correlation}}, \code{\link{catalog}}, \code{\link{freq_DTW}}). Note also that corrupt files can be
+#' fixed using \code{\link{fix_wavs}} ('sox' must be installed to be able to run this function).
 #' The 'selection_table' class can be input in subsequent functions. 
 #' 
 #' When \code{extended = TRUE} the function will generate an object of class 'extended_selection_table' which 
@@ -74,7 +74,7 @@
 #'  selection table). You can check the size of the output extended selection table
 #'  with the \code{\link[utils]{object.size}} function. Note that extended selection table created 'by.song' could be 
 #'  considerable larger.
-#' @seealso \code{\link{checkwavs}}, \href{https://marce10.github.io/2018/05/15/Extended_selection_tables.html}{blog post on extended selection tables}
+#' @seealso \code{\link{check_wavs}}, \href{https://marce10.github.io/2018/05/15/Extended_selection_tables.html}{blog post on extended selection tables}
 #' @export
 #' @name selection_table
 #' @examples
@@ -161,7 +161,7 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
     
     if (length(sound.files) == 0) stop("No sound files were found") 
     
-    X <- data.frame(sound.files, selec = 1, channel = 1, start = 0, end = wavdur(files = sound.files, path = path)$duration)
+    X <- data.frame(sound.files, selec = 1, channel = 1, start = 0, end = duration_wavs(files = sound.files, path = path)$duration)
   }
   
   if (pb) write(file = "", x ="checking selections (step 1 of 2):")
@@ -194,7 +194,7 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
         check.results$mar.after <- check.results$mar.before <- rep(mar, nrow(X))
         
         # get sound file duration
-        dur <- wav_dur(files = as.character(X$sound.files), path = path)$duration
+        dur <- duration_wavs(files = as.character(X$sound.files), path = path)$duration
         
         #reset margin signals if lower than 0 or higher than duration
         for(i in 1:nrow(X))  
@@ -205,7 +205,7 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
         
         if (!is.null(by.song))
         {
-          Y <- song_param(X = as.data.frame(X), song_colm = by.song, pb = FALSE)
+          Y <- song_analysis(X = as.data.frame(X), song_colm = by.song, pb = FALSE)
           Y <-Y[, names(Y) %in% c("sound.files", by.song, "start", "end")]
           
           check.results$song <- X[, by.song]          
@@ -315,7 +315,7 @@ make.selection.table <- selection_table
 #' @details An object of class \code{selection_table} created by \code{\link{selection_table}} is a list with the following elements:
 #'  \itemize{
 #'  \item\code{selections}: data frame containing the frequency/time coordinates of the selections, sound file names, and any  additional information
-#'  \item \code{check.resutls}: results of the checks on data consistency using \link{checksels}
+#'  \item \code{check.resutls}: results of the checks on data consistency using \link{check_sels}
 #' }
 #' @seealso \code{\link{selection_table}}
 
@@ -364,7 +364,7 @@ is_selection_table <- function(x) inherits(x, "selection_table")
 #' @details An object of class \code{extended_selection_table} created by \code{\link{selection_table}} is a list with the following elements:
 #'  \itemize{
 #'  \item \code{selections}: data frame containing the frequency/time coordinates of the selections, sound file names, and any  additional information
-#'  \item \code{check.resutls}: results of the checks on data consistency using \link{checksels}
+#'  \item \code{check.resutls}: results of the checks on data consistency using \link{check_sels}
 #'  \item \code{wave.objects}: list of wave objects corresponding to each selection
 #'  \item \code{by.song}: a list with 1) a logical argument defining if the 'extended_selection_table' was created 'by song'
 #'  and 2) the name of the song column (see \code{\link{selection_table}})
@@ -488,27 +488,21 @@ is_extended_selection_table <- function(x) inherits(x, "extended_selection_table
 
 print.extended_selection_table <- function(x, ...) {
   
-  # to exclude printing of column names below the table
-  options(huxtable.print = function (h) {
-    huxtable::print_screen(h, colnames = FALSE, color = TRUE)
-    cat("\n")
-  })
-  
   cat(crayon::cyan(paste("Object of class", crayon::bold("'extended_selection_table' \n"))))
   
-  cat(crayon::silver(paste(crayon::bold("Contains:"), "\n* A selection table data frame with"), nrow(x), "rows and", ncol(x), "columns: \n"))
+  cat(crayon::silver(paste(crayon::bold("Contains:"), "\n*  A selection table data frame with"), nrow(x), "rows and", ncol(x), "columns: \n"))
   
-  #print data frame as table
-  tb <- try(huxtable::set_text_color(huxtable::theme_basic(huxtable::as_hux(head(as.data.frame(x)))), "silver"), silent = TRUE)
+  #define columns to show
+  cols <- if (ncol(x) > 6)  1:6 else 1:ncol(x)
   
-  if(is(tb, "try-error")) tb <- head(as.data.frame(x))
+  kntr_tab <- knitr::kable(head(x[, cols]), escape = FALSE, digits  = 4, justify = "centre", format = "pipe")
   
-  print(tb)
+    for(i in 1:length(kntr_tab)) cat(crayon::silver(paste0(kntr_tab[i], "\n")))
   
-  if (nrow(x) > 6) cat(crayon::silver(paste0("... and ", nrow(x) - 6, " more rows \n")))  
+  if (ncol(x) > 6) cat(crayon::silver(paste0("... ", ncol(x) - 6, " more column(s) (", paste(colnames(x)[7:ncol(x)], collapse = ", "), ")")))
+  if (nrow(x) > 6) cat(crayon::silver(paste0(if (ncol(x) <= 6) "..." else "", " and ", nrow(x) - 6, " more row(s) \n")))  
   
   cat(crayon::silver(paste0("\n* ", length(attr(x, "wave.objects"))," wave objects (as attributes): ")))
-  
   
   cat(crayon::silver(head(names(attr(x, "wave.objects")))))
   
@@ -552,24 +546,21 @@ print.extended_selection_table <- function(x, ...) {
 
 print.selection_table <- function(x, ...) {
   
-  # to exclude printing of column names below the table
-  options(huxtable.print = function (h) {
-    huxtable::print_screen(h, colnames = FALSE, color = TRUE, compact = FALSE, ceiling(getOption("width")/3))
-    cat("\n")
-  })
-  
   cat(crayon::cyan(paste("Object of class", crayon::bold("'selection_table' \n"))))
   
-  cat(crayon::silver(paste(crayon::bold("Contains:"), "\n*  A selection table data frame with"), nrow(x), "rows and", ncol(x), "columns: \n"))
+  cat(crayon::silver(paste(crayon::bold("\nContains:"), "\n*  A selection table data frame with"), nrow(x), "rows and", ncol(x), "columns: \n"))
   
-  #print data frame as table
-  tb <- try(huxtable::set_text_color(huxtable::theme_basic(huxtable::as_hux(head(as.data.frame(x)))), "silver"), silent = TRUE)
+  #print data frame
+  #define columns to show
+  cols <- if (ncol(x) > 6)  1:6 else 1:ncol(x)
   
-  if(is(tb, "try-error")) tb <- head(as.data.frame(x))
+  kntr_tab <- knitr::kable(head(x[, cols]), escape = FALSE, digits  = 4, justify = "centre", format = "pipe")
   
-  print(tb)
+  for(i in 1:length(kntr_tab)) cat(crayon::silver(paste0(kntr_tab[i], "\n")))
   
-  if (nrow(x) > 6) cat(crayon::silver(paste0("... and ", nrow(x) - 6, " more rows \n")))  
+  if (ncol(x) > 6) cat(crayon::silver(paste0("... ", ncol(x) - 6, " more column(s) (", paste(colnames(x)[7:ncol(x)], collapse = ", "), ")")))
+  if (nrow(x) > 6) cat(crayon::silver(paste0(if (ncol(x) <= 6) "..." else "", " and ", nrow(x) - 6, " more row(s) \n")))  
+  
   
   cat(crayon::silver("\n * A data frame (check.results) generated by check_sels() (as attribute) \n"))
   
@@ -718,7 +709,7 @@ rbind.extended_selection_table <- function(..., deparse.level = 1) {
   waves.X <- names(attr(X, "wave.objects"))
   waves.Y <- names(attr(Y, "wave.objects"))
   
-  if (any(waves.X %in% waves.Y)) cat("Some wave object names are found in both extended selection tables, they are assumed to refer to the same wave object and only one copy will be kept (use rename_waves_est() to change sound file/wave objetc names if needed)")
+  if (any(waves.X %in% waves.Y)) cat("Some wave object names are found in both extended selection tables, they are assumed to refer to the same wave object and only one copy will be kept (use rename_est_waves() to change sound file/wave objetc names if needed)")
   
   cl.nms <- intersect(names(X), names(Y))
   

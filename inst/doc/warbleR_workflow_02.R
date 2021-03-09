@@ -57,16 +57,16 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  str(Phae.hisnr)
 #  head(Phae.hisnr, n = 15)
 #  
-#  # yields a data frame with an additional column (ovlp_sels) that indicates which selections overlap
-#  Phae.hisnr <- ovlp_sels(X = Phae.hisnr, max.ovlp = 0)
+#  # yields a data frame with an additional column (ovlp.sels) that indicates which selections overlap
+#  Phae.hisnr <- overlapping_sels(X = Phae.hisnr, max.ovlp = 0)
 #  
 #  # run the function again but this time retain only the signals that don't overlap
-#  Phae.hisnr <- ovlp_sels(X = Phae.hisnr, max.ovlp = 0, drop = TRUE)
+#  Phae.hisnr <- overlapping_sels(X = Phae.hisnr, max.ovlp = 0, drop = TRUE)
 #  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
-#  specreator(Phae.hisnr, wl = 300, flim = c(2, 10), it = "jpeg", res = 150, osci = TRUE, ovlp = 90)
+#  spectrograms(Phae.hisnr, wl = 300, flim = c(2, 10), it = "jpeg", res = 150, osci = TRUE, ovlp = 90)
 #  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
@@ -88,7 +88,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  #
 #  # Listening to signals complements visual inspection and classification. The function `cut_sels` can be very useful for aural comparison of selected signals. Selected signals can be played as individual sounds rather than having to open up entire sound files. As a word of caution, generating cuts of sound files will also propagate any naming errors present in your original files.
 #  #
-#  # `cut_sels` can also be used to your advantage if your original recordings are long (over 10-15 minutes). Some _warbleR_ functions, in particular `manualoc` will run slowly with long recordings, so it's helpful to use shorter duration sound files. You can make selections of shorter pieces of long original recordings, either in _Raven_ or _Syrinx_, and use `cut_sels` to generate shorter segments for smoother signal detection in `warbleR`.
+#  # `cut_sels` can also be used to your advantage if your original recordings are long (over 10-15 minutes). Some _warbleR_ functions, so it's helpful to use shorter duration sound files. You can make selections of shorter pieces of long original recordings, either in _Raven_ or _Syrinx_, and use `cut_sels` to generate shorter segments for smoother signal detection in `warbleR`.
 #  
 #  cut_sels(X = Phae.hisnr2, mar = 0.01, labels = c("sound.files", "selec"))
 #  
@@ -102,9 +102,9 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
-#  seltailor(Phae.hisnr2, wl = 300, flim = c(2,10), wn = "hanning", mar = 0.1, osci = TRUE, title = c("sound.files", "selec"), auto.next = TRUE)
+#  tailor_sels(Phae.hisnr2, wl = 300, flim = c(2,10), wn = "hanning", mar = 0.1, osci = TRUE, title = c("sound.files", "selec"), auto.next = TRUE)
 #  
-#  # Read in seltailor output after renaming the csv file
+#  # Read in tailor_sels output after renaming the csv file
 #  Phae.hisnrt <- read.csv("Phae_hisnrt.csv", header = TRUE)
 #  str(Phae.hisnrt)
 #  
@@ -118,16 +118,16 @@ str(Phae.hisnrt)
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # highlight selected signals
-#  lspec(Phae.hisnrt, wl = 300, flim = c(2, 10), ovlp = 10, sxrow = 6, rows = 15, it = "jpeg")
+#  full_spectrograms(Phae.hisnrt, wl = 300, flim = c(2, 10), ovlp = 10, sxrow = 6, rows = 15, it = "jpeg")
 #  
-#  # concatenate lspec image files into a single PDF per recording
-#  # lspec images must be jpegs
-#  lspec2pdf(keep.img = FALSE, overwrite = TRUE)
+#  # concatenate full_spectrograms image files into a single PDF per recording
+#  # full_spectrograms images must be jpegs
+#  full_spectrograms2pdf(keep.img = FALSE, overwrite = TRUE)
 #  
 
 ## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
-#  # Note for later...lspec2pdf works on autodetec files in the working directory too...maybe including a suffix argument would help
+#  # Note for later...full_spectrograms2pdf works on auto_detec files in the working directory too...maybe including a suffix argument would help
 #  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ str(Phae.hisnrt)
 #  st$colors <- c("red2", "blue", "green")
 #  
 #  # highlight selections
-#  color.spectro(wave = sgnl, wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5), dB = "B", X = st, col.clm = "colors", base.col = "skyblue",  t.mar = 0.07, f.mar = 0.1)
+#  color_spectro(wave = sgnl, wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5), dB = "B", X = st, col.clm = "colors", base.col = "skyblue",  t.mar = 0.07, f.mar = 0.1)
 #  
 
 ## ---- eval = FALSE, echo = FALSE--------------------------------------------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ str(Phae.hisnrt)
 #  X2 <- frange(X)
 #  # View(X2)
 #  
-#  color.spectro(wave = readWave("Phaethornis-longirostris-154072.wav"), wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5),
+#  color_spectro(wave = readWave("Phaethornis-longirostris-154072.wav"), wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5),
 #                dB = "B", X = X2, col.clm = "colors", base.col = "skyblue",  t.mar = 0.07, f.mar = 0.1)
 #  
 
@@ -195,12 +195,12 @@ str(Phae.hisnrt)
 #  # assuming we are working from the warbleR_example directory
 #  # the ~/ format does not apply to Windows
 #  # make sure you have already moved or deleted all other pdf files
-#  move.imgs(from = ".", it = "pdf", create.folder = TRUE, folder.name = "Catalog_image_files")
+#  move_imgs(from = ".", it = "pdf", create.folder = TRUE, folder.name = "Catalog_image_files")
 #  
 
 ## ---- eval = FALSE, echo = FALSE--------------------------------------------------------------------------------------------------------------------
 #  
-#  # suggestion for move.imgs
+#  # suggestion for move_imgs
 #  # add argument for regex so as not to delete/move all image files of a given type
 #  # and be able to move just "Cat*.pdf"...etc
 

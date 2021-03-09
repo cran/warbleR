@@ -109,7 +109,7 @@ sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Query xeno-canto for all Phaethornis recordings (e.g., by genus)
-#  Phae <- querxc(qword = "Phaethornis", download = FALSE)
+#  Phae <- query_xc(qword = "Phaethornis", download = FALSE)
 #  
 #  # Check out the structure of resulting the data frame
 #  str(Phae)
@@ -117,7 +117,7 @@ sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 
 ## ---- eval = TRUE, echo = FALSE, message = FALSE----------------------------------------------------------------------------------------------------
 
-# Phae <- querxc(qword = "Phaethornis", download = FALSE) 
+# Phae <- query_xc(qword = "Phaethornis", download = FALSE) 
 
 # write.csv(Phae, file = "~/Dropbox/warbleR/vignettes/Phae.XC.csv", row.names = FALSE)
 
@@ -131,7 +131,7 @@ str(Phae)
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Query xeno-canto for all Phaethornis longirostris recordings
-#  Phae.lon <- querxc(qword = "Phaethornis longirostris", download = FALSE)
+#  Phae.lon <- query_xc(qword = "Phaethornis longirostris", download = FALSE)
 #  
 #  # Check out the structure of resulting the data frame
 #  str(Phae.lon)
@@ -139,7 +139,7 @@ str(Phae)
 
 ## ---- eval = TRUE, echo = FALSE, message = FALSE----------------------------------------------------------------------------------------------------
 
-# Phae.lon <- querxc(qword = "Phaethornis longirostris", download = FALSE)
+# Phae.lon <- query_xc(qword = "Phaethornis longirostris", download = FALSE)
 
 # write.csv(Phae.lon, file = "~/Dropbox/warbleR/vignettes/Phae.lon.XC.csv", row.names = FALSE)
 
@@ -154,13 +154,13 @@ str(Phae.lon)
 #  # Image type default is jpeg, but tiff files have better resolution
 #  
 #  # When the data frame contains multiple species, this will yield one map per species
-#  xcmaps(X = Phae, img = TRUE, it = "tiff") # all species in the genus
-#  xcmaps(X = Phae.lon, img = FALSE) # a single species
+#  map_xc(X = Phae, img = TRUE, it = "tiff") # all species in the genus
+#  map_xc(X = Phae.lon, img = FALSE) # a single species
 #  
 
 ## ---- eval=TRUE, echo=FALSE, message=FALSE----------------------------------------------------------------------------------------------------------
 
-xcmaps(X = Phae.lon, img = FALSE) 
+map_xc(X = Phae.lon, img = FALSE) 
 
 
 ## ---- eval=TRUE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ xcmaps(X = Phae.lon, img = FALSE)
 nrow(Phae.lon) 
 
 # How many signal types exist in the xeno-canto metadata?
-levels(Phae.lon$Vocalization_type)
+unique(Phae.lon$Vocalization_type)
 
 # How many recordings per signal type?
 table(Phae.lon$Vocalization_type)
@@ -197,7 +197,7 @@ str(Phae.lon.LS)
 ## ---- eval=TRUE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 
 # map in the RStudio graphics device (img = FALSE)
-xcmaps(Phae.lon.LS, img = FALSE)
+map_xc(Phae.lon.LS, img = FALSE)
 
 
 ## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
@@ -218,7 +218,7 @@ xcmaps(Phae.lon.LS, img = FALSE)
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Download sound files
-#  querxc(X = Phae.lon.LS)
+#  query_xc(X = Phae.lon.LS)
 #  
 #  # Save the metadata object as a .csv file
 #  write.csv(Phae.lon.LS, "Phae_lon.LS.csv", row.names = FALSE)
@@ -233,7 +233,7 @@ xcmaps(Phae.lon.LS, img = FALSE)
 #  mp32wav(samp.rate = 22.05)
 #  
 #  # Use checkwavs to see if wav files can be read
-#  checkwavs()
+#  check_wavs()
 #  
 
 ## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
@@ -303,30 +303,30 @@ xcmaps(Phae.lon.LS, img = FALSE)
 #  # 6 sound files from xeno-canto
 #  wavs
 #  
-#  # Select a subset of recordings to explore lspec() arguments
+#  # Select a subset of recordings to explore full_spectrograms() arguments
 #  # Based on the list of wav files we created above
 #  sub <- wavs[c(1, 5)]
 #  
-#  # How long are these files? this will determine number of pages returned by lspec
-#  wavdur(sub)
+#  # How long are these files? this will determine number of pages returned by full_spectrograms
+#  duration_wavs(sub)
 #  
 #  # ovlp = 10 to speed up function
 #  # tiff image files are better quality and are faster to produce
-#  lspec(flist = sub, ovlp = 10, it = "tiff")
+#  full_spectrograms(flist = sub, ovlp = 10, it = "tiff")
 #  
 #  # We can zoom in on the frequency axis by changing flim,
 #  # the number of seconds per row, and number of rows
-#  lspec(flist = sub, flim = c(2, 10), sxrow = 6, rows = 15, ovlp = 10, it = "tiff")
+#  full_spectrograms(flist = sub, flim = c(2, 10), sxrow = 6, rows = 15, ovlp = 10, it = "tiff")
 #  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Make long spectrograms for the xeno-canto sound files
-#  lspec(flim = c(2, 10), ovlp = 10, sxrow = 6, rows = 15, it = "jpeg", flist = fl)
+#  full_spectrograms(flim = c(2, 10), ovlp = 10, sxrow = 6, rows = 15, it = "jpeg", flist = fl)
 #  
-#  # Concatenate lspec image files into a single PDF per recording
-#  # lspec images must be jpegs to do this
-#  lspec2pdf(keep.img = FALSE, overwrite = TRUE)
+#  # Concatenate full_spectrograms image files into a single PDF per recording
+#  # full_spectrograms images must be jpegs to do this
+#  full_spectrograms2pdf(keep.img = FALSE, overwrite = TRUE)
 #  
 
 ## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
@@ -338,14 +338,14 @@ xcmaps(Phae.lon.LS, img = FALSE)
 #  
 #  ### Remove silence in sound files
 #  
-#  # The function below removes silent segments of sound files. This can help reduce file size, which can speed up functions (in particular, `manualoc`).
+#  # The function below removes silent segments of sound files. This can help reduce file size, which can speed up functions.
 #  
 #  # giving error: Error in file.copy(from = wv, to = file.path(getwd(), "removed_silence_files",  :
 #    # more 'from' files than 'to' files
 #  
 #  # here we will produce spectrograms of the silent gaps that were removed
 #  # perform this on only the longer xeno-canto recordings
-#  rm_sil(flist = wavs, min.sil.dur = 0.2, img = TRUE, it = "jpeg", flim = c(0, 12))
+#  remove_silence(flist = wavs, min.sil.dur = 0.2, img = TRUE, it = "jpeg", flim = c(0, 12))
 #  
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
@@ -358,20 +358,20 @@ xcmaps(Phae.lon.LS, img = FALSE)
 #  set.seed(1)
 #  sub <- wavs[sample(1:length(wavs), 3)]
 #  
-#  # Run autodetec() on subset of recordings
+#  # Run auto_detec() on subset of recordings
 #  # The data frame object output is printed to the console, we are not saving this in an object yet, since we are just playing around with argument settings
 #  # you can run this in parallel to speed up computation time
-#  autodetec(flist = sub, bp = c(1, 10), threshold = 10, mindur = 0.05, maxdur = 0.5, envt="abs", ssmooth = 300, ls = TRUE, res = 100, flim = c(1, 12), wl = 300, set = TRUE, sxrow = 6, rows = 15, redo = FALSE)
+#  auto_detec(flist = sub, bp = c(1, 10), threshold = 10, mindur = 0.05, maxdur = 0.5, envt="abs", ssmooth = 300, ls = TRUE, res = 100, flim = c(1, 12), wl = 300, set = TRUE, sxrow = 6, rows = 15, redo = FALSE)
 #  
 
 ## ---- eval=FALSE, echo = TRUE-----------------------------------------------------------------------------------------------------------------------
 #  
-#  autodetec(flist = sub, bp = c(2, 10), threshold = 20, mindur = 0.09, maxdur = 0.22, envt = "abs", ssmooth = 900, ls = TRUE, res = 100, flim= c(1, 12), wl = 300, set =TRUE, sxrow = 6, rows = 15, redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
+#  auto_detec(flist = sub, bp = c(2, 10), threshold = 20, mindur = 0.09, maxdur = 0.22, envt = "abs", ssmooth = 900, ls = TRUE, res = 100, flim= c(1, 12), wl = 300, set =TRUE, sxrow = 6, rows = 15, redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
 #  
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
-#  Phae.ad <- autodetec(bp = c(2, 10), threshold = 20, mindur = 0.09, maxdur = 0.22, envt = "abs", ssmooth = 900, ls = TRUE, res = 100, flim = c(2, 10), wl = 300, set =TRUE, sxrow = 6, rows = 15, redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
+#  Phae.ad <- auto_detec(bp = c(2, 10), threshold = 20, mindur = 0.09, maxdur = 0.22, envt = "abs", ssmooth = 900, ls = TRUE, res = 100, flim = c(2, 10), wl = 300, set =TRUE, sxrow = 6, rows = 15, redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
 #  
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
@@ -382,7 +382,7 @@ xcmaps(Phae.lon.LS, img = FALSE)
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # A margin that's too large causes other signals to be included in the noise measurement
-#  # Re-initialize X as needed, for either autodetec or manualoc output
+#  # Re-initialize X as needed, for either auto_detec output
 #  
 #  # Try this with 10% of the selections first
 #  # Set a seed first, so we all have the same results
@@ -391,13 +391,13 @@ xcmaps(Phae.lon.LS, img = FALSE)
 #  X <- Phae.ad[sample(1:nrow(Phae.ad),(nrow(Phae.ad)*0.05)), ]
 #  nrow(X)
 #  
-#  snrspecs(X = X, flim = c(2, 10), snrmar = 0.5, mar = 0.7, it = "jpeg")
+#  snr_spectrograms(X = X, flim = c(2, 10), snrmar = 0.5, mar = 0.7, it = "jpeg")
 #  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # This smaller margin is better
-#  snrspecs(X = X, flim = c(2, 10), snrmar = 0.04, mar = 0.7, it = "jpeg")
+#  snr_spectrograms(X = X, flim = c(2, 10), snrmar = 0.04, mar = 0.7, it = "jpeg")
 #  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
@@ -421,17 +421,5 @@ xcmaps(Phae.lon.LS, img = FALSE)
 #  
 #  Phae.hisnr <- read.csv("Phae_hisnr.csv", header = TRUE)
 #  table(Phae.hisnr$sound.files)
-#  
-
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
-#  
-#  # Run manualoc() with frequency range set for Phaethornis longirostris
-#  # Recording comments are enabled to mark recording quality
-#  # Selection comments enabled to include visual classifications
-#  manualoc(flim = c(2, 10), reccomm = TRUE, selcomm = TRUE, osci = TRUE, seltime = 2)
-#  
-#  # Read manualoc() output back into R as an object
-#  # This data frame object can be used as input for later functions
-#  manualoc_out <- read.csv("manualoc_output.csv", header = TRUE)
 #  
 

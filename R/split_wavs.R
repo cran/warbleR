@@ -45,7 +45,7 @@ split_wavs <- function(path = NULL, sgmt.dur = 10, sgmts = NULL, files = NULL, p
   
   #### set arguments from options
   # get function arguments
-  argms <- methods::formalArgs(wavdur)
+  argms <- methods::formalArgs(split_wavs)
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
@@ -119,7 +119,7 @@ split_wavs <- function(path = NULL, sgmt.dur = 10, sgmts = NULL, files = NULL, p
   # if X has not
   if (is.null(X)){    
   # measure wav duration
-  wvdr <- wav_dur(path = path, files = files)
+  wvdr <- duration_wavs(path = path, files = files)
 
   # calculate start and end of segments and output data frame
   split.dfs <- lapply(files, function(x){
@@ -184,3 +184,15 @@ split_wavs <- function(path = NULL, sgmt.dur = 10, sgmts = NULL, files = NULL, p
   
   return(split.df)
 } 
+
+
+
+##############################################################################################################
+#' alternative name for \code{\link{split_wavs}}
+#'
+#' @keywords internal
+#' @details see \code{\link{split_wavs}} for documentation. \code{\link{split_wavs}} will be deprecated in future versions.
+#' @export
+
+split_wavs <- split_wavs
+

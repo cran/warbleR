@@ -1,6 +1,6 @@
-#' Obtain annotations from 'audioblast.org' data base
+#' Obtain annotations from audioblast.org data base
 #' 
-#' \code{find_annotations} downloads sound file annotations and metadata from 'audioblast.org'.
+#' \code{find_annotations} downloads sound file annotations and metadata from audioblast.org.
 #' @usage find_annotations(qword, parallel = 1, pb = TRUE, warbler.format = FALSE, 
 #' download = FALSE, X = NULL, path = NULL)  
 #' @param qword Character vector of length one indicating  the scientific name of the species to search for at audioblast's annotations database. For example, \emph{Phaethornis longirostris}. 
@@ -20,8 +20,8 @@
 #' @export
 #' @name find_annotations
 #' @details This function queries for annotations on acoustic media in the open-access
-#' online repository 'audioblast.org'.
-#' @seealso \code{\link{quer_xc}} 
+#' online repository audioblast.org.
+#' @seealso \code{\link{query_xc}} 
 #' @examples
 #'  \dontrun{
 #' ann <- find_annotations(qword = "Thyroptera")

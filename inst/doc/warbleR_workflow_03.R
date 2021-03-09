@@ -51,13 +51,13 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
-#  tin <- querxc(qword = 'Tinamus', download = FALSE)
+#  tin <- query_xc(qword = 'Tinamus', download = FALSE)
 #  
 #  # select a single recording
 #  tin <- tin[tin$Recordist == "Marcelo Araya-Salas", ]
 #  
 #  # download this recording
-#  querxc(X = tin, download = TRUE)
+#  query_xc(X = tin, download = TRUE)
 #  
 #  mp32wav()
 #  
@@ -92,15 +92,12 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
-#  # here we will use manualoc to select signals within this recording
-#  # display only part of the recording to make manualoc run faster
-#  manualoc(flist = "Tinamus-major-154191.wav", flim = c(0, 4), tdisp = 60)
-#  
+#  # here we will use a data set with sound files that have been already annotated
 #  # read the selections back into the global environment
 #  Tin.sels <- read.csv("manualoc_output.csv")
 #  str(Tin.sels)
 #  
-#  # cut the original wave file by selections for frange.detec below
+#  # cut the original wave file by selections for freq_range_detec below
 #  writeWave(seewave::cutw(readWave("Tinamus-major-154191.wav"), from = Tin.sels$start[1], to = Tin.sels$end[1], f = 44100, plot = FALSE, output = "Wave"), filename = "Tinamus-major-154191-1.wav")
 #  
 #  writeWave(seewave::cutw(readWave("Tinamus-major-154191.wav"), from = Tin.sels$start[2], to = Tin.sels$end[2], f = 44100, plot = FALSE, output = "Wave"), filename = "Tinamus-major-154191-2.wav")
@@ -109,20 +106,20 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # note that changing the threshold argument in combination with the bandpass argument can improve the detection
-#  frange.detec(readWave("Tinamus-major-154191-1.wav"), flim = c(0, 2.5), bp = c(0, 3), threshold = 15, plot = TRUE)
+#  freq_range_detec(readWave("Tinamus-major-154191-1.wav"), flim = c(0, 2.5), bp = c(0, 3), threshold = 15, plot = TRUE)
 #  
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
-#  # here, giving a strict bandpass with very low threshold improves frange detection
+#  # here, giving a strict bandpass with very low threshold improves freq_range detection
 #  # since the curving end of the tinamou signal is lower amplitude than the rest of the signal
-#  frange.detec(readWave("Tinamus-major-154191-1.wav"), flim = c(0, 2.5), bp = c(0, 3), threshold = 1, plot = TRUE)
+#  c(readWave("Tinamus-major-154191-1.wav"), flim = c(0, 2.5), bp = c(0, 3), threshold = 1, plot = TRUE)
 #  
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
-#  # use arguments from frange.detec above
-#  fr <- frange(Tin.sels, threshold = 1, res = 100, flim = c(0, 2.5), bp = c(0.5, 2.5))
+#  # use arguments from freq_range_detec above
+#  fr <- freq_range(Tin.sels, threshold = 1, res = 100, flim = c(0, 2.5), bp = c(0.5, 2.5))
 #  str(fr)
 #  
 
@@ -136,7 +133,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  Phae.hisnrt <- read.csv("Phae_hisnrt.csv", header = TRUE)
 #  str(Phae.hisnrt)
 #  
-#  se <- sp.en.ts(Phae.hisnrt, wl = 300, length.out = 10, threshold = 10, img = TRUE, img.suffix = "sp.en.ts", type = "b", ovlp = 90, sp.en.range = c(-25, 10), flim = c(2, 10), picsize = 0.75, title = FALSE)
+#  se <- entropy_ts(Phae.hisnrt, wl = 300, length.out = 10, threshold = 10, img = TRUE, img.suffix = "entropy_ts", type = "b", ovlp = 90, sp.en.range = c(-25, 10), flim = c(2, 10), picsize = 0.75, title = FALSE)
 #  
 #  str(se)
 #  
@@ -144,28 +141,28 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Note that the dominant frequency measurements are almost always more accurate
-#  trackfreqs(Phae.hisnrt, wl = 300, flim = c(2, 10), bp = c(1, 12), it = "jpeg")
+#  track_freq_contour(Phae.hisnrt, wl = 300, flim = c(2, 10), bp = c(1, 12), it = "jpeg")
 #  
 #  # We can change the lower end of bandpass to make the frequency measurements more precise
-#  trackfreqs(Phae.hisnrt, wl = 300, flim = c(2, 10), bp = c(2, 12), col = c("purple", "orange"), pch = c(17, 3), res = 100, it = "jpeg", picsize = 0.8)
+#  track_freq_contour(Phae.hisnrt, wl = 300, flim = c(2, 10), bp = c(2, 12), col = c("purple", "orange"), pch = c(17, 3), res = 100, it = "jpeg", picsize = 0.8)
 #  
 
 ## ---- echo=FALSE, eval=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
-#  # decided to remove track_harms, not working well for either Phaethornis or Tinamou signals
+#  # decided to remove track_harmonics, not working well for either Phaethornis or Tinamou signals
 #  
 #  # the text for above this chunk
-#  # `track_harms` is a modified function from `seewave` that allows you to track the dominant frequency for harmonic calls, even when the amplitude fluctuates among harmonics.
+#  # `track_harmonics` is a modified function from `seewave` that allows you to track the dominant frequency for harmonic calls, even when the amplitude fluctuates among harmonics.
 #  
 #  # with a Phaethornis harmonic signal
 #  nm <- paste(paste(as.character(Phae.hisnrt$sound.files[1]), as.character(Phae.hisnrt$selec[1]), sep = "-"), ".wav", sep = "")
 #  
 #  writeWave(seewave::cutw(readWave(as.character(Phae.hisnrt$sound.files[1])), from = Phae.hisnrt$start[1], to = Phae.hisnrt$end[1], f = 44100, plot = FALSE, output = "Wave"), filename = nm)
 #  
-#  trck_hrm <- track_harm(readWave(nm), f = 44100, ovlp = 70, fftw = FALSE, threshold = 15, bandpass = NULL, clip = 0.1, plot = TRUE, xlab = "Time (s)", ylab = "Frequency (kHz)",  adjust.wl = FALSE, dfrq = FALSE)
+#  trck_hrm <- track_harmonic(readWave(nm), f = 44100, ovlp = 70, fftw = FALSE, threshold = 15, bandpass = NULL, clip = 0.1, plot = TRUE, xlab = "Time (s)", ylab = "Frequency (kHz)",  adjust.wl = FALSE, dfrq = FALSE)
 #  
 #  # plot spectrogram
-#  spectro(readWave(nm), grid = FALSE, scale = FALSE, f = 22050, ovlp = 90, palette = reverse.gray.colors.2, collevels = seq(-40, 0, 1), wl = 300, osc = FALSE, flim = c(2, 10), main = "warbleR's 'track_harm'")
+#  spectro(readWave(nm), grid = FALSE, scale = FALSE, f = 22050, ovlp = 90, palette = reverse.gray.colors.2, collevels = seq(-40, 0, 1), wl = 300, osc = FALSE, flim = c(2, 10), main = "warbleR's 'track_harmonic'")
 #  
 #  # plot detected frequency contour
 #  points(x = trck_hrm[ , 1] + 0.1, y =  trck_hrm[ , 2], cex = 1, col = "red", pch = 20)
@@ -174,10 +171,10 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 ## ---- echo=FALSE, eval=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
 #  # with a Tinamou tonal signal
-#  trck_hrm <- track_harm(readWave("Tinamus-major-154191-1.wav"), f = 44100, ovlp = 70, fftw = FALSE, threshold = 15, bandpass = NULL, plot = TRUE, xlab = "Time (s)", ylab = "Frequency (kHz)",  adjust.wl = FALSE, dfrq = FALSE)
+#  trck_hrm <- track_harmonic(readWave("Tinamus-major-154191-1.wav"), f = 44100, ovlp = 70, fftw = FALSE, threshold = 15, bandpass = NULL, plot = TRUE, xlab = "Time (s)", ylab = "Frequency (kHz)",  adjust.wl = FALSE, dfrq = FALSE)
 #  
 #  # plot spectrogram
-#  spectro(readWave("Tinamus-major-154191-2.wav"), grid = FALSE, scale = FALSE, f = 44100, ovlp = 90, palette = reverse.gray.colors.2, collevels = seq(-40, 0, 1), wl = 300, osc = FALSE, flim = c(0, 4), main = "warbleR's 'track_harm'")
+#  spectro(readWave("Tinamus-major-154191-2.wav"), grid = FALSE, scale = FALSE, f = 44100, ovlp = 90, palette = reverse.gray.colors.2, collevels = seq(-40, 0, 1), wl = 300, osc = FALSE, flim = c(0, 4), main = "warbleR's 'track_harmonic'")
 #  
 #  # plot detected frequency contour
 #  points(x = trck_hrm[ , 1] + 0.1, y =  trck_hrm[ , 2], cex = 1, col = "red", pch = 20)
@@ -186,7 +183,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 ## ---- echo=TRUE, eval=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Fundamental frequency contour
-#  ff_df <- ffts(Phae.hisnrt, wl = 300, length.out = 20, threshold = 15, img = TRUE, img.suffix = "ff", type = "p", ovlp = 70, clip.edges = FALSE, leglab = "ffts", ff.method = "tuneR")
+#  ff_df <- freq_ts(Phae.hisnrt, wl = 300, length.out = 20, threshold = 15, img = TRUE, img.suffix = "ff", type = "p", ovlp = 70, clip.edges = FALSE, leglab = "ffts", ff.method = "tuneR")
 #  
 #  str(ff_df)
 #  
@@ -196,23 +193,23 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  # Dominant frequency contour
 #  
 #  # Uses seewave function dfreq by default
-#  df_df <- ffts(Phae.hisnrt, wl = 300, length.out = 20, threshold = 15, img = TRUE, img.suffix = "ff", type = "p", ovlp = 70, clip.edges = FALSE, leglab = "ffts", fsmooth = 0.2)
+#  df_df <- freq_ts(Phae.hisnrt, wl = 300, length.out = 20, threshold = 15, img = TRUE, img.suffix = "ff", type = "p", ovlp = 70, clip.edges = FALSE, leglab = "ffts", fsmooth = 0.2)
 #  
 #  str(df_df)
 #  
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
-#  # Use the original data frame of songs for the main seltailor dataset
+#  # Use the original data frame of songs for the main tailor_sels dataset
 #  # the data frame with the fundamental frequency contours is provided for manual tracing
-#  seltailor(Phae.hisnrt, wl = 300, flim = c(2, 10), wn = "hanning", mar = 0.1,
+#  tailor_sels(Phae.hisnrt, wl = 300, flim = c(2, 10), wn = "hanning", mar = 0.1,
 #   osci = TRUE, title = c("sound.files", "selec"), auto.contour = TRUE, ts.df = ff_df, col = "red", alpha = 0.6)
 #  
-#  # rename your seltailor output csv as desired, then read it back into R
+#  # rename your tailor_sels output csv as desired, then read it back into R
 #  mff <- read.csv("seltailor_output_mff.csv")
 #  str(mff)
 #  
-#  trackfreqs(Phae.hisnrt, wl = 300, flim = c(2, 10), bp = c(1, 12), it = "jpeg", custom.contour = mff)
+#  track_freq_contour(Phae.hisnrt, wl = 300, flim = c(2, 10), bp = c(1, 12), it = "jpeg", custom.contour = mff)
 #  
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
@@ -225,7 +222,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  
 #  Phae.hisnrt <- read.csv("Phae_hisnrt.csv", header = TRUE)
 #  
-#  compare.methods(X = Phae.hisnrt, flim = c(0, 10), bp = c(0, 10),
+#  compare_methods(X = Phae.hisnrt, flim = c(0, 10), bp = c(0, 10),
 #                  wl = 300, n = 10, methods = c("XCORR", "dfDTW"))
 #  
 
@@ -236,7 +233,7 @@ params <- read.csv("acoustic_parameters.csv")
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
-#  params <- specan(Phae.hisnrt, bp = c(2, 10), threshold = 15)
+#  params <- spectro_analysis(Phae.hisnrt, bp = c(2, 10), threshold = 15)
 #  write.csv(params, "acoustic_parameters.csv", row.names = FALSE)
 #  
 
@@ -257,20 +254,20 @@ params <- read.csv("acoustic_parameters.csv")
 #  selec.table$song <- rep(1:4, each = 3)[1:11]
 #  
 #  # Measure acoustic parameters
-#  sp <- specan(selec.table, bp = c(1, 11), 300, fast = TRUE)
+#  sp <- spectro_analysis(selec.table, bp = c(1, 11), 300, fast = TRUE)
 #  
 #  # Add song data
 #  sp <- merge(sp, selec.table, by = c("sound.files", "selec"))
 #  
 #  # Caculate song-level parameters for all numeric parameters
-#  sng <- song_param(X = sp, song_colm = "song", parallel = 1, pb = TRUE)
+#  sng <- song_analysis(X = sp, song_colm = "song", parallel = 1, pb = TRUE)
 #  str(sng)
 #  
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Harmonic Phaethornis signals
-#  dm <- dfDTW(Phae.hisnrt, length.out = 30, flim = c(2, 10), bp = c(2, 9), wl = 300, img = TRUE)
+#  dm <- freq_DTW(Phae.hisnrt, length.out = 30, flim = c(2, 10), bp = c(2, 9), wl = 300, img = TRUE)
 #  
 #  str(dm)
 #  
@@ -280,13 +277,13 @@ params <- read.csv("acoustic_parameters.csv")
 #  # Tonal Tinamou signals
 #  Tin.sels <- read.csv("Tinamus-major-154191_sels.csv", header = TRUE)
 #  
-#  dm <- dfDTW(Tin.sels, length.out = 30, flim = c(0, 2.5), bp = c(0.5, 2.5), wl = 512, img = TRUE)
+#  dm <- freq_DTW(Tin.sels, length.out = 30, flim = c(0, 2.5), bp = c(0.5, 2.5), wl = 512, img = TRUE)
 #  str(dm)
 #  
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
-#  xc <- xcorr(Phae.hisnrt, wl = 300, na.rm = FALSE)
+#  xc <- cross_correlation(Phae.hisnrt, wl = 300, na.rm = FALSE)
 #  str(xc)
 #  
 
@@ -302,7 +299,7 @@ summary(pca)
 pcascor <- as.data.frame(pca[[5]])
 
 # Plot the 2 first PCs
-plot(pcascor[, 1], pcascor[, 2], col = as.numeric(params$sound.files), pch = 20, 
+plot(pcascor[, 1], pcascor[, 2], col = as.numeric(as.factor(params$sound.files)), pch = 20, 
      cex = 1, xlab = "PC1", ylab = "PC2")
 
 # Add recordings/individuals labels 
@@ -331,7 +328,7 @@ songtype <- gsub("154129|154161", "B", songtype)
 songtype <- gsub("154138", "C", songtype)
 
 # Add song type as a variable representing symbol type
-plot(pcascor[, 1], pcascor[, 2], col = as.numeric(params$sound.files), 
+plot(pcascor[, 1], pcascor[, 2], col = as.numeric(as.factor(params$sound.files)), 
 pch = as.numeric(as.factor(songtype)), 
      cex = 1, xlab = "PC1", ylab = "PC2")
 
@@ -344,14 +341,14 @@ text(x, y, unique(songtype), cex = 1)
 
 ## ---- eval = FALSE, echo = TRUE---------------------------------------------------------------------------------------------------------------------
 #  
-#  data(sim.coor.sing)
-#  str(sim.coor.sing)
+#  data(sim_coor_sing)
+#  str(sim_coor_sing)
 #  
 
 ## ---- eval = FALSE, echo = TRUE---------------------------------------------------------------------------------------------------------------------
 #  
 #  # save plots in a list
-#  g <- coor.graph(sim.coor.sing, it = "jpeg", img = FALSE, res = 300)
+#  g <- plot_coordination(sim_coor_sing, it = "jpeg", img = FALSE, res = 300)
 #  
 #  # print list of plots to graphics device
 #  g
@@ -359,7 +356,7 @@ text(x, y, unique(songtype), cex = 1)
 
 ## ---- eval = FALSE, echo = TRUE---------------------------------------------------------------------------------------------------------------------
 #  
-#  cs <- coor.test(sim.coor.sing, iterations = 1000, less.than.chance = TRUE, cutoff = 10)
+#  cs <- test_coordination(sim_coor_sing, iterations = 1000, less.than.chance = TRUE, cutoff = 10)
 #  str(cs)
 #  
 

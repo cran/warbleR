@@ -41,7 +41,7 @@ convert all .mp3 files in working directory to .wav format. Function used intern
 \examples{
 \dontrun{
 # download mp3 files from xeno-canto
-querxc(qword = "Phaethornis aethopygus", download = TRUE, path = tempdir())
+query_xc(qword = "Phaethornis aethopygus", download = TRUE, path = tempdir())
 
 # Convert all files to .wav format
 mp32wav(path = tempdir(), dest.path = tempdir())

@@ -6,7 +6,7 @@
 #' labels = c("sound.files", "selec"), overwrite = FALSE, norm = FALSE, ...)
 #' @param X object of class 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signals (start and end).
-#' The output of \code{\link{manualoc}} or \code{\link{autodetec}} can be used as the input data frame. 
+#' The output of \code{\link{auto_detec}} can be used as the input data frame. 
 #' @param mar Numeric vector of length 1. Specifies the margins adjacent to the start and end points of selections,
 #' delineating spectrogram limits. Default is 0.05.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
@@ -182,3 +182,13 @@ cut_sels <- function(X, mar = 0.05, parallel = 1, path = NULL, dest.path = NULL,
     cutFUN(X = X, i = i, mar = mar, labels = labels, dest.path = dest.path)
   }) 
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{cut_sels}}
+#'
+#' @keywords internal
+#' @details see \code{\link{cut_sels}} for documentation. \code{\link{cut_sels}} will be deprecated in future versions.
+#' @export
+
+cut_sels <- cut_sels

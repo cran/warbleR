@@ -1,10 +1,5 @@
 ## ----extn_sel_2, echo = FALSE, message = FALSE----------------------------------------------------
 
-rm(list = ls())
-
-# unload all non-based packages
-out <- sapply(paste('package:', names(sessionInfo()$otherPkgs), sep = ""), function(x) try(detach(x, unload = FALSE, character.only = TRUE), silent = T))
-
 #load packages
 library(warbleR)
 library(knitr)
@@ -34,17 +29,18 @@ options(width = 100, max.print = 100)
 #  lbh_selec_table
 #  
 
-## ----extn_sel_4.2, echo=FALSE, eval = FALSE-------------------------------------------------------
-#  
-#  kbl <- kable(lbh_selec_table, align = "c", row.names = F,  format = "html")
-#  
-#  kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl <- scroll_box(kbl, width = "740px",
-#  box_css = "border: 1px solid #ddd; padding: 1px; ", extra_css = NULL)
-#  
-#  kbl
-#  
+## ----extn_sel_4.2, echo=FALSE, eval = TRUE--------------------------------------------------------
+
+library(kableExtra)
+kbl <- kable(lbh_selec_table, align = "c", row.names = F,  format = "html")
+
+kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
+
+kbl <- scroll_box(kbl, width = "740px",
+box_css = "border: 1px solid #ddd; padding: 1px; ", extra_css = NULL)
+
+kbl
+
 
 ## ----extn_sel_4.32, eval = FALSE------------------------------------------------------------------
 #  
@@ -65,7 +61,11 @@ options(width = 100, max.print = 100)
 
 st <- selection_table(X = lbh_selec_table, pb = FALSE)
 
+
+## ---- eval = TRUE, echo = FALSE-------------------------------------------------------------------
+
 st
+
 
 ## -------------------------------------------------------------------------------------------------
 
@@ -74,9 +74,8 @@ class(st)
 
 ## ----extn_sel_4.3, eval = FALSE-------------------------------------------------------------------
 #  
-#  
 #  #  global parameters
-#  warbleR_options(wav.path = "PONER RUTA A 'ejemplos' AQUI")
+#  warbleR_options(wav.path = tempdir())
 #  
 #  
 #  ext_st <- selection_table(X = lbh_selec_table, pb = FALSE,
@@ -176,35 +175,35 @@ for(i in 1:6){
 
 ## ----extn_sel_8.24--------------------------------------------------------------------------------
 
-# crear nueva base de datos
+# create new data frame
 Y <- data.frame(sound.files = ext_st$sound.files, site = "La Selva", lek = c(rep("SUR", 5), rep("CCL", 6)))
 
-# combinar
+# combine
 mrg_ext_st <- merge(ext_st, Y, by = "sound.files")
 
-# revisar clase
+# check class
 is_extended_selection_table(mrg_ext_st)
 
 
 ## ----extn_sel_8.25--------------------------------------------------------------------------------
 
-# arreglar
+# fix est
 mrg_ext_st <- fix_extended_selection_table(X = mrg_ext_st, Y = ext_st)
 
-# revisar clase
+# check class
 is_extended_selection_table(mrg_ext_st)
 
 
 ## ----extn_sel_12.1, eval=FALSE--------------------------------------------------------------------
 #  
 #  #  parametros espectrales
-#  sp <- specan(ext_st)
+#  sp <- spectro_analysis(ext_st)
 #  
 #  sp
 
 ## ---- extn_sel_12.2, echo= FALSE, eval = FALSE----------------------------------------------------
 #  
-#  sp <- specan(ext_st)
+#  sp <- spectro_analysis(ext_st)
 #  
 #  kbl <- kable(sp, align = "c", row.names = F,  format = "html")
 #  
@@ -239,14 +238,14 @@ is_extended_selection_table(mrg_ext_st)
 
 ## ----extn_sel_12.7, eval=FALSE--------------------------------------------------------------------
 #  
-#  dtw.dist <- dfDTW(ext_st, img = FALSE)
+#  dtw.dist <- freq_DTW(ext_st, img = FALSE)
 #  
 #  dtw.dist
 #  
 
 ## ---- extn_sel_12.8, echo= FALSE, eval = FALSE----------------------------------------------------
 #  
-#  dtw.dist <- dfDTW(ext_st, img = FALSE)
+#  dtw.dist <- freq_DTW(ext_st, img = FALSE)
 #  
 #  kbl <- kable(dtw.dist, align = "c", row.names = T,  format = "html")
 #  
@@ -329,128 +328,128 @@ table(Phae.long.est$lek.song.type)
 #  # write.csv(df4, "cuadro de funciones warbleR.csv", row.names = FALSE)
 #  
 
-## ---- echo = FALSE, eval = FALSE------------------------------------------------------------------
-#  
-#  library(kableExtra)
-#  
-#  names(cf) <- gsub("\\.", " ", names(cf))
-#  
-#  cf2 <- cf[cf$`Obtener preparar grabaciones` == "x", c("Function", "Description", "Works on", "Output")]
-#  
-#  cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
-#  
-#  kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
-#  
-#  kbl <- column_spec(kbl, 1, bold = TRUE)
-#  
-#  kbl <- column_spec(kbl, 2:4, italic = TRUE)
-#  
-#  kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl
-#  
+## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
 
-## ---- echo = FALSE, eval = FALSE------------------------------------------------------------------
-#  
-#  cf2 <- cf[cf$Anotar == "x",  c("Function", "Description", "Works on", "Output")]
-#  
-#  cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
-#  
-#  kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
-#  
-#  kbl <- column_spec(kbl, 1, bold = TRUE)
-#  
-#  kbl <- column_spec(kbl, 2:4, italic = TRUE)
-#  
-#  kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl
-#  
+library(kableExtra)
 
-## ---- echo = FALSE, eval = FALSE------------------------------------------------------------------
-#  
-#  cf2 <- cf[cf$`Organizar anotaciones` == "x",  c("Function", "Description", "Works on", "Output")]
-#  
-#  cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
-#  
-#  kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
-#  
-#  kbl <- column_spec(kbl, 1, bold = TRUE)
-#  
-#  kbl <- column_spec(kbl, 2:4, italic = TRUE)
-#  
-#  kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl
-#  
+names(cf) <- gsub("\\.", " ", names(cf))
 
-## ---- echo = FALSE, eval = FALSE------------------------------------------------------------------
-#  
-#  cf2 <- cf[cf$`Medir estructura` == "x",  c("Function", "Description", "Works on", "Output")]
-#  
-#  cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
-#  
-#  kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
-#  
-#  kbl <- column_spec(kbl, 1, bold = TRUE)
-#  
-#  kbl <- column_spec(kbl, 2:4, italic = TRUE)
-#  
-#  kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl
-#  
+cf2 <- cf[cf$`Obtener preparar grabaciones` == "x", c("Function", "Description", "Works on", "Output")]
 
-## ---- echo = FALSE, eval = FALSE------------------------------------------------------------------
-#  
-#  cf2 <- cf[cf$Verificar == "x",  c("Function", "Description", "Works on", "Output")]
-#  
-#  cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
-#  
-#  kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
-#  
-#  kbl <- column_spec(kbl, 1, bold = TRUE)
-#  
-#  kbl <- column_spec(kbl, 2:4, italic = TRUE)
-#  
-#  kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl
-#  
+cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
 
-## ---- echo = FALSE, eval = FALSE------------------------------------------------------------------
-#  
-#  cf2 <- cf[cf$`Inspeccion visual` == "x",  c("Function", "Description", "Works on", "Output")]
-#  
-#  cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
-#  
-#  kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
-#  
-#  kbl <- column_spec(kbl, 1, bold = TRUE)
-#  
-#  kbl <- column_spec(kbl, 2:4, italic = TRUE)
-#  
-#  kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl
-#  
+kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
 
-## ---- echo = FALSE, eval = FALSE------------------------------------------------------------------
-#  
-#  cf2 <- cf[cf$`Analisis estadistico` == "x" | cf$Otros == "x",  c("Function", "Description", "Works on", "Output")]
-#  
-#  cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
-#  
-#  kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
-#  
-#  kbl <- column_spec(kbl, 1, bold = TRUE)
-#  
-#  kbl <- column_spec(kbl, 2:4, italic = TRUE)
-#  
-#  kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl
-#  
+kbl <- column_spec(kbl, 1, bold = TRUE)
+
+kbl <- column_spec(kbl, 2:4, italic = TRUE)
+
+kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
+
+kbl
+
+
+## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+
+cf2 <- cf[cf$Anotar == "x",  c("Function", "Description", "Works on", "Output")]
+
+cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
+
+kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
+
+kbl <- column_spec(kbl, 1, bold = TRUE)
+
+kbl <- column_spec(kbl, 2:4, italic = TRUE)
+
+kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
+
+kbl
+
+
+## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+
+cf2 <- cf[cf$`Organizar anotaciones` == "x",  c("Function", "Description", "Works on", "Output")]
+
+cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
+
+kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
+
+kbl <- column_spec(kbl, 1, bold = TRUE)
+
+kbl <- column_spec(kbl, 2:4, italic = TRUE)
+
+kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
+
+kbl
+
+
+## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+
+cf2 <- cf[cf$`Medir estructura` == "x",  c("Function", "Description", "Works on", "Output")]
+
+cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
+
+kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
+
+kbl <- column_spec(kbl, 1, bold = TRUE)
+
+kbl <- column_spec(kbl, 2:4, italic = TRUE)
+
+kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
+
+kbl
+
+
+## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+
+cf2 <- cf[cf$Verificar == "x",  c("Function", "Description", "Works on", "Output")]
+
+cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
+
+kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
+
+kbl <- column_spec(kbl, 1, bold = TRUE)
+
+kbl <- column_spec(kbl, 2:4, italic = TRUE)
+
+kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
+
+kbl
+
+
+## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+
+cf2 <- cf[cf$`Inspeccion visual` == "x",  c("Function", "Description", "Works on", "Output")]
+
+cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
+
+kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
+
+kbl <- column_spec(kbl, 1, bold = TRUE)
+
+kbl <- column_spec(kbl, 2:4, italic = TRUE)
+
+kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
+
+kbl
+
+
+## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+
+cf2 <- cf[cf$`Analisis estadistico` == "x" | cf$Otros == "x",  c("Function", "Description", "Works on", "Output")]
+
+cf2$Function <- cell_spec(x = cf2$Function, link = paste0("https://marce10.github.io/warbleR/reference/", cf2$Function, ".html"))
+
+kbl <- kable(cf2, align = "c", row.names = F,  format = "html", escape = F)
+
+kbl <- column_spec(kbl, 1, bold = TRUE)
+
+kbl <- column_spec(kbl, 2:4, italic = TRUE)
+
+kbl <-  kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
+
+kbl
+
 
 ## ----session info, echo=F-------------------------------------------------------------------------
 
