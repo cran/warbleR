@@ -54,8 +54,8 @@ resample_est_waves <- function(X, samp.rate = 44.1, bit.depth = 16, avoid.clip =
     bit.depth <- as.character(bit.depth)
     if (!bit.depth %in% c("1", "8", "16", "24", "32", "64", "0")) stop('only this "bit.depth" values allowed c("1", "8", "16", "24", "32", "64", "0") \n see ?tuneR::normalize')
   
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  
   
   #### set arguments from options
   # get function arguments
@@ -63,9 +63,6 @@ resample_est_waves <- function(X, samp.rate = 44.1, bit.depth = 16, avoid.clip =
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -81,15 +78,15 @@ resample_est_waves <- function(X, samp.rate = 44.1, bit.depth = 16, avoid.clip =
     for (q in 1:length(opt.argms))
       assign(names(opt.argms)[q], opt.argms[[q]])
   
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  
+  
   
   # set clusters for windows OS and no soz
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # if (!sox)
-  #   out <- pbapply::pblapply(attributes(X)$wave.objects, cl = cl, function(x)
+  #   out <- pblapply_wrblr_int(pbar = pb, X = attributes(X)$wave.objects, cl = cl, function(x)
   # {
   # 
   #   if (x@samp.rate != samp.rate * 1000) {
@@ -110,7 +107,7 @@ resample_est_waves <- function(X, samp.rate = 44.1, bit.depth = 16, avoid.clip =
   #   }) else {
   #    
       
-      out <- pbapply::pblapply(attributes(X)$wave.objects, function(x){
+      out <- pblapply_wrblr_int(pbar = pb, X = attributes(X)$wave.objects, FUN = function(x){
         
         # fo saving current wave    
         tempfile <- paste0(tempfile(), ".wav")
@@ -118,7 +115,7 @@ resample_est_waves <- function(X, samp.rate = 44.1, bit.depth = 16, avoid.clip =
         # for writting converted wave
         tempfile2 <- paste0(tempfile(), ".wav")
         
-        suppressWarnings(tuneR::writeWave(extensible = FALSE, object = tuneR::normalize(x), filename = tempfile))
+        suppressWarnings(tuneR::writeWave(extensible = FALSE, object = tuneR::normalize(x, unit = bit.depth), filename = tempfile))
    
         cll <- paste0("sox '", tempfile,"'  -t wavpcm ", "-b ", bit.depth, " '", tempfile2, "' rate ", samp.rate * 1000, " dither -s") 
         
@@ -130,7 +127,7 @@ resample_est_waves <- function(X, samp.rate = 44.1, bit.depth = 16, avoid.clip =
         
         out <- suppressWarnings(system(cll, ignore.stdout = FALSE, intern = TRUE)) 
         
-        x <- warbleR::read_wave(X = basename(tempfile2), path = tempdir())
+        x <- warbleR::read_sound_file(X = basename(tempfile2), path = tempdir())
         
         # remove files
         unlink(c(tempfile, tempfile2))  
@@ -147,7 +144,6 @@ resample_est_waves <- function(X, samp.rate = 44.1, bit.depth = 16, avoid.clip =
   # fix attributes
   attributes(X)$check.results$sample.rate <- samp.rate
   attributes(X)$check.results$bits <- bit.depth
-  # attributes(X)$check.results$n.samples <- sapply(attributes(X)$check.results$sound.files, function(x) length(x@left)) 
   attributes(X)$check.results$n.samples <- sapply(X$sound.files, function(x) length(attributes(X)$wave.objects[[which(names(attributes(X)$wave.objects) == x)]]@left)) 
   
   if (any(X$top.freq > samp.rate / 2)) 

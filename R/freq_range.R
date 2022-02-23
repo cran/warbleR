@@ -2,11 +2,11 @@
 #' 
 #' \code{freq_range} detect frequency range iteratively from signals in a selection table.
 #' @usage freq_range(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, threshold = 10, 
-#' dB.threshold = NULL, wn = "hanning", flim = c(0, 22), bp = NULL, 
+#' dB.threshold = NULL, wn = "hanning", flim = NULL, bp = NULL, 
 #' propwidth = FALSE, xl = 1, picsize = 1, res = 100, fast.spec = FALSE, ovlp = 50,
 #' pal = reverse.gray.colors.2, parallel = 1, widths = c(2, 1), main = NULL, 
 #' img = TRUE, mar = 0.05, path = NULL, pb = TRUE, impute = FALSE)
-#' @param X object of class 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @param X object of class 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the sound 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The output of \code{\link{auto_detec}} can
 #' also be used as the input data frame.
@@ -25,7 +25,7 @@
 #' @param wn Character vector of length 1 specifying window name. Default is 
 #'   "hanning". See function \code{\link[seewave]{ftwindow}} for more options. This is used for calculating the frequency spectrum (using \code{\link[seewave]{meanspec}}) and producing the spectrogram (using \code{\link[seewave]{spectro}}, if \code{img = TRUE}). 
 #' @param flim A numeric vector of length 2 for the frequency limit of 
-#'   the spectrogram (in kHz), as in \code{\link[seewave]{spectro}}. Default is c(0, 22).
+#'   the spectrogram (in kHz), as in \code{\link[seewave]{spectro}}. Default is \code{NULL}.
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a 
 #'   frequency bandpass filter (in kHz) or "frange" to indicate that values in 'bottom.freq' 
 #'   and 'top.freq' columns will be used as bandpass limits. Default is c(0, 22).
@@ -91,10 +91,10 @@
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 #last modification on mar-12-2018 (MAS)
 
-freq_range <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, threshold = 10, dB.threshold = NULL, wn = "hanning", flim = c(0, 22), bp = NULL, propwidth = FALSE, xl = 1, picsize = 1, res = 100, fast.spec = FALSE, ovlp = 50, pal = reverse.gray.colors.2, parallel = 1, widths = c(2, 1), main = NULL, img = TRUE, mar = 0.05, path = NULL, pb = TRUE, impute = FALSE)
+freq_range <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, threshold = 10, dB.threshold = NULL, wn = "hanning", flim = NULL, bp = NULL, propwidth = FALSE, xl = 1, picsize = 1, res = 100, fast.spec = FALSE, ovlp = 50, pal = reverse.gray.colors.2, parallel = 1, widths = c(2, 1), main = NULL, img = TRUE, mar = 0.05, path = NULL, pb = TRUE, impute = FALSE)
 {
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  
   
   #### set arguments from options
   # get function arguments
@@ -102,9 +102,6 @@ freq_range <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thr
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -149,15 +146,15 @@ freq_range <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thr
   #return warning if not all sound files were found
   if (!is_extended_selection_table(X))
   {
-    fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+    fs <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
-                  ".wav file(s) not found"))
+                  "sound file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
   d <- which(X$sound.files %in% fs) 
   if (length(d) == 0){
-    stop("The .wav files are not in the working directory")
+    stop("The sound files are not in the working directory")
   }  else {
     X <- X[d, ]
     }
@@ -165,7 +162,7 @@ freq_range <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thr
     
   # internal function to detect freq range
   frangeFUN <- function(X, i, img, bp, wl, fsmooth, threshold, wn, flim, ovlp, fast.spec, pal, widths) {
-    r <- warbleR::read_wave(X = X, path = path, index = i, header = TRUE)
+    r <- warbleR::read_sound_file(X = X, path = path, index = i, header = TRUE)
     f <- r$sample.rate
     t <- c(X$start[i] - mar, X$end[i] + mar)
     
@@ -183,7 +180,7 @@ freq_range <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thr
     
     
     # read rec segment
-    r <- warbleR::read_wave(X = X, path = path, index = i, from = t[1], to = t[2])
+    r <- warbleR::read_sound_file(X = X, path = path, index = i, from = t[1], to = t[2])
     
     frng <- frd_wrblr_int(wave = seewave::cutw(r, from = mar1, to = mar2, output = "Wave"), wl = wl, fsmooth = fsmooth, threshold = threshold, dB.threshold = dB.threshold, wn = wn, bp = bp, ovlp = ovlp)
     
@@ -206,15 +203,15 @@ freq_range <- function(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, thr
     
   }
 
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  
+  
   
   # set clusters for windows OS
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # run loop apply function
-  fr <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
+  fr <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(X), cl = cl, FUN = function(i) 
   { 
     # if bp is frange
    if (!is.null(bp))

@@ -1,5 +1,5 @@
 #internal warbleR function, not to be called by users. It is a modified version of seewave::spectro 
-# that allows to plot spectrograms without resetting the graphic device.It also allow using image() 
+# that allows to plot spectrograms without resetting the graphic device, which is useful for multipannel figures. It also allow using image() 
 # which substantially increases speed (although makes some options unavailable)
 #last modification on feb-27-2019 (MAS)
 spectro_wrblr_int2 <- function(wave, f, wl = 512, wn = "hanning", zp = 0, ovlp = 0, 
@@ -45,7 +45,7 @@ spectro_wrblr_int2 <- function(wave, f, wl = 512, wn = "hanning", zp = 0, ovlp =
   if (!is.null(tlim)) 
     wave <- cutw(wave, f = f, from = tlim[1], to = tlim[2])
   if (!is.null(flimd)) {
-    mag <- round((f/2000)/(flimd[2] - flimd[1]))
+    mag <- round((floor(f / 2000))/(flimd[2] - flimd[1]))
     wl <- wl * mag
     if (ovlp == 0) 
       ovlp <- 100

@@ -10,8 +10,7 @@
 #'   alpha = 0.7, auto.contour = FALSE, ...)
 #' @param X 'selection_table', 'extended_selection_table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
-#' end time of selections. The output of \code{\link{auto_detec}} can 
-#' be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above. Notice that, if an output file ("seltailor_output.csv") is found in the working directory it will be given priority over an input data frame.
+#' end time of selections. Notice that, if an output file ("seltailor_output.csv") is found in the working directory it will be given priority over an input data frame.
 #' @param wl A numeric vector of length 1 specifying the spectrogram window length. Default is 512.
 #' @param flim A numeric vector of length 2 specifying the frequency limit (in kHz) of 
 #'   the spectrogram, as in the function \code{\link[seewave]{spectro}}. 
@@ -140,9 +139,6 @@ tailor_sels <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar 
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
-  
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
   
@@ -239,10 +235,10 @@ tailor_sels <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar 
   
   # stop if not all sound files were found
   if (!is_extended_selection_table(X)){
-    fs <- list.files(path = path,pattern = "\\.wav$", ignore.case = TRUE)
+    fs <- list.files(path = path,pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     stop(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
-               ".wav file(s) not found"))
+               "sound file(s) not found"))
   } else path <- NULL # if is extended then no path needed
   
   if (frange & !all(any(names(X) == "bottom.freq"), any(names(X) == "top.freq")))
@@ -305,12 +301,12 @@ tailor_sels <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar 
     j <- dn[h]
     
     if (exists("prev.plot")) rm(prev.plot)
-    rec <- warbleR::read_wave(X, index = j, path = path, header = TRUE)
+    rec <- warbleR::read_sound_file(X, index = j, path = path, header = TRUE)
     main <- do.call(paste, as.list(X[j, names(X) %in% title])) 
     
     f <- rec$sample.rate #for spectro display
-    fl<- flim #in case flim its higher than can be due to sampling rate
-    if (fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
+    fl<- flim #in case flim its higher than nyquist frequency
+    if (fl[2] > f / 2000) fl[2] <- f / 2000 
     len <- rec$samples/f  #for spectro display 
     start <- numeric() #save results
     end <- numeric() #save results
@@ -324,7 +320,7 @@ tailor_sels <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar 
     par(mfrow = c(1,1), mar = c(3, 3, 1.8, 0.1))
     
     #create spectrogram
-    spectro_wrblr_int(warbleR::read_wave(X = X, index = j, path = path, from =  tlim[1], to = tlim[2]), 
+    spectro_wrblr_int(warbleR::read_sound_file(X = X, index = j, path = path, from =  tlim[1], to = tlim[2]), 
                       f = f, wl = wl, ovlp = ovlp, wn = wn, heights = c(3, 2), 
                       osc = osci, palette =  pal, main = NULL, axisX= TRUE, grid = FALSE, collab = "black", alab = "", fftw= TRUE, colwave = "#07889B", collevels = collevels,
                       flim = fl, scale = FALSE, axisY= TRUE, fast.spec = fast.spec, ...
@@ -592,7 +588,8 @@ tailor_sels <- function(X = NULL, wl = 512, flim = c(0,22), wn = "hanning", mar 
           X$start[j] <- 0
         
         # fix if higher than file duration in extended selection tables
-        if (is_extended_selection_table(X) & X$end[j] > duration(attr(X, "wave.objects")[[which(names(attr(X, "wave.objects")) == X$sound.files[j])[1]]]))
+        if (is_extended_selection_table(X)) 
+          if (X$end[j] > duration(attr(X, "wave.objects")[[which(names(attr(X, "wave.objects")) == X$sound.files[j])[1]]]))
               X$end[j] <- duration(attr(X, "wave.objects")[[which(names(attr(X, "wave.objects")) == X$sound.files[j])[1]]])
         
         if (frange) {

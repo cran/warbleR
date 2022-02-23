@@ -5,7 +5,7 @@
 #' example sound files included in this package. Same data than 'selec_table'.
 #' 'selec_table' will be removed in future package version.
 #' 
-#' @format A data frame with 11 rows and 6 variables: \describe{ 
+#' @format A data frame with 11 rows and 7 variables: \describe{ 
 #'  \item{sound.files}{recording names}
 #'  \item{channel}{channel in which signal is found}
 #'  \item{selec}{selection numbers within recording}
@@ -17,7 +17,7 @@
 #' 
 #' @usage data(lbh_selec_table)
 #' 
-#' @source Marcelo Araya Salas, warbleR 
+#' @source Marcelo Araya-Salas, warbleR 
 #' 
 #' @description \code{lbh_selec_table} alternative name for \code{selec.table}. \code{selec.table} will be deprecated in 
 #' future versions.

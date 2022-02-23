@@ -1,4 +1,4 @@
-# warbleR
+# warbleR: Streamline Bioacoustic Analysis
 
 [![CRAN Status Badge](https://www.r-pkg.org/badges/version/warbleR)](https://cran.r-project.org/package=warbleR)
 [![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/warbleR)](https://www.r-pkg.org/pkg/warbleR)
@@ -8,14 +8,15 @@
 [warbleR](https://cran.r-project.org/package=warbleR) is intended to facilitate the analysis of the structure of animal acoustic signals in R. Users can collect open-access avian recordings or enter their own data into a workflow that facilitates spectrographic visualization and measurement of acoustic parameters. [warbleR](https://cran.r-project.org/package=warbleR) makes use of the fundamental sound analysis tools of the seewave package, and offers new tools for acoustic structure analysis. These tools are available for batch analysis of acoustic signals.
 
 The main features of the package are:
-
+ 
+ - Diverse tools for measuring acoustic structure
  - The use of loops to apply tasks through acoustic signals referenced in a selection table
  - The production of images in the working directory with spectrograms to allow users organize data and verify acoustic analyses
 
 The package offers functions to:
  - Explore and download Xeno ‐ Canto recordings
  - Explore, organize and manipulate multiple sound files
- - Detect signals automatically (in frequency and time)
+ - Detect signals automatically (in frequency and time) (but check the R package [ohun](https://marce10.github.io/ohun/index.html) for a more thorough and friendly implementation)
  - Create spectrograms of complete recordings or individual signals
  - Run different measures of acoustic signal structure
  - Evaluate the performance of measurement methods

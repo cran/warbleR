@@ -1,7 +1,7 @@
 #' Create catalog of vocal signals
 #' 
 #' \code{catalog} produces spectrograms of selections (signals) split into multiple rows and columns.
-#' @usage catalog(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TRUE, 
+#' @usage catalog(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
 #' collevels = seq(-40, 0, 1), ovlp = 50, parallel = 1, mar = 0.05, prop.mar = NULL, 
 #' lab.mar = 1, wl = 512, wn = "hanning", gr = FALSE, pal = reverse.gray.colors.2, 
 #' it = "jpeg", path = NULL, pb = TRUE, fast.spec = FALSE, res = 100, 
@@ -15,7 +15,7 @@
 #' and start and end time of signal (start and end). Default is \code{NULL}.
 #' @param flim A numeric vector of length 2 indicating the highest and lowest 
 #'   frequency limits (kHz) of the spectrogram, as in 
-#'   \code{\link[seewave]{spectro}}. Default is c(0,22).
+#'   \code{\link[seewave]{spectro}}. Default is \code{NULL}.
 #' @param nrow A numeric vector of length 1. Specifies number of rows. Default is 4.
 #' @param ncol A numeric vector of length 1.  Specifies number of columns. Default is 3.
 #' @param same.time.scale Logical. Controls if all spectrograms are in the same time scale 
@@ -202,7 +202,7 @@
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 #last modification on feb-09-2017 (MAS)
 
-catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TRUE, collevels = seq(-40, 0, 1), 
+catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, collevels = seq(-40, 0, 1), 
                     ovlp = 50, parallel = 1, mar = 0.05, prop.mar = NULL, lab.mar = 1,
                     wl = 512, wn = "hanning", gr = FALSE, pal = reverse.gray.colors.2, it = "jpeg", 
                     path = NULL, pb = TRUE, fast.spec = FALSE, res = 100, orientation = "v", 
@@ -214,19 +214,13 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
                     by.row = TRUE, box = TRUE)
 {
 
-  # reset pbapply options
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type))
-  
   #### set arguments from options
   # get function arguments
   argms <- methods::formalArgs(catalog)
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
-  
+
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
   
@@ -253,15 +247,15 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
   if (!is_extended_selection_table(X))
     {
     #return warning if not all sound files were found
-    recs.wd <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+    recs.wd <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
       if (length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files)))
         (paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])),
-               ".wav file(s) not found"))
+               "sound file(s) not found"))
       
       #count number of sound files in working directory and if 0 stop
       d <- which(X$sound.files %in% recs.wd)
       if (length(d) == 0){
-        stop("The .wav files are not in the working directory")
+        stop("The sound files are not in the working directory")
       }  else {
         X <- X[d, ]
       }
@@ -352,14 +346,14 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
   #if it argument is not "jpeg" or "tiff"
   if (!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))
   
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  
+  
   
   
   #if flim is not vector or length!=2 stop
-  if (is.null(flim)) stop("'flim' must be a numeric vector of length 2") else {
-    if (!is.vector(flim)) stop("'flim' must be a numeric vector of length 2") else{
-      if (!length(flim) == 2) stop("'flim' must be a numeric vector of length 2")}}
+  if (is.null(flim)) {
+    if (!is.vector(flim)) stop("'flim' must be a numeric vector of length 2") else
+      if (!length(flim) == 2) stop("'flim' must be a numeric vector of length 2")}
   
   #if wl is not vector or length!=1 stop
   if (is.null(wl)) stop("'wl' must be a numeric vector of length 1") else {
@@ -552,7 +546,7 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
   
   #calculate time and freq ranges based on all recs
   rangs <- lapply(1:nrow(X), function(i){
-   r <- warbleR::read_wave(X = X, path = path, index = i, header = TRUE)
+   r <- read_sound_file(X = X, path = path, index = i, header = TRUE)
    f <- r$sample.rate
 
     # change mar to prop.mar (if provided)
@@ -567,7 +561,11 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
     
     #in case flim its higher than can be due to sampling rate
     fl <- flim
-    if (fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1
+    
+    if (is.null(fl)) 
+      fl <- c(0, ceiling(f / 2000) - 1)
+    
+    if (fl[2] > ceiling(f / 2000) - 1) fl[2] <- ceiling(f / 2000) - 1
     return(data.frame(fl1 = fl[1], fl2 = fl[2], mardur = t[2] - t[1]))
     })
   
@@ -751,7 +749,7 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
                                     
         if (fig.type[i] == "spec")  #plot spectros
         {     #Read sound files, initialize frequency and time limits for spectrogram
-         r <- warbleR::read_wave(X = X3, path = path, index = i, header = TRUE)
+         r <- warbleR::read_sound_file(X = X3, path = path, index = i, header = TRUE)
          f <- r$sample.rate
           
           # change mar to prop.mar (if provided)
@@ -764,7 +762,7 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
           
           if (t[2] > r$samples/f) t[2] <- r$samples/f
           
-          rec <- warbleR::read_wave(X = X3, path = path, index = i, from = t[1], to = t[2])
+          rec <- warbleR::read_sound_file(X = X3, path = path, index = i, from = t[1], to = t[2])
           
           #add xaxis to bottom spectros
           if (!same.time.scale & !rm.axes) {
@@ -1010,7 +1008,7 @@ catalog <- function(X, flim = c(0, 22), nrow = 4, ncol = 3, same.time.scale = TR
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
-  out <- pbapply::pblapply(X = 1:length(Xlist), cl = cl, FUN = function(z) 
+  out <- pblapply_wrblr_int(pbar = pb, X = 1:length(Xlist), cl = cl, FUN = function(z) 
     { 
     catalFUN(X = Xlist[[z]], nrow, ncol, page = z, labels, grid, fast.spec, flim,pal, 
              width, height, tag.col.df, legend, cex, img.suffix, img.prefix, title)}

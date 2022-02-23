@@ -1,24 +1,23 @@
-#' A extended version of read_wave that reads several sound file formats and files from selection tables
+#' An extended version of read_wave that reads several sound file formats and files from selection tables
 #' 
-#' \code{read_sound_file} is a extended version of read_wave that reads several sound file formats as well as files listed within selection tables
-#' @usage read_sound_file(X, index, from = X$start[index], to = X$end[index], channel = NULL, 
-#' header = FALSE, path = NULL) 
+#' \code{read_sound_file} reads several sound file formats as well as files referenced in selection tables
+#' @usage read_sound_file(X, index, from = X$start[index], to = X$end[index], 
+#' channel = X$channel[index], header = FALSE, path = NULL) 
 #' @param X 'data.frame', 'selection_table' or 'extended_selection_table' containing columns for sound file name (sound.files), 
-#' selection number (selec), and start and end time of signals (start and end). Alternatively, the name of a sound file or URL address to sound file can be provided. The function can read sound files in 'mp3', 'wav' and 'wac' format. The file name can contain the directory path.
+#' selection number (selec), and start and end time of signals (start and end). Alternatively, the name of a sound file or URL address to sound file can be provided. The function can read sound files in 'wav', 'mp3', 'flac' and 'wac' format. The file name can contain the directory path.
 #' 'top.freq' and 'bottom.freq' columns are optional. Default is \code{NULL}.
 #' @param index Index of the selection in 'X' that will be read. Ignored if 'X' is \code{NULL}.
 #' @param from Where to start reading, in seconds. Default is \code{X$start[index]}.
 #' @param to Where to stop reading, in seconds. Default is \code{X$end[index]}.
-#' @param channel Channel to be read from sound file (1 = left, 2 = right, or higher number for multichannel waves). If 
-#' \code{NULL} or higher than the number of channels in a wave then the first channel is used.
+#' @param channel Channel to be read from sound file (1 = left, 2 = right, or higher number for multichannel waves). Default is \code{X$channel[index]}. If a 'channel' column does not exist it will read the first channel.
 #' @param header If \code{TRUE}, only the header information of the Wave object is returned, otherwise (the default) the whole Wave object.
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used. If 'X' refers to a sound file including its directory 'path' is ignored. 
 #' @return An object of class "Wave".
 #' @export
 #' @name read_sound_file
-#' @details The function is a wrapper for \code{\link[tuneR]{readWave}} that read sound files listed within selection tables. It 
-#' is also used internally by warbleR functions to read wave objects from extended selection tables (see \code{\link{selection_table}} for details).
+#' @details The function is a wrapper for \code{\link[tuneR]{readWave}} that read sound files, including those referenced in selection tables. It
+#' is also used internally by warbleR functions to read wave objects from extended selection tables (see \code{\link{selection_table}} for details). Note that reading 'flac' files requires creating a temporary copy in 'wav' format, which can be particularly slow for long files. 
 #' @examples
 #' \dontrun{
 #' # write wave files with lower case file extension
@@ -57,22 +56,22 @@
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 #last modification on may-7-2018 (MAS)
 
-read_sound_file <- function (X, index, from = X$start[index], to = X$end[index], channel = NULL, header = FALSE, path = NULL) 
+read_sound_file <- function (X, index = NULL, from = X$start[index], to = X$end[index], channel = X$channel[index], header = FALSE, path = NULL) 
 {
   
   # if is extended then index must be provided
-  if (is_extended_selection_table(X) & missing(index)) stop('"index" needed when an extended selection table is provided')
+  if (is.data.frame(X) & is.null(index)) stop('"index" needed when a  "data.frame", "selection_table", "extended_selection_table" is provided')
   
   #if X is not a data frame
-  if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X), is.character(X), is.factor(X))) stop("X is not of a class 'data.frame', 'selection_table', 'extended_selection_table' or a sound file")
+  if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X), is.character(X), is.factor(X))) stop("X is not of a class 'data.frame', 'selection_table', 'extended_selection_table' or a sound file name")
   
   # if is not a data frame
   if (is.character(X) | is.factor(X)) {
     
     # if URL
     if (grepl("^www.|^http:|^https:", X)){
-     
-       # get  temporary file name
+      
+      # get  temporary file name
       temp.file <- tempfile()
       
       # download it
@@ -92,47 +91,25 @@ read_sound_file <- function (X, index, from = X$start[index], to = X$end[index],
     }
     
     # stop if extension not allowed
-    if (!extsn %in% c("unk", "wav", "mp3", "wac")) stop("File format cannot be read")
+    if (!extsn %in% c("unk", "wav", "mp3", "wac", "flac")) stop("File format cannot be read")
     
-    if (basename(as.character(X)) != X){
-      path <- dirname(as.character(X))
-      X <- basename(as.character(X))
-    } else
-      # if path wasn't provided and still doesn't exist
+    if (basename(as.character(X)) != X) filename <- X else
+    {# if path wasn't provided and still doesn't exist
       if (is.null(path)) 
         path <- getwd()
       
-      if (is.na(warbleR::try_na(from))) from <- 0
-      if (is.na(warbleR::try_na(to))) to <- Inf
-      
-      if (extsn == "wav") read_fun <- function(X, path, header, from, to) tuneR::readWave(filename = file.path(path, X), header = header, from = from, to = to, units = "seconds")
-      
-      if (extsn == "mp3") read_fun <- function(X, path, header, from, to) bioacoustics::read_mp3(file = file.path(path, X), from = from, to = to)
-      
-      if (extsn == "wac") read_fun <- function(X, path, header, from, to) {
-        
-        obj <- bioacoustics::read_wac(file = file.path(path, X))[[1]]
-        if (to > 0 | from != Inf) obj <- seewave::cutw(wave = obj, f = obj@samp.rate, from = from, to = to, output = "Wave")
-        }
-      
-      if (extsn == "unk") read_fun <- function(X, path, header, from, to) {
-        suppressWarnings(object <- try(tuneR::readWave(filename = file.path(path, X), header = header, from = from, to = to), silent = TRUE))
-        
-        if (is(object, "try-error")) 
-          object <- try(bioacoustics::read_mp3(file = file.path(path, X), from = from, to = to), silent = TRUE)
-        
-        if (is(object, "try-error"))
-        obj <- try(bioacoustics::read_wac(file = file.path(path, X))[[1]], silent = TRUE)
-        if (to > 0 | from != Inf) try(obj <- seewave::cutw(wave = obj, f = obj@samp.rate, from = from, to = to, output = "Wave"), silent = TRUE)
-        
-        return(object)
-      }
-      
-      object <- read_fun(X, path, header, from, to)  
-      
-      if (is(object, "try-error")) 
-        stop("file cannot be read (try read_sound_file() for other sound file formats")  
-      
+      filename <- file.path(path, X)
+    }    
+    
+    if (is.na(warbleR::try_na(from))) from <- 0
+    if (is.na(warbleR::try_na(to))) to <- Inf
+    if (is.na(warbleR::try_na(channel))) channel <- 1
+    
+    object <- read_soundfile_wrblr_int(filename, header, from, to, extension = extsn, channel = channel)  
+    
+    if (is(object, "try-error")) 
+      stop("file cannot be read")  
+    
   } else {
     
     # check columns
@@ -165,19 +142,22 @@ read_sound_file <- function (X, index, from = X$start[index], to = X$end[index],
         if (header)
         {
           if (any(is_selection_table(X), is_extended_selection_table(X)))
-            object <- list(sample.rate = attr(X, "check.results")$sample.rate[attr(X, "check.results")$sound.files == X$sound.files[index]][1] * 1000, channels = 1, bits = attr(X, "check.results")$bits[attr(X, "check.results")$sound.files == X$sound.files[index]][1], samples = attr(X, "check.results")$n.samples[attr(X, "check.results")$sound.files == X$sound.files[index]][1]) else 
-              object <- tuneR::readWave(filename = filename, header = TRUE)
-            
-            if (any(sapply(object, length) > 1)) object <- lapply(object, "[", 1)
-        } else 
-        {
+            object <- list(sample.rate = attr(X, "check.results")$sample.rate[attr(X, "check.results")$sound.files == X$sound.files[index]][1] * 1000, channels = 1, bits = attr(X, "check.results")$bits[attr(X, "check.results")$sound.files == X$sound.files[index]][1], samples = attr(X, "check.results")$n.samples[attr(X, "check.results")$sound.files == X$sound.files[index]][1]) else {
+              
+              pos <- regexpr("\\.([[:alnum:]]+)$",  X$sound.files[index])
+              extsn <- tolower(ifelse(pos > -1L, substring(X$sound.files[index], pos + 1L), ""))
+              
+              object <- read_soundfile_wrblr_int(filename = filename, header = TRUE, extension = extsn)
+            }
+          
+          if (any(sapply(object, length) > 1)) object <- lapply(object, "[", 1)
+        } else {
           if (is_selection_table(X) | is.data.frame(X) & !is_extended_selection_table(X)) # if no extended selection table
           {
-            object <- tuneR::readWave(filename = filename, header = FALSE, units = "seconds", from = from, to = to, toWaveMC = TRUE)
-            #if more than 1 channel
-            if (is(object, "WaveMC") & !is.null(X$channel)) object <- Wave(object[, X$channel[index]]) else
-              object <- Wave(object[, 1])
+            pos <- regexpr("\\.([[:alnum:]]+)$", X$sound.files[index])
+            extsn <- tolower(ifelse(pos > -1L, substring(X$sound.files[index], pos + 1L), ""))
             
+            object <- read_soundfile_wrblr_int(filename = filename, header = FALSE, from = from, to = to, extension = extsn, channel = channel)
           } else {
             
             object <- attr(X, "wave.objects")[[which(names(attr(X, "wave.objects")) == X$sound.files[index])[1]]]
@@ -185,10 +165,140 @@ read_sound_file <- function (X, index, from = X$start[index], to = X$end[index],
             # if to is infinite then duration of sound file
             if (is.infinite(to)) to <- length(object@left)/object@samp.rate
             
-            if (attr(X, "check.results")$mar.before[attr(X, "check.results")$sound.files == X$sound.files[index] & attr(X, "check.results")$sound.files == X$sound.files[index] & attr(X, "check.results")$selec == X$selec[index]] != 0 & attr(X, "check.results")$mar.after[attr(X, "check.results")$sound.files == X$sound.files[index] & attr(X, "check.results")$selec == X$selec[index]] != 0 & any(to < length(object@left)/object@samp.rate, from > 0))  object <- seewave::cutw(object, from = from, to = to, output = "Wave") 
+            # if margin before  != 0 and 
+            if (attr(X, "check.results")$mar.before[attr(X, "check.results")$sound.files == X$sound.files[index] & attr(X, "check.results")$selec == X$selec[index]] != 0 & attr(X, "check.results")$mar.after[attr(X, "check.results")$sound.files == X$sound.files[index] & attr(X, "check.results")$selec == X$selec[index]] != 0 & any(to < length(object@left)/object@samp.rate, from > 0))  object <- seewave::cutw(object, from = from, to = to, output = "Wave") 
           }
         }
   }
   
   return(object)
+}
+
+
+### internals for reading sound files
+read_wave_wrblr_int <- function(filename, header = header, from = 0, to = Inf, channel = 1){
+  
+  obj <- tuneR::readWave(filename = filename, header = header, from = from, to = to, units = "seconds", toWaveMC = TRUE)
+  
+  # Extract one channel
+  if (!header) 
+    obj <- Wave(obj[, channel])
+  
+  return(obj)
+}
+
+read_mp3_wrblr_int <- function(filename, header = FALSE, from = 0, to = Inf, channel = 1) {
+  obj <- tuneR::readMP3(file = filename)
+  if (from > 0 |  to != Inf) obj <- seewave::cutw(wave = obj, f = obj@samp.rate, from = from, to = to, output = "Wave")
+  
+  if (header)
+    obj <- list(sample.rate = obj@samp.rate, channels = if(obj@stereo) 2 else 1, bits = obj@bit, samples = length(obj@left))
+  
+  return(obj)
+}
+
+read_wac_wrblr_int <- function(filename, header = FALSE, from = 0, to = Inf, channel = 1) {
+  obj <- bioacoustics::read_wac(file = filename)[[1]]
+  if (from > 0 | to != Inf) obj <- seewave::cutw(wave = obj, f = obj@samp.rate, from = from, to = to, output = "Wave")
+  
+  if (header)
+    obj <- list(sample.rate = obj@samp.rate, channels = if(obj@stereo) 2 else 1, bits = obj@bit, samples = length(obj@left))
+  
+  return(obj)
+}
+
+read_flac_wrblr_int <- function(filename, header = FALSE, from = 0, to = Inf, channel = 1, flac.path)
+{
+  
+  # create temporary file for convertin to a wav to be read at the end
+  temp_wav <- tempfile()
+  
+  if (.Platform$OS.type == "unix") {
+    if (missing(flac.path)) {
+      exe <- "flac"
+    }
+    else {
+      exe <- paste(flac.path, "flac", sep = "/")
+    }
+    if (system(paste(exe, "-v"), ignore.stderr = TRUE) != 
+        0) {
+      stop("FLAC program was not found.")
+    }
+    
+    system_call <- paste0(exe, " -d ", filename, " --output-name=", temp_wav, " --silent")
+  }
+  
+  if (.Platform$OS.type == "windows") {
+    if (missing("flac")) {
+      "flac" <- "flac.exe"
+    }
+    if (missing(flac.path)) {
+      exe <- paste("C:/Program Files/FLAC/", "flac", 
+                   sep = "")
+      if (!file.exists(exe)) {
+        exe <- paste("C:/Program Files (x86)/FLAC/", 
+                     "flac", sep = "")
+      }
+    }
+    else {
+      exe <- paste(flac.path, "flac", sep = "/")
+    }
+    if (!file.exists(exe)) {
+      stop("FLAC program was not found.")
+    }
+    
+    system_call <- paste(shQuote(exe), "-d", shQuote(filename, 
+                                                     type = "cmd"), "--silent", sep = " ")
+  }
+  
+  
+  # add start and end time if supplied
+  if (from > 0){
+    start <- gsub("\\.", ",", paste0(floor(from / 60), ":", from - (floor(from / 60) * 60)))
+    system_call <- paste0(system_call, " --skip=", start)
+  }
+  
+  if (to != Inf){
+    end <- gsub("\\.", ",",paste0(floor(to / 60), ":", to - (floor(to / 60) * 60)))
+    system_call <- paste0(system_call, " --until=", end)
+  }
+  
+  # run flac
+  out <- system(system_call, ignore.stderr = TRUE)                          
+  
+  # read temporary wav file
+  wav <- read_wave_wrblr_int(temp_wav, header, 0, Inf, channel)
+  
+  # remove temporary wav file
+  unlink(temp_wav)
+  
+  return(wav)
+}
+
+read_soundfile_wrblr_int <- function(filename, header, from = 0, to = Inf, extension = "unk", channel = 1) {
+  
+  if (is.null(channel) | is.function(channel))
+    channel <- 1
+  
+  switch(EXPR = extension, 
+         wav = object <- read_wave_wrblr_int(filename, header, from, to, channel),
+         mp3 = object <- read_mp3_wrblr_int(filename, header, from, to, channel),
+         wac = object <- read_wac_wrblr_int(filename, header, from, to, channel),
+         flac = object <- read_flac_wrblr_int(filename, header, from, to, channel),
+         unk = {
+           
+           object <- try(read_wave_wrblr_int(filename, header, from, to, channel), silent = TRUE)
+           
+           if (is(object, "try-error")) 
+             object <- try(read_mp3_wrblr_int(filename, header, from, to, channel), silent = TRUE)
+           
+           if (is(object, "try-error"))
+             object <- try(read_wac_wrblr_int(filename, header, from, to, channel), silent = TRUE)
+           
+           if (is(object, "try-error"))
+             object <- try(read_flac_wrblr_int(filename, header, from, to, channel), silent = TRUE)
+         } 
+  )
+  return(object)
+  
 }

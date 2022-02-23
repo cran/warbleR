@@ -20,7 +20,7 @@
 #' @examples
 #' {
 #' # load data
-#' data(list = c("Phae.long1", "Phae.long2", "lbh_selec_table2", "comp_matrix"))
+#' data(list = c("Phae.long4", "Phae.long2", "lbh_selec_table2", "comp_matrix"))
 #' 
 #' # save sound files
 #' writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav")) 
@@ -44,18 +44,14 @@
 # last modification on jan-03-2020 (MAS)
 find_peaks <- function(xc.output, parallel = 1, cutoff = 0.4, path = NULL, pb = TRUE, max.peak = FALSE, output = "data.frame") 
 {
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
-  
+  print("this function has been deprecated, please look at the ohun package for automatic signal detection (https://marce10.github.io/ohun/index.html")
+
   #### set arguments from options
   # get function arguments
   argms <- methods::formalArgs(find_peaks)
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -77,19 +73,23 @@ find_peaks <- function(xc.output, parallel = 1, cutoff = 0.4, path = NULL, pb = 
       stop("'path' provided does not exist") else
         path <- normalizePath(path)
   
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  
+  
   
   # set clusters for windows OS and no soz
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # loop over scores of each dyad
-  pks <- pbapply::pblapply(unique(xc.output$scores$dyad), cl = cl, FUN = function(i) {
+  pks <- pblapply_wrblr_int(pbar = pb, X = unique(xc.output$scores$dyad), cl = cl, FUN = function(i) {
     
     # extract data for a dyad
     dat <- xc.output$scores[xc.output$scores$dyad == i, ]
-
+    
+    # check xc.output being a autodetec.output object
+    if (!(is(xc.output, "xcorr.output") | is(xc.output, "xc.output"))) 
+      stop("'xc.output' must be and object of class 'xcorr.output'")
+    
     ## get peaks as the ones higher than previous and following scores  
     pks <- dat[c(FALSE, diff(dat$score) > 0) & c(rev(diff(rev(dat$score)) > 0), FALSE) & dat$score > cutoff, , drop = FALSE]
     
@@ -102,7 +102,7 @@ find_peaks <- function(xc.output, parallel = 1, cutoff = 0.4, path = NULL, pb = 
   
   # put results in a data frame
   peaks <- do.call(rbind, pks)
-
+  
   # relabel rows
   if (nrow(peaks) > 0)
   {  rownames(peaks) <- 1:nrow(peaks)
@@ -116,17 +116,17 @@ find_peaks <- function(xc.output, parallel = 1, cutoff = 0.4, path = NULL, pb = 
   
   #### add start and end
   # add template column to selection table in xc.output
-  Y <- xc.output$selection.table
+  Y <- xc.output$org.selection.table
   Y$template <- paste(Y$sound.files, Y$selec, sep = "-")
   
   # Y <- Y[Y$template %in% comp_mat[, 1], ]
   
   # add start as time - half duration of template
   peaks$start <- sapply(1:nrow(peaks), function(i){
-   
+    
     peaks$time[i] - 
-    ((Y$end[Y$template == peaks$template[i]] - 
-    Y$start[Y$template == peaks$template[i]])  / 2)
+      ((Y$end[Y$template == peaks$template[i]] - 
+          Y$start[Y$template == peaks$template[i]])  / 2)
     
   })
   
@@ -135,25 +135,32 @@ find_peaks <- function(xc.output, parallel = 1, cutoff = 0.4, path = NULL, pb = 
     
     peaks$time[i] + 
       ((Y$end[Y$template == peaks$template[i]] - 
-         Y$start[Y$template == peaks$template[i]]) / 2)
+          Y$start[Y$template == peaks$template[i]]) / 2)
     
   })
   
   # add selec labels
   peaks$selec <- 1
-
+  
   if (nrow(peaks) > 1)
-  for(i in 2:nrow(peaks)) 
-  if (peaks$sound.files[i] == peaks$sound.files[i - 1])
+    for(i in 2:nrow(peaks)) 
+      if (peaks$sound.files[i] == peaks$sound.files[i - 1])
         peaks$selec[i] <- peaks$selec[i - 1] + 1
-
+  
   # sort columns in a intuitive order
   peaks <- sort_colms(peaks)
   
   # output results
   if (output == "data.frame") return(peaks) else{
     
-    output_list <- list(selection.table = peaks, scores = xc.output$scores,  cutoff = cutoff)
+    output_list <- list(
+      selection.table = peaks, 
+      scores = xc.output$scores,  
+      cutoff = cutoff,
+      call = base::match.call(),
+      spectrogram = xc.output$spectrogram,
+      warbleR.version = packageVersion("warbleR")
+      )
     
     class(output_list) <- c("list", "find_peaks.output")
     
@@ -161,10 +168,54 @@ find_peaks <- function(xc.output, parallel = 1, cutoff = 0.4, path = NULL, pb = 
   }
   
   } else {
-  
-  # no detections    
-  write(file = "", x = "no peaks above cutoff were detected")  
-  
-  return(NULL)  
+    
+    # no detections    
+    write(file = "", x = "no peaks above cutoff were detected")  
+    
+    return(NULL)  
   }
 }
+
+##############################################################################################################
+
+#' print method for class \code{xcorr.output}
+#'
+#' @param x Object of class \code{find_peaks.output}, generated by \code{\link{find_peaks}}.
+#' @param ...	 further arguments passed to or from other methods. Ignored when printing selection tables.
+#' @keywords internal
+#'
+#' @export
+#' 
+
+print.find_peaks.output <- function(x, ...) {
+  
+  cat(crayon::cyan(paste("Object of class", crayon::bold("'find_peaks.output' \n"))))
+  
+  cat(crayon::silver(paste(crayon::bold("\nContains: \n"), "The output of a detection routine from the following", crayon::italic("find_peaks()"), "call: \n")))
+  
+  cll <- paste0(deparse(x$call))
+  cat(crayon::silver(crayon::italic(gsub("    ", "", cll), "\n")))
+
+  
+  #print count of detections per sound file
+  #define columns to show
+  if (nrow(x$selection.table) > 0)
+  
+  tab <- aggregate(selec ~ sound.files, data = x$selection.table, FUN = length)  
+  names(tab)[2] <- "detections"  
+  
+  cat(crayon::silver("\n The following peaks (i.e. detections, found in the 'selection.table' list element) per sound files were found: \n"))
+  
+  kntr_tab <- knitr::kable(head(tab), escape = FALSE, digits  = 4, justify = "centre", format = "pipe")
+  
+  for(i in 1:length(kntr_tab)) cat(crayon::silver(paste0(kntr_tab[i], "\n")))
+  
+  cat(crayon::silver("\n The peaks are found in the 'selection.table' list element \n"))
+  
+  cat(crayon::silver(paste("\n Use", crayon::bold(crayon::italic("full_spectrograms()")), "to plot detections along spectrograms \n")))
+
+  # print warbleR version
+  if (!is.null(x$warbleR.version))
+    cat(crayon::silver(paste0("\n Created by warbleR ", x$warbleR.version)), "\n") else
+      cat(crayon::silver("\n Created by warbleR < 1.1.27 \n"))
+  }

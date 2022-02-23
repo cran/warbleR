@@ -5,7 +5,7 @@
 \title{Extract frequency contours as time series}
 \usage{
 freq_ts(X, type = "dominant", wl = 512, length.out = 20, wn = "hanning", 
-ovlp = 70, bp = c(0, 22), threshold = 15, img = TRUE, parallel = 1, path = NULL, 
+ovlp = 70, bp = NULL, threshold = 15, img = TRUE, parallel = 1, path = NULL, 
 img.suffix = "frequency.ts", pb = TRUE, clip.edges = FALSE, leglab = "frequency.ts", 
 track.harm = FALSE, raw.contour = FALSE, adjust.wl = TRUE, 
 ff.method = "seewave", entropy.range = c(2, 10), ...)
@@ -13,8 +13,7 @@ ff.method = "seewave", entropy.range = c(2, 10), ...)
 \arguments{
 \item{X}{object of class 'selection_table', 'extended_selection_table' or data 
 frame containing columns for sound file name (sound.files), 
-selection number (selec), and start and end time of signal (start and end).
-The output of \code{\link{auto_detec}} can be used as the input data frame.}
+selection number (selec), and start and end time of signal (start and end).}
 
 \item{type}{Character string to determine the type of contour to be detected. Three options are available, "dominant" (default), "fundamental" and "entropy".}
 
@@ -31,7 +30,7 @@ frequency desired (the length of the time series).}
 consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
-frequency bandpass filter (in kHz). Default is c(0, 22).}
+frequency bandpass filter (in kHz). Default is \code{NULL}.}
 
 \item{threshold}{amplitude threshold (\%) for fundamental frequency detection. Default is 15.}
 

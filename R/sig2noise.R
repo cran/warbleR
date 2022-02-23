@@ -21,9 +21,9 @@
 #' \itemize{
 #' \item \code{1}: ratio of S mean amplitude envelope to 
 #'   N mean amplitude envelope (\code{mean(env(S))/mean(env(N))})
-#' \item \code{2}: ratio of S amplitude envelope quadratic mean to N amplitude envelope quadratic mean
+#' \item \code{2}: ratio of S amplitude envelope RMS (root mean square) to N amplitude envelope RMS
 #'  (\code{rms(env(S))/rms(env(N))})
-#' \item \code{3}: ratio of the difference between S amplitude envelope quadratic mean and N amplitude envelope quadratic mean to N amplitude envelope quadratic mean (\code{(rms(env(S)) - rms(env(N)))/rms(env(N))})
+#' \item \code{3}: ratio of the difference between S amplitude envelope RMS and N amplitude envelope RMS to N amplitude envelope RMS (\code{(rms(env(S)) - rms(env(N)))/rms(env(N))})
 #' }
 #' @param eq.dur Logical. Controls whether the noise segment that is measured has the same duration 
 #' than the signal (if \code{TRUE}, default \code{FALSE}). If \code{TRUE} then 'mar' argument is ignored.
@@ -76,8 +76,8 @@
 sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq.dur = FALSE,
                       in.dB = TRUE, before = FALSE, lim.dB = TRUE, bp = NULL, wl = 10){
   
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  
   
   #### set arguments from options
   # get function arguments
@@ -85,9 +85,6 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -130,15 +127,15 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
   
   if (!is_extended_selection_table(X))
   {
-  fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+  fs <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
-                  ".wav file(s) not found"))
+                  "sound file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
   d <- which(X$sound.files %in% fs) 
   if (length(d) == 0){
-    stop("The .wav files are not in the working directory")
+    stop("The sound files are not in the working directory")
   }  else X <- X[d, , drop = FALSE]
   } else d <- 1:nrow(X)
   
@@ -151,7 +148,7 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
   snr_FUN <- function(y, mar, bp, wl, type, before, in.dB, lim.dB){
     
     # Read sound files to get sample rate and length
-    r <- warbleR::read_wave(X = X, path = path, index = y, header = TRUE)
+    r <- warbleR::read_sound_file(X = X, path = path, index = y, header = TRUE)
    
     # read sample rate
     f <- r$sample.rate
@@ -173,7 +170,7 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
     
     if (enn > r$samples/f) enn <- r$samples/f
     
-    r <- warbleR::read_wave(X = X, path = path, index = y, from = stn, to = enn)
+    r <- warbleR::read_sound_file(X = X, path = path, index = y, from = stn, to = enn)
     
     # add band-pass frequency filter
     if (!is.null(bp)) {
@@ -228,24 +225,31 @@ sig2noise <- function(X, mar, parallel = 1, path = NULL, pb = TRUE, type = 1, eq
     
   }
    
-  # set pb options 
-  pbapply::pboptions(type = ifelse(as.logical(pb), "timer", "none"))
-  
   # set clusters for windows OS
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # run loop apply function
-  SNR <- pbapply::pbsapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
+  SNR_l <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(X), cl = cl, FUN = function(y) 
   { 
-    snr_FUN(y = i, mar, bp, wl, type, before, in.dB, lim.dB)
+    snr_FUN(y, mar, bp, wl, type, before, in.dB, lim.dB)
   }) 
       
     # Add SNR data to X
-    z <- data.frame(X, SNR = SNR)
+    z <- data.frame(X, SNR = unlist(SNR_l))
     
   # fix extended selection table
     if (is_extended_selection_table(X)) z <- fix_extended_selection_table(X = z, Y = X)  
 
     return(z)
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{sig2noise}}
+#'
+#' @keywords internal
+#' @details see \code{\link{sig2noise}} for documentation. \code{\link{sig2noise}} will be deprecated in future versions.
+#' @export
+
+signal_2_noise <- sig2noise

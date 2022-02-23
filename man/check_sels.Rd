@@ -5,7 +5,7 @@
 \title{Check selection data frames}
 \usage{
 check_sels(X, parallel = 1, path = NULL, check.header = FALSE, pb = TRUE,
-wav.size = FALSE, verbose = TRUE)
+wav.size = FALSE, verbose = TRUE, fix.selec = FALSE)
 
 check_sels(
   X = NULL,
@@ -14,14 +14,14 @@ check_sels(
   check.header = FALSE,
   pb = TRUE,
   wav.size = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  fix.selec = FALSE
 )
 }
 \arguments{
 \item{X}{'selection_table' object or data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
-end time of selections. Alternatively, a 'selection_table' class object can be input to double check selections. The output of \code{\link{auto_detec}} can 
-be used as the input data frame.}
+end time of selections. Alternatively, a 'selection_table' class object can be input to double check selections.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied.
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
@@ -39,7 +39,9 @@ with long sound files.}
 when the selection is imported into R (as when using \code{\link[tuneR]{readWave}}
 is calculated and added as a column. Size is return in MB. Default is \code{FALSE}.}
 
-\item{verbose}{Logical to control whether the 'path' is printed in the console. Defaut is \code{TRUE}.}
+\item{verbose}{Logical to control whether the summary messages are printed to the console. Defaut is \code{TRUE}.}
+
+\item{fix.selec}{Logical to control if labels in 'selec' column should be fixed. This column should not be duplicated within a sound file. If that happens and \code{fix.selec = TRUE} duplicated labels will be changed. Default is \code{FALSE}.}
 }
 \value{
 A data frame including the columns in the input data frame (X) and the following additional columns:
@@ -63,7 +65,7 @@ to avoid problems in any warbleR analysis downstream. It specifically checks if:
 \itemize{
    \item 'X' is an object of class 'data.frame' or 'selection_table' (see \code{\link{selection_table}}) and contains 
    the required columns to be used on any warbleR function ('sound.files', 'selec', 'start', 'end', if not returns an error) 
-   \item  'sound.files' in 'X' correspond to .wav files in the working directory or in the provided 'path'
+   \item  'sound.files' in 'X' correspond to sound files in the working directory or in the provided 'path'
     (if no file is found returns an error, if some files are not found returns error info in the ouput data frame)
    \item time ('start', 'end') and frequency ('bottom.freq', 'top.freq', if provided) limit parameters are numeric and 
    don't contain NAs (if not returns an error)

@@ -3,7 +3,7 @@
 #' \code{mfcc_stats} calculates descriptive statistics on Mel-frequency cepstral coefficients and its derivatives.
 #' @usage mfcc_stats(X, ovlp = 50, wl = 512, bp = 'frange', path = NULL, numcep = 25, 
 #' nbands = 40, parallel = 1, pb = TRUE, ...)
-#' @param X 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @param X 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the sound 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The output of \code{\link{auto_detec}} can
 #' be used as the input data frame.
@@ -64,8 +64,8 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = 'frange', path = NULL,
   if (!requireNamespace("Sim.DiffProc",quietly = TRUE))
     stop("must install 'Sim.DiffProc' to use this function")
   
-    # set pb options 
-    on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+    
+    
     
     #### set arguments from options
     # get function arguments
@@ -73,9 +73,6 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = 'frange', path = NULL,
     
     # get warbleR options
     opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-    
-    # rename path for sound files
-    names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
     
     # remove options not as default in call and not in function arguments
     opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -119,28 +116,28 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = 'frange', path = NULL,
     
     # bp checking
     if (bp[1] != "frange")
-    {if (!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
-      if (!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")} 
+    {if (!is.vector(bp)) stop("'bp' must be a numeric vector of length 2 or 'frange'") else{
+      if (!length(bp) == 2) stop("'bp' must be a numeric vector of length 2 or 'frange'")} 
     } else
-    {if (!any(names(X) == "bottom.freq") & !any(names(X) == "top.freq")) stop("'bp' = frange requires bottom.freq and top.freq columns in X")
+    {if (!any(names(X) == "bottom.freq") & !any(names(X) == "top.freq")) stop("'bp' = 'frange' requires bottom.freq and top.freq columns in X")
       if (any(is.na(c(X$bottom.freq, X$top.freq)))) stop("NAs found in bottom.freq and/or top.freq") 
       if (any(c(X$bottom.freq, X$top.freq) < 0)) stop("Negative values found in bottom.freq and/or top.freq") 
       if (any(X$top.freq - X$bottom.freq < 0)) stop("top.freq should be higher than bottom.freq")
     
-          bp <- c(min(X$bottom.freq), max(X$top.freq))
+        bp <- c(min(X$bottom.freq), max(X$top.freq))
       }
     
     if (!is_extended_selection_table(X)){
       #return warning if not all sound files were found
-      fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+      fs <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
       if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
         write(file = "", x = paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
-                                   ".wav file(s) not found"))
+                                   "sound files file(s) not found"))
       
       #count number of sound files in working directory and if 0 stop
       d <- which(X$sound.files %in% fs) 
       if (length(d) == 0){
-        stop("The .wav files are not in the working directory")
+        stop("The sound files are not in the working directory")
       }  else {
         X <- X[d, ]
       }
@@ -153,19 +150,22 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = 'frange', path = NULL,
     mfcc_FUN <- function(i, X, bp, wl, numcep, nbands){
   
       # read wave file
-      r <- warbleR::read_wave(X = X, path = path, index = i)
+      r <- warbleR::read_sound_file(X = X, path = path, index = i)
       
       # set bandpass
-      if (bp[1] == "frange") b <- c(X$bottom.freq[i], X$top.freq[i]) else b <- bp
+      if (!is.null(bp))
+        if (bp[1] == "frange") bp <- c(X$bottom.freq[i], X$top.freq[i])
       
+        b <- bp
+        
       #in case bp its higher than can be due to sampling rate
-      if (b[2] > ceiling(r@samp.rate/2000) - 1) b[2] <- ceiling(r@samp.rate/2000) - 1 
+      if (b[2] > floor(r@samp.rate / 2000)) b[2] <- floor(r@samp.rate / 2000) 
       
       # add a bit above and below to ensure range limits are included
       bpfr <- b
       bpfr <- bpfr + c(-0.2, 0.2)  
       if (bpfr[1] < 0) bpfr[1] <- 0
-      if (bpfr[2] > ceiling(r@samp.rate/2000) - 1) bpfr[2] <- ceiling(r@samp.rate/2000) - 1 
+      if (bpfr[2] > floor(r@samp.rate / 2000)) bpfr[2] <- floor(r@samp.rate / 2000) 
     
       # measure MFCCs  
       m <- try(melfcc(r, wintime = wl / r@samp.rate, hoptime = wl / r@samp.rate * (1 - (ovlp / 100)), 
@@ -198,15 +198,15 @@ mfcc_stats <- function(X, ovlp = 50, wl = 512, bp = 'frange', path = NULL,
     return(out.df)
     }
   
-    # set pb options 
-    pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+    
+    
     
     # set clusters for windows OS
     if (Sys.info()[1] == "Windows" & parallel > 1)
       cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
     
     # run loop apply function
-    ccs <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
+    ccs <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(X), cl = cl, FUN = function(i) 
     { 
       mfcc_FUN(i = i, X = X, bp, wl = wl, numcep = numcep, nbands = nbands)
     }) 

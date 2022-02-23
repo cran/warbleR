@@ -4,7 +4,8 @@
 #' @usage cross_correlation(X, wl = 512, bp = "pairwise.freq.range", ovlp = 70, 
 #' dens = NULL, wn = 'hanning', cor.method = "pearson", parallel = 1, 
 #' path = NULL, pb = TRUE, na.rm = FALSE, cor.mat = NULL, output = "cor.mat", 
-#' compare.matrix = NULL, type = "spectrogram", nbands = 40, method = 1)
+#' templates = NULL, surveys = NULL, compare.matrix = NULL, type = "fourier",
+#'  nbands = 40, method = 1)
 #' @param  X 'selection_table', 'extended_selection_table' or data frame containing columns for sound files (sound.files), 
 #' selection number (selec), and start and end time of signal (start and end). 
 #' All selections must have the same sampling rate. 
@@ -27,11 +28,13 @@
 #' @param na.rm Logical. If \code{TRUE} all NAs produced when pairwise cross-correlations failed are removed from the 
 #' results. This means that all selections with at least 1 cross-correlation that failed are excluded.
 #' @param cor.mat DEPRECATED. Use 'compare.matrix' instead.
-#' @param output Character vector of length 1 to determine if only the correlation matrix is returned ('cormat') or a list ('list') containing 1) the correlation matrix and 2) a data frame with correlation values at each sliding step for each comparison. The list, which is also of class 'xcorr.output', can be used to find detection peaks with \code{\link{find_peaks}} or to graphically explore detections using \code{\link{lspec}}.
-#' @param compare.matrix A character matrix with 2 columns indicating the selections to be compared (column 1 vs column 2). The columns must contained the ID of the selection, which is given by combining the 'sound.files' and 'selec' columns of 'X',  separated by '-' (i.e. \code{paste(X$sound.files, X$selec, sep = "-")}). Default is \code{NULL}. If supplied only those comparisons will be calculated (as opposed to all pairwise comparisons as the default behavior) and the output will be a data frame composed of the supplied matrix and the correspondent cross-correlation values. Note that 'method' is automatically set to 2 (create spectrograms on the fly) when 'compare.matrix' is supplied but can be set back to 1.
-#' @param type A character vector of length 1 specifying the type of cross-correlation; either "spectrogram" (i.e. spectrographic cross-correlation using Fourier transform; internally using \code{\link[seewave]{spectro}}; default) or "mfcc" (Mel cepstral coefficient cross-correlation; internally using \code{\link[tuneR]{melfcc}}).
+#' @param output Character vector of length 1 to determine if only the correlation matrix is returned ('cor.mat', default) or a list ('list') containing 1) the correlation matrix and 2) a data frame with correlation values at each sliding step for each comparison. The list, which is also of class 'xcorr.output', can be used to find detection peaks with \code{\link{find_peaks}} or to graphically explore detections using \code{\link{lspec}}.
+#' @param templates Character vector with the selections in 'X' to be used as templates for cross-correlation detection. To refer to specific selections in 'X' the user must use the format "sound.file-selec" (e.g. "file1.wav-1"). If only the sound file name is included then the entire sound file is used as template.
+#' @param surveys Character vector with the selections in 'X' to be used as surveys for cross-correlation detection. To refer to specific selections in 'X' the user must use the format "sound.file-selec" (e.g. "file1.wav-1"). If only the sound file name is included then the entire sound file is used as survey.
+#' @param compare.matrix A character matrix with 2 columns indicating the selections to be compared (column 1 vs column 2). The columns must contained the ID of the selection, which is given by combining the 'sound.files' and 'selec' columns of 'X',  separated by '-' (i.e. \code{paste(X$sound.files, X$selec, sep = "-")}). Default is \code{NULL}. If the 'selec' ID is not supplied then the entire sound file is used instead. If 'compare.matrix' is supplied only those comparisons will be calculated (as opposed to all pairwise comparisons as the default behavior) and the output will be a data frame composed of the supplied matrix and the correspondent cross-correlation values. Note that 'method' is automatically set to 2 (create spectrograms on the fly) when 'compare.matrix' is supplied but can be set back to 1. When supplied 'output' is forced to be 'list'. 
+#' @param type A character vector of length 1 specifying the type of cross-correlation; either "fourier" (i.e. spectrographic cross-correlation using Fourier transform; internally using \code{\link[seewave]{spectro}}; default) or "mfcc" (Mel cepstral coefficient spectrogram cross-correlation; internally using \code{\link[tuneR]{melfcc}}).
 #' @param nbands Numeric vector of length 1 controlling the number of warped spectral bands to calculate when using \code{type = "mfcc"} (see \code{\link[tuneR]{melfcc}}). Default is 40. 
-#' @param method Numeric vector of length 1 to control the method used to create spectrogram (or mfcc) matrices. Two option are available:
+#' @param method Numeric vector of length 1 to control the method used to create spectrogram matrices. Two option are available:
 #' \itemize{
 #'    \item \code{1}:  matrices are created first (keeping them internally as a list) and cross-correlation is calculated on a second step. Note that this method may require lots of memory if selection and or sound files are large. 
 #'    \item \code{2}: matrices are created "on the fly" (i.e. at the same time that cross-correlation is calculated). More memory efficient but may require extracting the same matrix several times, which will affect performance. Note that when using this method the function does not check if sound files have the same sampling rate which if not, may produce an error.
@@ -41,11 +44,10 @@
 #' the maximum correlation for each pairwise comparison ('max.xcorr.matrix') and 2) a data frame with the correlation statistic for each "sliding" step ('scores').
 #' @export
 #' @name cross_correlation
-#' @details This function calculates the pairwise similarity of multiple signals by means of time-frequency cross-correlation. Spectrographic cross-correlation (SPCC, i.e. Fourier transform) and Mel frequency cepstral coefficients (mfcc) can be applied to create time-frequency representations of sound. 
-#' This method "slides" the spectrogram of the sorthest selection over the longest one calculating a correlation of the amplitude values at each step.
+#' @details This function calculates the pairwise similarity of multiple signals by means of time-frequency cross-correlation. Fourier or Mel frequency ceptral coefficients spectrograms can be used as time-frequency representations of sound. 
+#' This method "slides" the spectrogram of the shortest selection over the longest one calculating a correlation of the amplitude values at each step.
 #' The function runs pairwise cross-correlations on several signals and returns a list including the correlation statistic
-#' for each "sliding" step as well as the maximum (peak) correlation for each pairwise comparison. To accomplish this the margins
-#' of the signals are expanded by half the duration of the signal both before and after the provided time coordinates. 
+#' for each "sliding" step as well as the maximum (peak) correlation for each pairwise comparison. 
 #' The correlation matrix could have NA's if some of the pairwise correlation did not work (common when sound files have been modified by band-pass filters).
 #' @examples
 #' {
@@ -89,21 +91,15 @@
 cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ovlp = 70, dens = NULL, 
                   wn ='hanning', cor.method = "pearson", parallel = 1, 
                   path = NULL, pb = TRUE, na.rm = FALSE, cor.mat = NULL, output = "cor.mat",
-                  compare.matrix = NULL, type = "spectrogram", nbands = 40, method = 1)
+                  templates = NULL, surveys = NULL,
+                  compare.matrix = NULL, type = "fourier", nbands = 40, method = 1)
 {
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
-  
- 
   #### set arguments from options
   # get function arguments
   argms <- methods::formalArgs(cross_correlation)
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -121,15 +117,15 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
   
   #check path to working directory
   if (is.null(path)) path <- getwd() else 
-    if (!dir.exists(path) & !is_extended_selection_table(X)) 
+    if (!dir.exists(path) & !warbleR::is_extended_selection_table(X)) 
       stop("'path' provided does not exist") else
         path <- normalizePath(path)
   
   #if X is not a data frame
-  if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
+  if (!any(is.data.frame(X), warbleR::is_selection_table(X), warbleR::is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
   
   # if is extended all should have the same sampling rate
-  if (is_extended_selection_table(X) & length(unique(attr(X, "check.results")$sample.rate)) > 1) stop("all wave objects in the extended selection table must have the same sampling rate (they can be homogenized using resample_est_waves())")
+  if (warbleR::is_extended_selection_table(X) & length(unique(attr(X, "check.results")$sample.rate)) > 1) stop("all wave objects in the extended selection table must have the same sampling rate (they can be homogenized using resample_est_waves())")
   
   #if there are NAs in start or end stop
   if (any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end") 
@@ -147,7 +143,7 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
   if (!is.null(dens))  write(file = "", x = "'dens' has been deprecated and will be ignored")
   
   # dens deprecated
-  if (!is.null(cor.mat))  write(file = "", x = "'dens' has been deprecated and will be ignored")
+  if (!is.null(cor.mat))  write(file = "", x = "'cor.mat' has been deprecated and will be ignored")
   
   #check output
   if (!any(output %in% c("cor.mat", "list"))) stop("'output' must be either 'cor.mat' or 'list'")  
@@ -162,18 +158,19 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
     if (!is.vector(ovlp)) stop("'ovlp' must be a numeric vector of length 1") else{
       if (!length(ovlp) == 1) stop("'ovlp' must be a numeric vector of length 1")}} 
   
-  if (!is_extended_selection_table(X)){
+  # extended selection table only need sound files in the working directory when doing detection
+  if (!warbleR::is_extended_selection_table(X) | warbleR::is_extended_selection_table(X) & !is.null(templates) | warbleR::is_extended_selection_table(X) & !is.null(compare.matrix)){
     #return warning if not all sound files were found
-    fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
-    if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
+    fs <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
+    if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files)) & !warbleR::is_extended_selection_table(X)) 
       write(file = "", x = paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
-                                 ".wav file(s) not found"))
+                                 "sound file(s) not found"))
     
     #count number of sound files in working directory and if 0 stop
+    if (!warbleR::is_extended_selection_table(X) | warbleR::is_extended_selection_table(X) & !is.null(templates) | warbleR::is_extended_selection_table(X) & !is.null(compare.matrix) & any(grep(pattern = "\\.wav$", x = compare.matrix[ , 2], ignore.case = TRUE))) {
     d <- which(X$sound.files %in% fs) 
-    if (length(d) == 0){
-      stop("The .wav files are not in the working directory")
-    }  else {
+    if (length(d) == 0)
+      stop("The sound files are not in the working directory") else 
       X <- X[d, ]
     }
   }
@@ -183,14 +180,33 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
   if (any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
   
   # check sampling rate is the same for all selections if not a selection table
-  if (is_extended_selection_table(X) & length(unique(attr(X, "check.results")$sample.rate)) > 1) stop("sampling rate must be the same for all selections")
+  if (warbleR::is_extended_selection_table(X) & length(unique(attr(X, "check.results")$sample.rate)) > 1) stop("sampling rate must be the same for all selections")
   
   # add selection id column to X
   X$selection.id <- paste(X$sound.files, X$selec, sep = "-")
   
-  # keep only selections in supplied compare.matrix to improve performance
+  # if templates were supplied
+  if (!is.null(templates))
+    if (!all(templates %in% X$selection.id))
+      stop("not all templates are referenced in 'X'")
+  
+  # check surveys
+  if (!all(surveys %in% list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)))
+    stop("not all sound files in 'surveys' are found in the working directory or 'path'")
+  
+  # if templates were supplied but no compare.matrix use files in working directory
+  if (!is.null(templates) & is.null(compare.matrix))
+    if (is.null(surveys))
+      compare.matrix <- data.frame(X1 = rep(templates, length(fs)), X2 = fs) else
+        compare.matrix <- data.frame(X1 = rep(templates, length(surveys)), X2 = surveys)
+  
+  
   if (!is.null(compare.matrix))
-  { X <- X[X$selection.id %in% unique(c(compare.matrix)), , drop = FALSE]
+    output <- "list"
+      
+  # keep only selections in supplied compare.matrix to improve performance
+  if (!is.null(compare.matrix)){ 
+    X <- X[X$selection.id %in% unique(unlist(c(compare.matrix))), , drop = FALSE]
  
   # set method to 2 if not provided in call
   if (!any(names(call.argms) == "method"))
@@ -199,30 +215,39 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
    
   # define number of steps in analysis to print message
   if (pb){
-    max.stps <- getOption("warbleR.steps")
-    if (is.null(max.stps)) 
-      if (method == 1) max.stps <- 2 else 
-        max.stps <- 1
+    steps <- getOption("int_warbleR_steps")
+    
+      if (steps[2] > 0) 
+      {
+        current.step <- steps[1]
+        total.steps <- steps[2] 
+      } else {
+              if(method == 1) total.steps <- 2  else  total.steps <- 1
+              
+              current.step <- 1
+              }
   } 
-  
-  # generate all possible combinations of selections, keep one with the orignal order of rows to create cor.table output
+    
+  # generate all possible combinations of selections, keep one with the original order of rows to create cor.table output
   if (is.null(compare.matrix))
     spc.cmbs.org <- spc.cmbs <- t(combn(X$selection.id, 2)) else
     {
-      # if all are selection in compare.matrix are from X
-      if (all(c(compare.matrix) %in% X$selection.id))
+      # if all selections in compare.matrix are from X
+      if (all(unlist(c(compare.matrix)) %in% X$selection.id))
         spc.cmbs.org <- spc.cmbs <- compare.matrix else {
           
           # if some are complete sound files
-          complt.sf <- setdiff(c(compare.matrix), X$selection.id)
+          entire.sf <- setdiff(unlist(c(compare.matrix)), X$selection.id)
           
           # get duration of files
-          wvdr <- duration_wavs(files = complt.sf, path = path)
+          wvdr <- warbleR::info_sound_files(path = path, pb = FALSE)
+         
+          wvdr <- wvdr[wvdr$sound.files %in% entire.sf, ]
           
           # put it in a data frame
           names(wvdr)[2] <- "end"
           wvdr$start <- 0
-          wvdr$selec <- "whole.file"    
+          wvdr$selec <- "entire.file"    
           wvdr$selection.id <- paste(wvdr$sound.files, wvdr$selec, sep = "-")
           
           out <- lapply(1:nrow(wvdr), function(x) {
@@ -245,33 +270,40 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
           
           wvdr <- do.call(rbind, out)        
           
+          if (length(unique(wvdr$sample.rate)) > 1)
+            stop("not all sound files have the same sampling rate")
+          
+          if (warbleR::is_extended_selection_table(X))  
+            if (unique(wvdr$sample.rate) != unique(attr(X, "check.results")$sample.rate))
+              stop("not all sound files have the same sampling rate than the wave objects in the extended selection table")
+          
           #get intersect of column names
           int.nms <- intersect(names(X), names(wvdr))
             
           X <- rbind(as.data.frame(X)[, int.nms, drop = FALSE], wvdr[, int.nms])
           
           # change complete file names in compare matrix
-          for (i in complt.sf)
-            compare.matrix[compare.matrix == i] <- paste(i, "whole.file", sep = "-")
+          for (i in entire.sf)
+            compare.matrix[compare.matrix == i] <- paste(i, "entire.file", sep = "-")
           
           # set new matrices to allow changes down stream
           spc.cmbs.org <- spc.cmbs <- compare.matrix
         }
       
     }
-  
-  # function to get spectrogram or mfcc matrices
+
+  # function to get spectrogram matrices
   spc_FUN <- function(j, pth, W, wlg, ovl, w, nbnds) {
     
-    clp <- warbleR::read_wave(X = W, index = j, path = pth)
+    clp <- warbleR::read_sound_file(X = W, index = j, path = pth)
     
-    if (type == "spectrogram")
+    if (type == "fourier" | type == "spectrogram")
       spc <- seewave::spectro(wave = clp, wl = wlg, ovlp = ovl, wn = w, plot = FALSE, fftw = TRUE, norm = TRUE)
     
-    if (type == "mfcc")
+    if (type == "mfcc"| type == "mel")
     {
       # calculate MFCCs
-      spc <- melfcc(clp, nbands = nbnds, hoptime =  (wlg / clp@samp.rate) * (ovl / 100), wintime =  wlg / clp@samp.rate, dcttype = "t3", fbtype = "htkmel", spec_out = TRUE)
+      spc <- melfcc(clp, nbands = nbnds, hoptime = (wlg / clp@samp.rate) * ((if(ovl > 0) ovl else 100) / 100), wintime =  wlg / clp@samp.rate, dcttype = "t3", fbtype = "htkmel", spec_out = TRUE)
       
       # change name of target element so it maches spectrogram output names
       names(spc)[2] <- "amp" 
@@ -292,23 +324,18 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
   if (method == 1){
   #create spectrograms
   if (pb) 
-    if (type == "spectrogram")
-      write(file = "", x = paste0("creating spectrogram matrices (step 1 of ", max.stps,"):")) else
-        write(file = "", x = paste0("creating MFCC matrices (step 1 of ", max.stps,"):"))
+      write(file = "", x = paste0("creating spectrogram matrices (step ", current.step," of ", total.steps,"):"))
   
-  
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
    
   # set clusters for windows OS
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # get spectrogram for each selection
-  spcs <- pbapply::pblapply(X = 1:nrow(X), cl = cl, function(e) spc_FUN(j = e, pth = path, W = X, wlg = wl, ovl = ovlp, w = wn, nbnds = nbands))
+  spcs <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(X), cl = cl, FUN = function(e) spc_FUN(j = e, pth = path, W = X, wlg = wl, ovl = ovlp, w = wn, nbnds = nbands))
   
   # check sampling rate is the same for all selections if not a selection table
-  if (!is_extended_selection_table(X) & length(unique(sapply(spcs, function(x) length(x$freq)))) > 1) stop("sampling rate must be the same for all selections")
+  if (!warbleR::is_extended_selection_table(X) & length(unique(sapply(spcs, function(x) length(x$freq)))) > 1) stop("sampling rate must be the same for all selections")
   
     # add selection name
   names(spcs) <- X$selection.id
@@ -354,14 +381,14 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
   
   #run cross-correlation
   if (pb) 
-    write(file = "", x = paste0("running cross-correlation (step ", max.stps," of ", max.stps,"):"))
+    write(file = "", x = paste0("running cross-correlation (step ", current.step + 1," of ", total.steps,"):"))
         
   # set parallel cores
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # get correlation
-  xcrrs <- pbapply::pblapply(X = 1:nrow(spc.cmbs), cl = cl, FUN = function(j, BP = bp, cor.meth = cor.method) {
+  xcrrs <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(spc.cmbs), cl = cl, FUN = function(j, BP = bp, cor.meth = cor.method) {
     
     if (BP[1] %in% c("pairwise.freq.range", "frange"))
     BP <- c(min(X$bottom.freq[X$selection.id %in% spc.cmbs[j, ]]), max(X$top.freq[X$selection.id %in% spc.cmbs[j, ]]))
@@ -414,7 +441,7 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
   } 
 } else {
   mat <- data.frame(compare.matrix, score = mx.xcrrs)
- if (na.rm) mat <- mat[!is.infinite(mat$scores), ]
+ if (na.rm) mat <- mat[!is.infinite(mat$score), ]
   }
   ## create correlation data matrix (keeps all correlation values, not only the maximum)
   # time is the one of the longest selection as the shortest is used as template 
@@ -428,11 +455,12 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
         )
       
       # put in a data frame
-      df <- data.frame(dyad = paste(spc.cmbs.org[x, ], collapse = "/"),
+      df <- suppressWarnings(data.frame(dyad = paste(spc.cmbs.org[x, ], collapse = "/"),
                        sound.files = spc.cmbs.org[x, which.max(durs)], 
                        template = spc.cmbs.org[x, which.min(durs)], 
                        time = if (!is.null( xcrrs[[x]])) c(X$start[X$selection.id == spc.cmbs.org[x, 1]], X$start[X$selection.id == spc.cmbs.org[x, 2]])[which.max(durs)] + seq(min(durs)/2, max(durs) - min(durs)/2, length.out = length(xcrrs[[x]])) else NA, 
-                       score = if (!is.null(xcrrs[[x]])) xcrrs[[x]] else NA)
+                       score = if (!is.null(xcrrs[[x]])) xcrrs[[x]] else NA
+                      ))
           
       return(df)
       })
@@ -455,8 +483,20 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
   
   #list results
   if (output == "cor.mat") return(mat) else{
+
     
-    output_list <- list(max.xcorr.matrix = mat, scores = cor.table, selection.table = X, hop.size.ms = read_wave(X, 1, header = TRUE, path = path)$sample.rate / wl, errors = if (na.rm) errors else NA)
+    output_list <- list(
+      max.xcorr.matrix = mat, 
+      scores = cor.table, 
+      org.selection.table = X, 
+      hop.size.ms = warbleR::read_sound_file(X, 1, header = TRUE, path = path)$sample.rate / wl, 
+      errors = if (na.rm) errors else NA,
+      # parameters = lapply(call.argms, eval),
+      parameters = call.argms,
+      call = base::match.call(),
+      spectrogram = type,
+      warbleR.version = packageVersion("warbleR")
+      )
     
     class(output_list) <- c("list", "xcorr.output")
     
@@ -474,3 +514,58 @@ cross_correlation <- function(X = NULL, wl = 512, bp = "pairwise.freq.range", ov
 #' @export
 
 xcorr <- cross_correlation
+
+
+##############################################################################################################
+
+#' print method for class \code{xcorr.output}
+#'
+#' @param x Object of class \code{xcorr.output}, generated by \code{\link{cross_correlation}}.
+#' @param ...	 further arguments passed to or from other methods. Ignored when printing selection tables.
+#' @keywords internal
+#'
+#' @export
+#' 
+
+print.xcorr.output <- function(x, ...) {
+  
+  cat(crayon::cyan(paste("Object of class", crayon::bold("'xcorr.output' \n"))))
+  
+  cat(crayon::silver(paste(crayon::bold("\nContains: \n"), "The output of a detection routine from the following", crayon::italic("cross_correlation()"), "call: \n")))
+  
+  cll <- paste0(deparse(x$call))
+  cat(crayon::silver(crayon::italic(gsub("    ", "", cll), "\n")))
+  
+  max.scores <- x$max.xcorr.matrix
+  max.scores$X2 <- gsub("-entire.file", "", max.scores$X2)
+  max.scores$score <- NULL
+  names(max.scores) <- c("template", "survey")
+  
+  cat(crayon::silver(paste("\n The routine was run on", x$spectrogram, "spectrograms using the following templates and surveys (selections or files in which templates were looked for): \n")))
+
+  #print data frame
+  #define columns to show
+  cols <- if (ncol(max.scores) > 6)  1:6 else 1:ncol(max.scores)
+  
+  kntr_tab <- knitr::kable(head(max.scores[, cols]), escape = FALSE, digits  = 4, justify = "centre", format = "pipe")
+  
+  for(i in 1:length(kntr_tab)) cat(crayon::silver(paste0(kntr_tab[i], "\n")))
+  
+  if (nrow(max.scores) > 6) cat(crayon::silver(paste0(if (ncol(max.scores) <= 6) "..." else "", " and ", nrow(max.scores) - 6, " more row(s) (run ", crayon::italic(paste0(gsub("[^[:alnum:]=\\.]","", x$call[2]), "$max.xcorr.matrix[, 1:2]")), " to see it all) \n")))  
+  
+
+  cat(crayon::silver(paste(crayon::bold("\nIncludes:"), "\n* A data frame ('max.xcorr.matrix') with the highest correlation value for each pair of templates and surveys \n")))
+  
+  cat(crayon::silver("\n* A data frame ('scores',", nrow(x$scores), "rows) with the cross correlation scores for each of the", nrow(max.scores), "template/survey combination(s) \n"))
+  cat(crayon::silver(paste("\n* A selection table data frame ('org.selection.table') referencing the templates location in sound files \n")))
+  
+  cat(crayon::silver(paste("\n Use", crayon::bold(crayon::italic("full_spectrograms()")), "to plot cross_correlation scores along spectrograms \n")))
+  
+  cat(crayon::silver(paste("\n Use", crayon::bold(crayon::italic("find_peaks()")), "to extract detections from this object \n")))
+  
+  # print warbleR version
+  if (!is.null(x$warbleR.version))
+    cat(crayon::silver(paste0("\n Created by warbleR ", x$warbleR.version)), "\n") else
+      cat(crayon::silver("\n Created by warbleR < 1.1.27 \n"))
+  
+}

@@ -6,16 +6,14 @@
 \usage{
 selection_table(X, max.dur = 10, path = NULL, whole.recs = FALSE,
 extended = FALSE, confirm.extended = TRUE, mar = 0.1, by.song = NULL, 
-pb = TRUE, parallel = 1, ...)
+pb = TRUE, parallel = 1, verbose = TRUE, ...)
 }
 \arguments{
 \item{X}{data frame with the following columns: 1) "sound.files": name of the .wav 
 files, 2) "selec": unique selection identifier (within a sound file), 3) "start": start time and 4) "end": 
 end time of selections. Columns for 'top.freq', 'bottom.freq' and 'channel' are optional. Note that, when 'channel' is
 not provided the first channel (i.e. left channel) would be used by default. 
-Frequency parameters (including top and bottom frequency) should be provided in kHz. Alternatively, a 'selection_table' class object can be input to double check selections. 
-The output of \code{\link{auto_detec}} can 
-be used as the input object for other \code{\link{warbleR}} functions.}
+Frequency parameters (including top and bottom frequency) should be provided in kHz. Alternatively, a 'selection_table' class object can be input.}
 
 \item{max.dur}{the maximum duration of expected for a selection  (ie. end - start). If surpassed then an error message 
 will be generated. Useful for detecting errors in selection tables.}
@@ -54,6 +52,8 @@ Ignored if \code{extended = FALSE}.}
 
 \item{parallel}{Numeric. Controls whether parallel computing is applied. 
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
+
+\item{verbose}{Logical argument to control if summary messages are printed to the console. Default is \code{TRUE}.}
 
 \item{...}{Additional arguments to be passed to \code{\link{check_sels}} for customizing
 checking routine.}
@@ -120,7 +120,7 @@ is_extended_selection_table(st)
 
 ### make extended selection by song  
 # create a song variable
-lbh_selec_table$song <- as.numeric(lbh_selec_table$sound.files)
+lbh_selec_table$song <- as.numeric(as.factor(lbh_selec_table$sound.files))
 
 st <- selection_table(X = lbh_selec_table, extended = TRUE, 
 confirm.extended = FALSE, by.song = "song", path = tempdir())

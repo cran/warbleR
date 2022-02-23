@@ -9,8 +9,7 @@
 #' by.song = NULL, sel.labels = "selec", title.labels = NULL, dest.path = NULL, ...)
 #' @param X 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signals (start and end). 
-#' 'top.freq' and 'bottom.freq' columns are optional.
-#' The output of \code{\link{auto_detec}} can be used as the input data frame. If using an 
+#' 'top.freq' and 'bottom.freq' columns are optional. If using an 
 #' 'extended_selection_table' the sound files are not required (see \code{\link{selection_table}}). 
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
@@ -119,18 +118,12 @@ spectrograms <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rev
                        sc = FALSE, line = TRUE, col = "#07889B", fill = adjustcolor("#07889B", alpha.f = 0.15), lty = 3, mar = 0.05, 
                        it = "jpeg", parallel = 1, path = NULL, pb = TRUE, fast.spec = FALSE, by.song = NULL, sel.labels = "selec", title.labels = NULL, dest.path = NULL, ...){
   
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
-  
   #### set arguments from options
   # get function arguments
   argms <- methods::formalArgs(spectrograms)
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -176,8 +169,7 @@ spectrograms <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rev
   
   #if any start higher than end stop
   if (any(X$end - X$start <= 0)) stop(paste("The start is higher than or equal to the end in", length(which(X$end - X$start <= 0)), "case(s)"))  
-  
-  # flim checking
+
   if (flim[1] != "frange")
   {
     
@@ -217,15 +209,15 @@ spectrograms <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rev
   #return warning if not all sound files were found
   if (!is_extended_selection_table(X))
   {
-    recs.wd <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+    recs.wd <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files))) 
     (paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
-           ".wav file(s) not found"))
+           "sound file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
   d <- which(X$sound.files %in% recs.wd) 
   if (length(d) == 0){
-    stop("The .wav files are not in the working directory")
+    stop("The sound files are not in the working directory")
   }  else {
     X <- X[d, , drop = FALSE]
   }
@@ -244,14 +236,14 @@ spectrograms <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rev
     X$selec <- 1
     
     # fix extended selection table again
-    if (is_extended_selection_table(Y)) X <- fix_extended_selection_table(X, Y)
-    } else Y <- NULL
+    if (warbleR::is_extended_selection_table(Y)) X <- fix_extended_selection_table(X, Y, to.by.song = TRUE)
+    } 
   
   #create function to run within Xapply functions downstream     
   specreFUN <- function(X, Y, i, mar, flim, xl, picsize, res, wl, ovlp, cexlab, by.song, sel.labels, pal, dest.path, fill){
     
     # Read sound files, initialize frequency and time limits for spectrogram
-    r <- warbleR::read_wave(X = X, path = path, index = i, header = TRUE, from = 0, to = X$end[i] + mar)
+    r <- warbleR::read_sound_file(X = X, path = path, index = i, header = TRUE, from = 0, to = X$end[i] + mar)
     f <- r$sample.rate
     t <- c(X$start[i] - mar, X$end[i] + mar)
     
@@ -270,7 +262,7 @@ spectrograms <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rev
     if (flim[1] == "frange") flim <- range(c(X$bottom.freq[i], X$top.freq[i])) + c(-1, 1)
     
     fl <- flim #in case flim its higher than can be due to sampling rate
-    if (fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
+    if (fl[2] > f / 2000) fl[2] <- f / 2000 
     if (fl[1] < 0) fl[1] <- 0
     
        # Spectrogram width can be proportional to signal duration
@@ -282,7 +274,7 @@ spectrograms <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rev
       fn <- paste(X$sound.files[i], "-", X[i, by.song], ".", it, sep = "")
    
     img_wrlbr_int(filename = fn, path = dest.path, 
-           width = pwc, height = (10.16) * picsize, units = "cm", res = res) 
+           width = pwc, height = (10.16) * picsize, units = "cm", res = res)
     
     # Change relative heights of rows for spectrogram when osci = TRUE
     if (osci) hts <- c(3, 2) else hts <- NULL
@@ -295,7 +287,7 @@ spectrograms <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rev
     par(oma = outer.mar)
     
     # Generate spectrogram using spectro_wrblr_int (modified from seewave::spectro)
-  spectro_wrblr_int(wave = warbleR::read_wave(X = X, path = path, index = i, from = t[1], to = t[2]), f = f, wl = wl, ovlp = ovlp, heights = hts, wn = "hanning",
+  spectro_wrblr_int(wave = warbleR::read_sound_file(X = X, path = path, index = i, from = t[1], to = t[2]), f = f, wl = wl, ovlp = ovlp, heights = hts, wn = "hanning",
                      widths = wts, palette = pal, osc = osci, grid = gr, scale = sc, collab = "black", 
                      cexlab = cexlab, cex.axis = 1, flim = fl, tlab = "Time (s)", 
                      flab = "Frequency (kHz)", alab = "", trel = FALSE, fast.spec = fast.spec, ...)
@@ -317,7 +309,7 @@ spectrograms <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rev
       {   
         if (!is.null(by.song))
         {
-          W <- Y[Y$sound.files == X$sound.files[i] & Y[, by.song] == X[i, by.song], ,  drop= FALSE]
+          W <- Y[Y$sound.files == X$sound.files[i] & Y[, by.song, drop = TRUE] == X[i, by.song, drop = TRUE], ,  drop= FALSE]
           W$start <- W$start - X$start[i] + mar1
           W$end <- W$end - X$start[i] + mar1
         } else 
@@ -343,15 +335,15 @@ spectrograms <- function(X, wl = 512, flim = "frange", wn = "hanning", pal = rev
     dev.off()
   }
 
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  
+  
   
   # set clusters for windows OS
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # run loop apply function
-  out <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
+  out <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(X), cl = cl, FUN = function(i) 
   { 
     specreFUN(X, Y, i, mar, flim, xl, picsize, res, wl, ovlp, cexlab, by.song, sel.labels, pal, dest.path, fill)
   }) 

@@ -6,7 +6,7 @@
 \usage{
 lspec(
   X = NULL,
-  flim = c(0, 22),
+  flim = NULL,
   sxrow = 5,
   rows = 10,
   collevels = seq(-40, 0, 1),
@@ -26,6 +26,7 @@ lspec(
   horizontal = FALSE,
   song = NULL,
   suffix = NULL,
+  dest.path = NULL,
   ...
 )
 }

@@ -1,3 +1,33 @@
+# *warbleR 1.1.27*
+
+## New functions:
+
+* `sound_pressure_level()` to measure, well, sound pressure level
+* `find_clipping()` to detect clipped selections
+* `wav_2_flac()` to convert '.wav' files into flac compresed lossless format
+* `gaps()` for calculating time intervals (i.e. gaps) between selections
+* `read_sound_files()` is now use to read sound files
+* `split_sound_files()` now can also split associated selection tables
+
+## Changes and additions:
+
+* `read_sound_files()` and consequently most other functions in warbleR will look at the 'channel' column for deciding which channel to read
+* updated download URL in `quer_xc()`
+* `selection_table` and `extended_selection_table` subsetting (`[`) drop behavior switched to `FALSE`
+* `overlapping_sels()` has been updated to improve performance
+* `unique.labs` argument in `overlapping_sels()` has been deprecated
+* `fix.selec` argument added to `check_sels()` to fix 'selec' column labels
+* warbleR now supports '.wav', '.flac', '.wac' and '.mp3' formats
+* New argument 'downsample' to speed up processing in `remove_silence()`
+* New printing methods for 'autodetec.output', 'find.peaks.output' and 'xcorr.output' object classes
+* 'templates' and 'surveys' arguments added to `cross_correlation()` to simplify signal detection with this function
+* `auto_detec()` output including envelopes is ~1/3 smaller to reduce memory usage
+
+## Bug fixes:
+
+* error when resampling wavs in `resample_est_waves()`
+* error when silences are not found in `remove_silence()`
+
 # *warbleR 1.1.26*
 
 ## Changes and additions:
@@ -16,15 +46,15 @@
 
 ## New functions:
 
-* 'optimize_autodetec()' for tunning detection parameters in 'autodetec()'
-* 'envelope()' a C-compiled version of 'seewave::env()'
-* new function 'find_peaks()' to detect signals on sound files using 'xcorr()' output
-* 'read_sound_file()' to read wav, wav and mp3 files as well as wave objects in extended selection tables
+* `optimize_autodetec()` for tunning detection parameters in `autodetec()`
+* `envelope()` a C-compiled version of `seewave::env()`
+* new function `find_peaks()` to detect signals on sound files using `xcorr()` output
+* `read_sound_file()` to read wav, wav and mp3 files as well as wave objects in extended selection tables
 
 ## Changes and additions:
 
 * Remove bioacoustics::resample() as it was deprecated (mp32wav() and fixwavs() affected)
-* Remove comment columns in 'lbh_selec_table'
+* Remove comment columns in `lbh_selec_table`
 * Selection table printing method uses huxtable package for text coloring
 * 'suffix' argument added to `lspec()`
 * `autodetec()` does not create image files with spectrograms any more

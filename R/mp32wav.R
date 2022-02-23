@@ -45,8 +45,8 @@ mp32wav <- function(samp.rate = NULL, parallel = 1, path = NULL,
   if (!requireNamespace("bioacoustics", quietly = TRUE) & !is.null(samp.rate))
     stop("must install 'bioacoustics' to use mp32wav() for changing sampling rate")
   
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  
   
   #### set arguments from options
   # get function arguments
@@ -54,9 +54,6 @@ mp32wav <- function(samp.rate = NULL, parallel = 1, path = NULL,
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -134,18 +131,21 @@ mp32wav <- function(samp.rate = NULL, parallel = 1, path = NULL,
    return(NULL)
    }
 
- # set pb options 
- pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+ 
+ 
  
  # set clusters for windows OS
  if (Sys.info()[1] == "Windows" & parallel > 1)
    cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
  
  # run loop apply function
- out <- pbapply::pbsapply(X = files, cl = cl, FUN = function(i) 
+ out_l <- pblapply_wrblr_int(pbar = pb, X = files, cl = cl, FUN = function(i) 
  { 
    suppressWarnings(mp3_conv_FUN(x = i, bit.depth))
  })
+ 
+ # make it a vector
+ out <- unlist(out_l)
  
  if(any(sapply(out, function(x) is(x, "try-error")))) {
    
@@ -155,3 +155,14 @@ mp32wav <- function(samp.rate = NULL, parallel = 1, path = NULL,
    }
  
 }
+
+
+##############################################################################################################
+#' alternative name for \code{\link{mp32wav}}
+#'
+#' @keywords internal
+#' @details see \code{\link{mp32wav}} for documentation. \code{\link{mp32wav}} will be deprecated in future versions.
+#' @export
+
+mp3_2_wav <- mp32wav
+

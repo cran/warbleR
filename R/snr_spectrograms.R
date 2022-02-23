@@ -2,7 +2,7 @@
 #' 
 #' \code{snr_spectrograms} creates spectrograms to visualize margins over which background noise
 #' will be measured by \code{\link{sig2noise}}.
-#' @usage snr_spectrograms(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70, 
+#' @usage snr_spectrograms(X, wl = 512, flim = NULL, wn = "hanning", ovlp = 70, 
 #' inner.mar = c(5, 4, 4, 2), outer.mar = c(0, 0, 0, 0), picsize = 1, 
 #' res = 100, cexlab = 1, title = TRUE, before = FALSE, eq.dur = FALSE,
 #'   propwidth= FALSE, xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, mar = 0.2,
@@ -13,7 +13,7 @@
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
 #' @param flim A numeric vector of length 2 for the frequency limit in kHz of 
-#'   the spectrogram, as in \code{\link[seewave]{spectro}}. Default is c(0, 22).
+#'   the spectrogram, as in \code{\link[seewave]{spectro}}. Default is \code{NULL}.
 ##' @param wn Character vector of length 1 specifying window name. Default is 
 #'   "hanning". See function \code{\link[seewave]{ftwindow}} for more options.
 #' @param ovlp Numeric vector of length 1 specifying \% of overlap between two 
@@ -102,14 +102,14 @@
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr}) and Grace Smith Vidaurre
 #last modification on aug-06-2018 (MAS)
 
-snr_spectrograms <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp = 70,
+snr_spectrograms <- function(X, wl = 512, flim = NULL, wn = "hanning", ovlp = 70,
                      inner.mar = c(5,4,4,2), outer.mar = c(0, 0, 0, 0), picsize = 1, res = 100,
                      cexlab = 1, title = TRUE, before = FALSE,  eq.dur = FALSE, propwidth = FALSE, 
                      xl = 1, osci = FALSE, gr = FALSE, sc = FALSE, mar = 0.2, snrmar = 0.1, it = "jpeg",
                      parallel = 1, path = NULL, pb = TRUE){
  
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  
   
   #### set arguments from options
   # get function arguments
@@ -117,9 +117,6 @@ snr_spectrograms <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp 
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -168,15 +165,15 @@ snr_spectrograms <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp 
   #return warning if not all sound files were found
   if (!is_extended_selection_table(X))
   { 
-  fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+  fs <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
-                  ".wav file(s) not found"))
+                  "sound file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
   d <- which(X$sound.files %in% fs) 
   if (length(d) == 0){
-    stop("The .wav files are not in the working directory")
+    stop("The sound files are not in the working directory")
   }  else X <- X[d, , drop = FALSE]
   }
   
@@ -187,12 +184,14 @@ snr_spectrograms <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp 
     snrspeFUN <- function(i, X, wl, flim, ovlp, inner.mar, outer.mar, picsize, res, cexlab, xl, mar, snrmar, before, eq.dur){
     
     # Read sound files to get sample rate and length
-    r <- warbleR::read_wave(X = X, path = path, index = i, header = TRUE)
+    r <- warbleR::read_sound_file(X = X, path = path, index = i, header = TRUE)
     f <- r$sample.rate
     
     fl<- flim #in case flim its higher than can be due to sampling rate
-    if (fl[2] > ceiling(f/2000) - 1) fl[2] <- ceiling(f/2000) - 1 
     
+    if (is.null(fl))
+    fl <- c(0, f / 2000)
+    if (fl[2] > f / 2000) fl[2] <- f / 2000
     
     # set margin if eq.dur
     if (eq.dur) snrmar <- X$end[i] -  X$start[i]
@@ -214,7 +213,7 @@ snr_spectrograms <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp 
     
     if (en > r$samples/f) en <- r$samples/f
     
-    r <- warbleR::read_wave(X = X, path = path, index = i, from = st, to = en)
+    r <- warbleR::read_sound_file(X = X, path = path, index = i, from = st, to = en)
     
     
 # Spectrogram width can be proportional to signal duration
@@ -261,15 +260,15 @@ snr_spectrograms <- function(X, wl = 512, flim = c(0, 22), wn = "hanning", ovlp 
     return (NULL)
   }
      
-    # set pb options 
-    pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+    
+    
     
     # set clusters for windows OS
     if (Sys.info()[1] == "Windows" & parallel > 1)
       cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
     
     # run loop apply function
-    out <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
+    out <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(X), cl = cl, FUN = function(i) 
     { 
       snrspeFUN(X = X, i = i, wl = wl, flim = flim, ovlp = ovlp, inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab, xl = xl, mar = mar, snrmar = snrmar, before,  eq.dur)
     }) 

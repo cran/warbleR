@@ -78,8 +78,8 @@
 query_xc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "Specific_epithet"), 
                    parallel = 1, path = NULL, pb = TRUE) {
   
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  
   
   #### set arguments from options
   # get function arguments
@@ -87,10 +87,7 @@ query_xc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
-  
+
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
   
@@ -121,8 +118,8 @@ query_xc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "
   if (!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if (any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
 
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  
+  
   
   file.name <- gsub(" ", "_", file.name) 
   file.name <- tolower(file.name) 
@@ -159,7 +156,7 @@ query_xc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "
       if (Sys.info()[1] == "Windows" & parallel > 1)
         cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
         
-        f <- pbapply::pblapply(X = 1:q$numPages, cl = cl, FUN = function(y)
+        f <- pblapply_wrblr_int(pbar = pb, X = 1:q$numPages, cl = cl, FUN = function(y)
       {
         #search for each page
         a <- rjson::fromJSON(file = paste0("https://www.xeno-canto.org/api/2/recordings?query=", qword, "&page=", y))  
@@ -237,7 +234,7 @@ query_xc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "
     results <- results[!duplicated(results$Recording_ID), ]
     
     if (pb)
-      write(file = "", x = paste0(nrow(results), " recordings found!"))
+      write(file = "", x = paste0(nrow(results), " recording(s) found!"))
     } 
   } else { 
     #stop if X is not a data frame
@@ -268,8 +265,10 @@ query_xc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "
     
     xcFUN <-  function(results, x){
       if (!file.exists(results$sound.files[x]))
-        download.file(url = paste("https://www.xeno-canto.org/download.php?XC=", results$Recording_ID[x], sep=""), destfile = file.path(path, results$sound.files[x]),
-                      quiet = TRUE,  mode = "wb", cacheOK = TRUE,
+        download.file(
+          url = paste("https://xeno-canto.org/", results$Recording_ID[x], "/download", sep = ""),
+          destfile = file.path(path, results$sound.files[x]),
+          quiet = TRUE,  mode = "wb", cacheOK = TRUE,
                       extra = getOption("download.file.extra"))
       return (NULL)
     }
@@ -280,7 +279,7 @@ query_xc <- function(qword, download = FALSE, X = NULL, file.name = c("Genus", "
     if (Sys.info()[1] == "Windows" & parallel > 1)
       cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
     
-       a1 <- pbapply::pblapply(X = 1:nrow(results), cl = cl, FUN = function(x) 
+       a1 <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(results), cl = cl, FUN = function(x) 
   { 
       xcFUN(results, x) 
   }) 
@@ -301,7 +300,7 @@ if (pb) write(file = "", x ="double-checking downloaded files")
        cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
      
      
-    a1 <- pbapply::pblapply(X = 1:nrow(Y), cl = cl, FUN = function(x) 
+    a1 <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(Y), cl = cl, FUN = function(x) 
   { 
       try(xcFUN(Y, x), silent = TRUE) 
   }) 

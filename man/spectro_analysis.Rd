@@ -9,7 +9,7 @@ spectro_analysis(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
 wn = "hanning", fsmooth = 0.1, harmonicity = FALSE, nharmonics = 3, ...)
 }
 \arguments{
-\item{X}{'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
+\item{X}{'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the sound 
 files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 end time of selections. The output \code{\link{auto_detec}} can
 be used as the input data frame.}
@@ -124,8 +124,7 @@ time intervals of 25\% and 75\% energy respectively (in s). See \code{\link[seew
 are provided.
 }
 \details{
-The output of \code{\link{auto_detec}} can be used 
- directly without any additional modification. The function measures 29 acoustic parameters (if \code{fast = TRUE}) on 
+The function measures 29 acoustic parameters (if \code{fast = TRUE}) on 
  each selection in the data frame. Most parameters are produced internally by 
  \code{\link[seewave]{specprop}}, \code{\link[seewave]{fpeaks}}, \code{\link[seewave]{fund}},
  and \code{\link[seewave]{dfreq}} from the package seewave and \code{\link[soundgen]{analyze}} 
@@ -147,7 +146,8 @@ sp_param <- spectro_analysis(X = lbh_selec_table[1:8,], pb = FALSE, path = tempd
 sp_param <- spectro_analysis(X = lbh_selec_table[1:8,], pb = FALSE, fast = FALSE, path = tempdir())
 
 # measuring harmonic-related parameters using progress bar
-sp_param <- spectro_analysis(X = lbh_selec_table[1:8,], harmonicity = TRUE, path = tempdir())
+sp_param <- spectro_analysis(X = lbh_selec_table[1:8,], harmonicity = TRUE, 
+path = tempdir(), ovlp = 0)
 }
 
 }

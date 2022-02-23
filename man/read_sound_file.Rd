@@ -2,14 +2,14 @@
 % Please edit documentation in R/read_sound_file.R
 \name{read_sound_file}
 \alias{read_sound_file}
-\title{A extended version of read_wave that reads several sound file formats and files from selection tables}
+\title{An extended version of read_wave that reads several sound file formats and files from selection tables}
 \usage{
-read_sound_file(X, index, from = X$start[index], to = X$end[index], channel = NULL, 
-header = FALSE, path = NULL)
+read_sound_file(X, index, from = X$start[index], to = X$end[index], 
+channel = X$channel[index], header = FALSE, path = NULL)
 }
 \arguments{
 \item{X}{'data.frame', 'selection_table' or 'extended_selection_table' containing columns for sound file name (sound.files), 
-selection number (selec), and start and end time of signals (start and end). Alternatively, the name of a sound file or URL address to sound file can be provided. The function can read sound files in 'mp3', 'wav' and 'wac' format. The file name can contain the directory path.
+selection number (selec), and start and end time of signals (start and end). Alternatively, the name of a sound file or URL address to sound file can be provided. The function can read sound files in 'wav', 'mp3', 'flac' and 'wac' format. The file name can contain the directory path.
 'top.freq' and 'bottom.freq' columns are optional. Default is \code{NULL}.}
 
 \item{index}{Index of the selection in 'X' that will be read. Ignored if 'X' is \code{NULL}.}
@@ -18,8 +18,7 @@ selection number (selec), and start and end time of signals (start and end). Alt
 
 \item{to}{Where to stop reading, in seconds. Default is \code{X$end[index]}.}
 
-\item{channel}{Channel to be read from sound file (1 = left, 2 = right, or higher number for multichannel waves). If 
-\code{NULL} or higher than the number of channels in a wave then the first channel is used.}
+\item{channel}{Channel to be read from sound file (1 = left, 2 = right, or higher number for multichannel waves). Default is \code{X$channel[index]}. If a 'channel' column does not exist it will read the first channel.}
 
 \item{header}{If \code{TRUE}, only the header information of the Wave object is returned, otherwise (the default) the whole Wave object.}
 
@@ -30,11 +29,11 @@ If \code{NULL} (default) then the current working directory is used. If 'X' refe
 An object of class "Wave".
 }
 \description{
-\code{read_sound_file} is a extended version of read_wave that reads several sound file formats as well as files listed within selection tables
+\code{read_sound_file} reads several sound file formats as well as files referenced in selection tables
 }
 \details{
-The function is a wrapper for \code{\link[tuneR]{readWave}} that read sound files listed within selection tables. It 
-is also used internally by warbleR functions to read wave objects from extended selection tables (see \code{\link{selection_table}} for details).
+The function is a wrapper for \code{\link[tuneR]{readWave}} that read sound files, including those referenced in selection tables. It
+is also used internally by warbleR functions to read wave objects from extended selection tables (see \code{\link{selection_table}} for details). Note that reading 'flac' files requires creating a temporary copy in 'wav' format, which can be particularly slow for long files.
 }
 \examples{
 \dontrun{

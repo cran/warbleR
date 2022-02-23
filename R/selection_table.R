@@ -3,14 +3,12 @@
 #' \code{selection_table} converts data frames into an object of classes 'selection_table' or 'extended_selection_table'.
 #' @usage selection_table(X, max.dur = 10, path = NULL, whole.recs = FALSE,
 #' extended = FALSE, confirm.extended = TRUE, mar = 0.1, by.song = NULL, 
-#' pb = TRUE, parallel = 1, ...)
+#' pb = TRUE, parallel = 1, verbose = TRUE, ...)
 #' @param X data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": unique selection identifier (within a sound file), 3) "start": start time and 4) "end": 
 #' end time of selections. Columns for 'top.freq', 'bottom.freq' and 'channel' are optional. Note that, when 'channel' is
 #' not provided the first channel (i.e. left channel) would be used by default. 
-#' Frequency parameters (including top and bottom frequency) should be provided in kHz. Alternatively, a 'selection_table' class object can be input to double check selections. 
-#' The output of \code{\link{auto_detec}} can 
-#' be used as the input object for other \code{\link{warbleR}} functions.
+#' Frequency parameters (including top and bottom frequency) should be provided in kHz. Alternatively, a 'selection_table' class object can be input. 
 #' @param max.dur the maximum duration of expected for a selection  (ie. end - start). If surpassed then an error message 
 #' will be generated. Useful for detecting errors in selection tables.
 #' @param path Character string containing the directory path where the sound files are located. 
@@ -40,6 +38,7 @@
 #' @param pb Logical argument to control progress bar and messages. Default is \code{TRUE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied. 
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
+  #' @param verbose Logical argument to control if summary messages are printed to the console. Default is \code{TRUE}.
 #' @param ... Additional arguments to be passed to \code{\link{check_sels}} for customizing
 #' checking routine.
 #' @return An object of class selection_table which includes the original data frame plus the following additional attributes:
@@ -100,7 +99,7 @@
 #'
 #' ### make extended selection by song  
 #' # create a song variable
-#' lbh_selec_table$song <- as.numeric(lbh_selec_table$sound.files)
+#' lbh_selec_table$song <- as.numeric(as.factor(lbh_selec_table$sound.files))
 #' 
 #' st <- selection_table(X = lbh_selec_table, extended = TRUE, 
 #' confirm.extended = FALSE, by.song = "song", path = tempdir())
@@ -113,21 +112,15 @@
 #last modification on may-9-2018 (MAS)
 
 selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
-                            extended = FALSE, confirm.extended = TRUE, mar = 0.1, by.song = NULL, pb = TRUE, parallel = 1, ...)
+                            extended = FALSE, confirm.extended = TRUE, mar = 0.1, by.song = NULL, pb = TRUE, parallel = 1, verbose = TRUE, ...)
 {
   
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
-   
   #### set arguments from options
   # get function arguments
   argms <- methods::formalArgs(selection_table)
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -157,15 +150,16 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
   
   # create a selection table for a row for each full length recording
   if (whole.recs){ 
-    sound.files <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+    sound.files <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
     
     if (length(sound.files) == 0) stop("No sound files were found") 
     
     X <- data.frame(sound.files, selec = 1, channel = 1, start = 0, end = duration_wavs(files = sound.files, path = path)$duration)
   }
   
-  if (pb) write(file = "", x ="checking selections (step 1 of 2):")
-  check.results <- warbleR::check_sels(X, path = path, wav.size = TRUE, pb = pb, ...)        
+  if (pb & verbose) write(file = "", x ="checking selections (step 1 of 2):")
+  
+  check.results <- warbleR::check_sels(X, path = path, wav.size = TRUE, pb = pb, verbose = FALSE, ...)        
   
   if (any(check.results$check.res != "OK")) stop("Not all selections can be read (use check_sels() to locate problematic selections)")
   
@@ -179,9 +173,9 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
   # add wave object to extended file
   if (extended)
   { 
-    exp.size <- sum(round(check.results$bits * check.results$sample.rate * (check.results$duration + (mar * 2)) / 4) / 1024 )
-    
     if (confirm.extended){
+      exp.size <- sum(round(check.results$bits * check.results$sample.rate * (check.results$duration + (mar * 2)) / 4) / 1024 )
+      
       cat(crayon::magenta(paste0("Expected 'extended_selection_table' size is ~", ifelse(round(exp.size) == 0, round(exp.size, 2), round(exp.size)), "MB (~", round(exp.size/1024, 5), " GB) \n Do you want to proceed? (y/n): \n")))
       answer <- readline(prompt = "")
       } else answer <- "yeah dude!"
@@ -211,7 +205,7 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
           check.results$song <- X[, by.song]          
           
           # temporal column to match songs by sound file
-          check.results$song.TEMP <- paste(X$sound.files, X[, by.song], sep = "-")   
+          check.results$song.TEMP <- paste(X$sound.files, X[, by.song, drop = TRUE], sep = "-")   
           Y$song.TEMP <- paste(Y$sound.files, Y[, by.song], sep = "-")   
           
           Y$mar.before <- sapply(unique(Y$song.TEMP), function(x) check.results$mar.before[which.min(check.results$orig.start[check.results$song.TEMP == x])])
@@ -228,15 +222,13 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
         
         #save wave objects as a list attributes
         # set clusters for windows OS
-        # set pb options 
-        pbapply::pboptions(type = ifelse(pb, "timer", "none"))
         
         if (Sys.info()[1] == "Windows" & parallel > 1)
           cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
         
         if (pb) write(file = "", x ="saving wave objects into extended selection table (step 2 of 2):")
         
-        attributes(X)$wave.objects <- pbapply::pblapply(1:nrow(Y), cl = cl, function(x) warbleR::read_wave(X = Y, index = x, from = Y$start[x] - Y$mar.before[x], to = Y$end[x] + Y$mar.after[x],  path = path))
+        attributes(X)$wave.objects <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(Y), cl = cl, FUN =  function(x) warbleR::read_sound_file(X = Y, index = x, from = Y$start[x] - Y$mar.before[x], to = Y$end[x] + Y$mar.after[x], path = path, channel = if (!is.null(X$channel)) X$channel[x] else 1))
         
         # reset for new dimensions  
         check.results$start <- X$start <- check.results$mar.before
@@ -286,6 +278,8 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
   attributes(X)$check.results <- check.results
   
   if (is_extended_selection_table(X) & !is.null(by.song)) attributes(X)$by.song  <- list(by.song = TRUE, song.column = by.song) else attributes(X)$by.song  <- list(by.song = FALSE, song.column = by.song)
+  
+  attributes(X)$call <- base::match.call()
   
   attributes(X)$warbleR.version <- packageVersion("warbleR")
   
@@ -417,7 +411,7 @@ is_extended_selection_table <- function(x) inherits(x, "extended_selection_table
 #' 
 
 # function to subset extended selection table with [
-`[.selection_table` <- function(X, i = NULL, j = NULL, drop = TRUE) {
+`[.selection_table` <- function(X, i = NULL, j = NULL, drop = FALSE) {
   
   if (is.character(i)) i <- which(row.names(X) %in% i)
   if (is.character(j)) j <- which(names(X) %in% j)
@@ -431,6 +425,8 @@ is_extended_selection_table <- function(x) inherits(x, "extended_selection_table
     attributes(Y)$check.results <- attributes(X)$check.results[i, ,]
     
     attributes(Y)$by.song <- attributes(X)$by.song
+    
+    attributes(Y)$call <- base::match.call()
     
     class(Y) <- class(X)
   }
@@ -449,7 +445,7 @@ is_extended_selection_table <- function(x) inherits(x, "extended_selection_table
 #' 
 
 # function to subset extended selection table with [
-`[.extended_selection_table` <- function(X, i = NULL, j = NULL, drop = TRUE) {
+`[.extended_selection_table` <- function(X, i = NULL, j = NULL, drop = FALSE) {
   
   if (is.character(i)) i <- which(row.names(X) %in% i)
   if (is.character(j)) j <- which(names(X) %in% j)
@@ -470,6 +466,8 @@ is_extended_selection_table <- function(x) inherits(x, "extended_selection_table
     
     attributes(Y)$by.song <- attributes(X)$by.song
     
+    attributes(Y)$call <- base::match.call()
+    
     class(Y) <- class(X)
   }
   
@@ -488,21 +486,29 @@ is_extended_selection_table <- function(x) inherits(x, "extended_selection_table
 
 print.extended_selection_table <- function(x, ...) {
   
-  cat(crayon::cyan(paste("Object of class", crayon::bold("'extended_selection_table' \n"))))
+  cat(crayon::black(paste("Object of class", crayon::bold("'extended_selection_table' \n"))))
   
-  cat(crayon::silver(paste(crayon::bold("Contains:"), "\n*  A selection table data frame with"), nrow(x), "rows and", ncol(x), "columns: \n"))
+  # print call
+  if (!is.null(attributes(x)$call)){
+    cat(crayon::silver(paste("* The output of the following", "call: \n")))
+    
+    cll <- paste0(deparse(attributes(x)$call))
+    cat(crayon::silver(crayon::italic(gsub("    ", "", cll), "\n")))
+  }
+  
+  cat(crayon::silver(paste(crayon::bold("\nContains:"), "\n*  A selection table data frame with"), nrow(x), "row(s) and", ncol(x), "columns: \n"))
   
   #define columns to show
   cols <- if (ncol(x) > 6)  1:6 else 1:ncol(x)
   
-  kntr_tab <- knitr::kable(head(x[, cols]), escape = FALSE, digits  = 4, justify = "centre", format = "pipe")
+  kntr_tab <- knitr::kable(head(x[, cols, drop = FALSE]), escape = FALSE, digits  = 4, justify = "centre", format = "pipe")
   
     for(i in 1:length(kntr_tab)) cat(crayon::silver(paste0(kntr_tab[i], "\n")))
   
   if (ncol(x) > 6) cat(crayon::silver(paste0("... ", ncol(x) - 6, " more column(s) (", paste(colnames(x)[7:ncol(x)], collapse = ", "), ")")))
   if (nrow(x) > 6) cat(crayon::silver(paste0(if (ncol(x) <= 6) "..." else "", " and ", nrow(x) - 6, " more row(s) \n")))  
   
-  cat(crayon::silver(paste0("\n* ", length(attr(x, "wave.objects"))," wave objects (as attributes): ")))
+  cat(crayon::silver(paste0("\n* ", length(attr(x, "wave.objects"))," wave object(s) (as attributes): ")))
   
   cat(crayon::silver(head(names(attr(x, "wave.objects")))))
   
@@ -546,7 +552,15 @@ print.extended_selection_table <- function(x, ...) {
 
 print.selection_table <- function(x, ...) {
   
-  cat(crayon::cyan(paste("Object of class", crayon::bold("'selection_table' \n"))))
+  cat(crayon::black(paste("Object of class", crayon::bold("'selection_table' \n"))))
+  
+  # print call
+  if (!is.null(attributes(x)$call)){
+  cat(crayon::silver(paste("* The output of the following", "call: \n")))
+
+  cll <- paste0(deparse(attributes(x)$call))
+  cat(crayon::silver(crayon::italic(gsub("    ", "", cll), "\n")))
+  }
   
   cat(crayon::silver(paste(crayon::bold("\nContains:"), "\n*  A selection table data frame with"), nrow(x), "rows and", ncol(x), "columns: \n"))
   
@@ -575,11 +589,12 @@ print.selection_table <- function(x, ...) {
 #' Fix extended selection tables 
 #' 
 #' \code{fix_extended_selection_table} fixes extended selection tables that have lost their attributes
-#' @usage fix_extended_selection_table(X, Y)
+#' @usage fix_extended_selection_table(X, Y, to.by.song = FALSE)
 #' @param X an object of class 'selection_table' or data frame that contains columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end).  
 #' @param Y an object of class 'extended_selection_table'
+#' @param to.by.song Logical argument to control if the attributes are formatted to a match a 'by.song' extended selection table. This is required when 'X' is created by collapsing an Y by song (see 'by.song' argument in \code{\link{selection_table}}). Mostly needed internally by some warbleR functions.
 #' @export
 #' @name fix_extended_selection_table
 #' @examples{
@@ -609,7 +624,7 @@ print.selection_table <- function(x, ...) {
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 #last modification on may-14-2018 (MAS)
 
-fix_extended_selection_table <- function(X, Y){
+fix_extended_selection_table <- function(X, Y, to.by.song = FALSE){
   #X is new data frame and Y the original one
   #add wave objects
   if (!is_extended_selection_table(Y)) stop("Y must be a extended selection table")
@@ -622,6 +637,36 @@ fix_extended_selection_table <- function(X, Y){
   
   if (length(xtr.attr) > 0)
     for(i in xtr.attr) attr(X, i) <- attr(Y, i)
+  
+  attributes(X)$call <- base::match.call()
+  
+  # fix if by.song (used internally by spectrograms())
+  if (to.by.song){
+    
+    new_X_attr_list <- lapply(unique(X$sound.files), function(x){
+      
+      sub.Y.check <- attr(Y, "check.results")[attr(Y, "check.results")$sound.files == x, ]
+      sub.Y.check.1 <- sub.Y.check[1, ]
+      sub.Y.check.1$selec <- X$selec[X$sound.files == x]
+      sub.Y.check.1$start <- min(sub.Y.check$start)
+      sub.Y.check.1$orig.start <- min(sub.Y.check$orig.start)
+      sub.Y.check.1$end <- max(sub.Y.check$end)
+      sub.Y.check.1$orig.end <- max(sub.Y.check$orig.end)
+      wave <- attr(Y, "wave.objects")[[which(names(attr(Y, "wave.objects")) == x)]]
+      sub.Y.check.1$duration <- duration(wave)
+      sub.Y.check.1$wav.size <- round(wave@bit  * ifelse(wave@stereo, 2, 1) * wave@samp.rate * duration(wave) / 4) / 1024
+      sub.Y.check.1$mar.before <- sub.Y.check$mar.before[which.min(sub.Y.check$start)]
+      sub.Y.check.1$mar.after <- sub.Y.check$mar.before[which.max(sub.Y.check$start)]
+      sub.Y.check.1$n.samples <- length(wave)
+      
+      return(sub.Y.check.1)
+      })
+    
+    X_attr <- do.call(rbind, new_X_attr_list)
+    
+    attributes(X)$check.results <- X_attr
+  }
+    
   
   return(X)
 }
@@ -659,6 +704,8 @@ rbind.selection_table <- function(..., deparse.level = 1) {
   attr(W, "by.song") <- attr(X, "by.song")
   
   class(W) <- class(X)
+  
+  attributes(W)$call <- base::match.call()
   
   return(W)
   
@@ -700,7 +747,7 @@ rbind.extended_selection_table <- function(..., deparse.level = 1) {
   X <- mcall[[1]]
   Y <- mcall[[2]]
 
-  if (!is_extended_selection_table(X) | !is_extended_selection_table(Y)) stop("both objects must be of class 'selection_table'")
+  if (!is_extended_selection_table(X) | !is_extended_selection_table(Y)) stop("both objects must be of class 'extended_selection_table'")
   
   if (attr(X, "by.song")[[1]] != attr(Y, "by.song")[[1]]) stop("both objects should have been created either 'by song' or by element' (see 'by.song' argument in selection_table())")
   
@@ -730,6 +777,8 @@ rbind.extended_selection_table <- function(..., deparse.level = 1) {
    
   # fix version to current version
   attributes(W)$warbleR.version <- packageVersion("warbleR")
+  
+  attributes(W)$call <- base::match.call()
   
   return(W)
 }

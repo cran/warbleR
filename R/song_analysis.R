@@ -4,10 +4,9 @@
 #' @usage song_analysis(X = NULL, song_colm = "song",mean_colm = NULL, min_colm = NULL, 
 #' max_colm = NULL, elm_colm = NULL, elm_fun = NULL, sd = FALSE, parallel = 1, pb = TRUE, 
 #' na.rm = FALSE, weight = NULL)
-#' @param X 'selection_table', 'extended_selection_table' (created 'by.song') or data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @param X 'selection_table', 'extended_selection_table' (created 'by.song') or data frame with the following columns: 1) "sound.files": name of the sound 
 #' files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end": 
-#' end time of selections. The output of \code{\link{auto_detec}} can 
-#' be used as the input data frame. Other data frames can be used as input, but must have at least the 4 columns mentioned above.
+#' end time of selections.
 #' @param song_colm Character string with the column name containing song labels. 
 #' It can be used to label any hierarchical level at which parameters need to be calculated (e.g. syllables, phrases).
 #' Note that 
@@ -102,8 +101,8 @@
 song_analysis <- function(X = NULL, song_colm = "song", mean_colm = NULL, min_colm = NULL, max_colm = NULL, elm_colm = NULL, elm_fun = NULL,
                        sd = FALSE, parallel = 1, pb = TRUE, na.rm = FALSE, weight = NULL)
 {
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  
   
   #### set arguments from options
   # get function arguments
@@ -266,15 +265,15 @@ song_analysis <- function(X = NULL, song_colm = "song", mean_colm = NULL, min_co
   
   X$.....SONGX... <- paste(X$sound.files, X[, song_colm]) 
   
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  
+  
   
   # set clusters for windows OS
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # run loop apply function
-  out <- pbapply::pblapply(unique(X$.....SONGX...), cl = cl, function(i) 
+  out <- pblapply_wrblr_int(pbar = pb, X = unique(X$.....SONGX...), cl = cl, FUN = function(i) 
   { 
     # subset by song label
     Y <- X[X$.....SONGX... == i, , drop = FALSE]

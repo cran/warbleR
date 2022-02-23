@@ -1,7 +1,7 @@
 #' @title Assessing the performance of acoustic distance measurements
 #' 
 #' @description \code{compare_methods} creates graphs to visually assess performance of acoustic distance measurements 
-#' @usage compare_methods(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1, wl = 512, ovlp = 90, 
+#' @usage compare_methods(X = NULL, flim = NULL, bp = NULL, mar = 0.1, wl = 512, ovlp = 90, 
 #' res = 150, n = 10, length.out = 30, 
 #' methods = NULL, 
 #' it = "jpeg", parallel = 1, path = NULL, sp = NULL, custom1 = NULL, 
@@ -13,9 +13,9 @@
 #' selection number (selec), and start and end time of signal (start and end).
 #' Default \code{NULL}. 
 #' @param flim A numeric vector of length 2 for the frequency limit in kHz of 
-#'   the spectrogram, as in \code{\link[seewave]{spectro}}. Default is c(0, 22).
+#'   the spectrogram, as in \code{\link[seewave]{spectro}}. Default is \code{NULL}.
 #' @param bp numeric vector of length 2 giving the lower and upper limits of the 
-#' frequency bandpass filter (in kHz) used in the acoustic distance methods. Default is c(0, 22).
+#' frequency bandpass filter (in kHz) used in the acoustic distance methods. Default is \code{NULL}.
 #' @param mar Numeric vector of length 1. Specifies plot margins around selection in seconds. Default is 0.1.
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram and cross-correlation, default 
 #'   is 512.
@@ -122,15 +122,16 @@
 #' #compare SP and XCORR
 #' compare_methods(X = lbh_selec_table, flim = c(0, 10), bp = c(0, 10), mar = 0.1, wl = 300,
 #' ovlp = 90, res = 200, n = 10, length.out = 30,
-#' methods = c("XCORR", "SP"), parallel = 1, it = "jpeg")
+#' methods = c("XCORR", "SP"), parallel = 1, it = "jpeg", path = tempdir())
 #' 
 #' #compare SP method against dfDTW
 #' compare_methods(X = lbh_selec_table, flim = c(0, 10), bp = c(0, 10), mar = 0.1, wl = 300,
 #' ovlp = 90, res = 200, n = 10, length.out = 30,
-#' methods = c("dfDTW", "SP"), parallel = 1, it = "jpeg")
+#' methods = c("dfDTW", "SP"), parallel = 1, it = "jpeg", 
+#' path = tempdir())
 #' 
 #' #alternatively we can provide our own SP matrix
-#' Y <- spectro_analysis(lbh_selec_table)
+#' Y <- spectro_analysis(lbh_selec_table, path = tempdir())
 #' 
 #' # selec a subset of variables
 #' Y <- Y[, 1:7]
@@ -141,7 +142,8 @@
 #' # add sound files and selec columns
 #' Y <- data.frame(lbh_selec_table[, c(1, 3)], Y[, 1:2])
 #' 
-#' compare_methods(X = lbh_selec_table, methods = c("dfDTW"), custom1 = Y)
+#' compare_methods(X = lbh_selec_table, methods = c("dfDTW"), custom1 = Y, 
+#' path = tempdir())
 #' }
 #' 
 #' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
@@ -150,14 +152,30 @@
 #' seewave package to create spectrograms.
 #last modification on mar-13-2018 (MAS)
 
-compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1, wl = 512, ovlp = 90, 
+compare_methods <- function(X = NULL, flim = NULL, bp = NULL, mar = 0.1, wl = 512, ovlp = 90, 
     res = 150, n = 10, length.out = 30, methods = NULL,
     it = "jpeg", parallel = 1, path = NULL, sp = NULL, custom1 = NULL, custom2 = NULL, pb = TRUE, grid = TRUE, 
     clip.edges = TRUE, threshold = 15, na.rm = FALSE, scale = FALSE, 
     pal = reverse.gray.colors.2, img = TRUE, ...){  
  
-  # reset pb
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  # define number of steps in analysis to print message
+  steps <- c(current = 1, total = 0)
+  
+  if (pb){
+    steps[2] <- 3 
+    if (any(methods == "XCORR")) steps[2] <- steps[2] + 1
+    if (!is.null(custom1)) steps[2] <- steps[2] - 1
+    if (!is.null(custom2)) steps[2] <- steps[2] - 1
+    
+    # for functions with no internal step count 
+    total.steps <- steps[2]
+    current.step <- 1
+    
+    # set internally
+    options("int_warbleR_steps" = steps)
+    
+    on.exit(options("int_warbleR_steps" = c(current = 0, total = 0)), add = TRUE)
+  } 
   
   #### set arguments from options
   # get function arguments
@@ -168,9 +186,6 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   
   options(warn = -1)
   on.exit(options(warn = 0), add = TRUE)
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -258,15 +273,15 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   #return warning if not all sound files were found
   if (!is_extended_selection_table(X))
   {
-    fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+    fs <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     cat(paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
-                  ".wav file(s) not found"))
+                  "sound file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
   d <- which(X$sound.files %in% fs) 
   if (length(d) == 0){
-    stop("The .wav files are not in the working directory")
+    stop("The sound files are not in the working directory")
   }  else X <- X[d,]
   }
   
@@ -325,7 +340,7 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   }
   
   if ("XCORR" %in% methods){
-    xcmat <- xcorr(X, wl = wl, bp = bp, ovlp = ovlp, dens = 0.9, parallel = parallel, pb = pb, na.rm = na.rm, cor.mat = TRUE)
+    xcmat <- warbleR::cross_correlation(X, wl = wl, bp = bp, ovlp = ovlp, parallel = parallel, pb = pb, na.rm = na.rm, path = path, dens = NULL)
 
   MDSxcorr <- stats::cmdscale(1-xcmat)  
   MDSxcorr <- scale(MDSxcorr)
@@ -333,12 +348,17 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   
   #remove the ones that failed cross-corr
   if (na.rm) X <- X[paste(X$sound.files, X$selec, sep = "-") %in% rownames(MDSxcorr), ]
-    }
+  # update number of steps
+  current.step <- steps[1] <- steps[1] + 2
+  options("int_warbleR_steps" = steps)
+  }
   
   if ("dfDTW" %in% methods){
-    if (pb)   write(file = "", x = "measuring dominant frequency contours:")
-    dtwmat <- freq_ts(X, wl = wl, flim = flim, ovlp = ovlp, img = FALSE, parallel = parallel, length.out = length.out,
-                    pb = pb, clip.edges = clip.edges, threshold = threshold)
+    if (pb) 
+    write(file = "", x = paste0("measuring dominant frequency contours (step ", current.step," of ", total.steps,"):"))
+    
+    dtwmat <- warbleR::freq_ts(X, wl = wl, flim = flim, ovlp = ovlp, img = FALSE, parallel = parallel, length.out = length.out,
+                    pb = pb, clip.edges = clip.edges, threshold = threshold, path = path)
    
     dtwmat <- dtwmat[,3:ncol(dtwmat)]
     
@@ -350,12 +370,18 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   MDSdtw <- stats::cmdscale(dm)  
   MDSdtw <- scale(MDSdtw)
   bidims[[length(bidims) + 1]] <- MDSdtw
+  
+  # update number of steps
+  current.step <- steps[1] <- steps[1] + 1
+  options("int_warbleR_steps" = steps)
   }
 
   if ("ffDTW" %in% methods){
-   if (pb)  write(file = "", x ="measuring fundamental frequency contours:")
-    dtwmat <- freq_ts(X, type = "fundamental", wl = wl, flim = flim, ovlp = ovlp, img = FALSE, parallel = parallel, length.out = length.out,
-                  pb = pb, clip.edges = clip.edges, threshold = threshold)
+   if (pb)
+    write(file = "", x = paste0("measuring fundamental frequency contours (step ", current.step," of ", total.steps,"):"))
+    
+    dtwmat <- warbleR::freq_ts(X, type = "fundamental",bp = bp,  wl = wl, flim = flim, ovlp = ovlp, img = FALSE, parallel = parallel, length.out = length.out, ff.method = "seewave",
+                  pb = pb, clip.edges = clip.edges, threshold = threshold, path = path)
   
   dtwmat <- dtwmat[,3:ncol(dtwmat)]
  
@@ -367,20 +393,32 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   MDSdtw <- stats::cmdscale(dm)  
   MDSdtw <- scale(MDSdtw)
   bidims[[length(bidims) + 1]] <- MDSdtw
+  
+  # update number of steps
+  current.step <- steps[1] <- steps[1] + 1
+  options("int_warbleR_steps" = steps)
   }
   
   if ("SP" %in% methods) { 
-    if (pb) write(file = "", x ="measuring spectral parameters:")
-    spmat <- warbleR::spectro_analysis(X, wl = wl, bp = bp, parallel = parallel, pb = pb, threshold = threshold, harmonicity = FALSE)
+    if (pb)
+    write(file = "", x = paste0("measuring spectral parameters (step ", current.step," of ", total.steps,"):"))
+    
+    spmat <- warbleR::spectro_analysis(X, wl = wl, bp = bp, parallel = parallel, pb = pb, threshold = threshold, harmonicity = FALSE, path = path)
   
   PCsp <- prcomp(scale(spmat[,3:ncol(spmat)]), center = TRUE, scale. = TRUE, rank. = 2)$x
 
   bidims[[length(bidims) + 1]] <- PCsp
+  
+  # update number of steps
+  current.step <- steps[1] <- steps[1] + 1
+  options("int_warbleR_steps" = steps)
   }
   
   if ("SPharm" %in% methods){ 
-    if (pb) write(file = "", x ="measuring spectral parameters + harmonicity:")
-    spmat <- warbleR::spectro_analysis(X, wl = wl, bp = bp, parallel = parallel, pb = pb, threshold = threshold, harmonicity = TRUE)
+    if (pb) 
+    write(file = "", x = paste0("measuring spectral parameters + harmonicity (step ", current.step," of ", total.steps,"):"))
+    
+    spmat <- warbleR::spectro_analysis(X, wl = wl, bp = bp, parallel = parallel, pb = pb, threshold = threshold, harmonicity = TRUE, path = path)
    
     if (any(sapply(spmat, anyNA))){
       spmat <- spmat[, !sapply(spmat, anyNA)]
@@ -390,18 +428,27 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
     PCsp <- prcomp(scale(spmat[,3:ncol(spmat)]), center = TRUE, scale. = TRUE, rank. = 2)$x
   
     bidims[[length(bidims) + 1]] <- PCsp
-  }
+    
+    # update number of steps
+    current.step <- steps[1] <- steps[1] + 1
+    options("int_warbleR_steps" = steps)
+    }
   
   if ("MFCC" %in% methods) { 
-    if (pb) write(file = "", x ="measuring cepstral coefficients:")
-    mfcc <- mfcc_stats(X, wl = wl, bp = bp, parallel = parallel, pb = pb)
+    if (pb)
+    write(file = "", x = paste0("measuring mel frequency cepstral coefficients (step ", current.step, " of ", total.steps,"):"))
+    mfcc <- warbleR::mfcc_stats(X, wl = wl, bp = bp, parallel = parallel, pb = pb, path = path)
     
     if (any(sapply(mfcc, anyNA))) stop("NAs generated when calculated MFCC's, try a higher 'wl'")
 
     PCmfcc <- prcomp(mfcc[, 3:ncol(mfcc)], center = TRUE, scale. = TRUE, rank. = 2)$x
     
     bidims[[length(bidims) + 1]] <- PCmfcc
-  }
+    
+    # update number of steps
+    current.step <- steps[1] <- steps[1] + 1
+    options("int_warbleR_steps" = steps)
+    }
   
   #name matchs changing order to match order in whic methods are ran
   nms <- match(c("custom1", "custom2", "XCORR","dfDTW", "ffDTW", "SP", "SPharm", "MFCC"), methods)
@@ -472,7 +519,7 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
     par(mar = rep(0, 4))
     if (x < 5) 
     { 
-      r <-  warbleR::read_wave(X = X, path = path, index = x, header = TRUE)
+      r <-  warbleR::read_sound_file(X = X, path = path, index = x, header = TRUE)
       tlim <- c((X$end[x] - X$start[x])/2 + X$start[x] - mxdur/2, (X$end[x] - X$start[x])/2 + X$start[x] + mxdur/2)
       
       mar1 <- X$start[x]-tlim[1]
@@ -494,9 +541,12 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
       tlim[2] <- r$samples/r$sample.rate
       } else tlim[2] <- r$samples/r$sample.rate
       
-      if (flim[2] > ceiling(r$sample.rate/2000) - 1) flim[2] <- ceiling(r$sample.rate/2000) - 1
+      if (is.null(flim))
+        flim <- c(0, floor(r$sample.rate / 2000))
+        
+      if (flim[2] > floor(r$sample.rate / 2000)) flim[2] <- floor(r$sample.rate / 2000)
       
-      r <- warbleR::read_wave(X = X, path = path, index = x, from = tlim[1], to = tlim[2])
+      r <- warbleR::read_sound_file(X = X, path = path, index = x, from = tlim[1], to = tlim[2])
       
       spectro_wrblr_int2(wave = r, f = r@samp.rate, flim = flim, wl = wl, ovlp = ovlp, axisX = FALSE, axisY = FALSE, tlab = FALSE, flab = FALSE, palette = pal, grid = grid, ...)
       box(lwd = 2)
@@ -592,17 +642,15 @@ compare_methods <- function(X = NULL, flim = c(0, 22), bp = c(0, 22), mar = 0.1,
   on.exit(invisible(close.screen(all.screens = TRUE)))
   }
       
-      # set pb options 
-      pbapply::pboptions(type = ifelse(pb, "timer", "none"))
-      
-      
-      if (pb)   write(file = "", x ="creating image files:")
+    # save image files  
+      if (pb)
+      write(file = "", x = paste0("creating image files (step ", current.step, " of ", total.steps,"):"))
       
       # set clusters for windows OS
       if (Sys.info()[1] == "Windows" & parallel > 1)
         cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
       
-      a1 <- pbapply::pblapply(X = 1:ncol(combs), cl = cl, FUN = function(u) 
+      a1 <- pblapply_wrblr_int(pbar = pb, X = 1:ncol(combs), cl = cl, FUN = function(u) 
       { 
         comp.methFUN(X, u, res, bidims, m, mar, flim)
       })

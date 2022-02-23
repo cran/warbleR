@@ -2,18 +2,18 @@
 #' 
 #' \code{full_spectrograms} produces image files with spectrograms of whole sound files split into multiple 
 #'   rows.
-#' @usage full_spectrograms(X = NULL, flim = c(0,22), sxrow = 5, rows = 10, 
+#' @usage full_spectrograms(X = NULL, flim = NULL, sxrow = 5, rows = 10, 
 #' collevels = seq(-40, 0, 1), ovlp = 50, parallel = 1, wl = 512, gr = FALSE, 
 #' pal = reverse.gray.colors.2, cex = 1, it = "jpeg", flist = NULL, 
 #' overwrite = TRUE, path = NULL, pb = TRUE, fast.spec = FALSE, labels = "selec",
-#'  horizontal = FALSE, song = NULL, suffix = NULL, ...) 
+#'  horizontal = FALSE, song = NULL, suffix = NULL, dest.path = NULL, ...) 
 #' @param X 'selection_table' object or any data frame with columns
 #' for sound file name (sound.files), selection number (selec), and start and end time of signal
 #' (start and end). If given, a transparent box is  plotted around each selection and the selections are labeled with the selection number 
-#' (and selection comment, if available). Default is \code{NULL}.Alternatively, it can also take the output of \code{\link{cross_correlation}} or \code{\link{auto_detec}} (when 'output' is a 'list', see \code{\link{cross_correlation}} or \code{\link{auto_detec}}). If supplied a secondary row is displayed under each spectrogram showing the detection (either cross-correlation scores or wave envelopes) values across time.
+#' (and selection comment, if available). Default is \code{NULL}. Alternatively, it can also take the output of \code{\link{cross_correlation}} or \code{\link{auto_detec}} (when 'output' is a 'list', see \code{\link{cross_correlation}} or \code{\link{auto_detec}}). If supplied a secondary row is displayed under each spectrogram showing the detection (either cross-correlation scores or wave envelopes) values across time.
 #' @param flim A numeric vector of length 2 indicating the highest and lowest 
 #'   frequency limits (kHz) of the spectrogram, as in 
-#'   \code{\link[seewave]{spectro}}. Default is c(0,22).
+#'   \code{\link[seewave]{spectro}}. Default is \code{NULL}.
 #' @param sxrow A numeric vector of length 1. Specifies seconds of spectrogram
 #'   per row. Default is 5.
 #' @param rows A numeric vector of length 1. Specifies number of rows per 
@@ -57,6 +57,8 @@
 #' organization level in the song (similar to 'song_colm' in \code{\link{song_analysis}}). If supplied then lines above the selections belonging to the same
 #' 'song' are plotted. Ignored if 'X' is not provided.
 #' @param suffix Character vector of length 1. Suffix for the output image file (to be added at the end of the default file name). Default is \code{NULL}.
+#' @param dest.path Character string containing the directory path where the image files will be saved.
+#' If \code{NULL} (default) then the folder containing the sound files will be used instead.
 #' @param ... Additional arguments for image formatting. It accepts 'width', 'height' (which will overwrite 'horizontal') and 'res' as in \code{\link[grDevices]{png}}.
 #' @return image files with spectrograms of whole sound files in the working directory. Multiple pages
 #' can be returned, depending on the length of each sound file. 
@@ -94,11 +96,11 @@
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 #last modification on mar-13-2018 (MAS)
 
-full_spectrograms <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, collevels = seq(-40, 0, 1),  ovlp = 50, parallel = 1, 
-                  wl = 512, gr = FALSE, pal = reverse.gray.colors.2, cex = 1, it = "jpeg", flist = NULL, overwrite = TRUE, path = NULL, pb = TRUE, fast.spec = FALSE, labels = "selec", horizontal = FALSE, song = NULL, suffix = NULL, ...) {
+full_spectrograms <- function(X = NULL, flim = NULL, sxrow = 5, rows = 10, collevels = seq(-40, 0, 1),  ovlp = 50, parallel = 1, 
+                  wl = 512, gr = FALSE, pal = reverse.gray.colors.2, cex = 1, it = "jpeg", flist = NULL, overwrite = TRUE, path = NULL, pb = TRUE, fast.spec = FALSE, labels = "selec", horizontal = FALSE, song = NULL, suffix = NULL, dest.path = NULL, ...) {
   
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+  
+  
   
   #### set arguments from options
   # get function arguments
@@ -107,14 +109,11 @@ full_spectrograms <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, c
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
   
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
-  
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
   
   # get arguments set in the call
-  call.argms <- as.list(base::match.call())[-1]
+  call.argms <- as.list(base::match.call())
   
   # remove arguments in options that are in call
   opt.argms <- opt.argms[!names(opt.argms) %in% names(call.argms)]
@@ -130,15 +129,22 @@ full_spectrograms <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, c
       stop("'path' provided does not exist") else
         path <- normalizePath(path)
   
+  #check dest.path 
+  if (is.null(dest.path)) dest.path <- getwd() else 
+    if (!dir.exists(dest.path)) 
+      stop("'path' provided does not exist") else
+        dest.path <- normalizePath(dest.path)
+
   #read files
-  files <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)  
+  files <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)  
   
+
   #stop if files are not in working directory
-  if (length(files) == 0) stop("no .wav files in working directory")
+  if (length(files) == 0) stop("no sound files in working directory")
   
   #subet based on file list provided (flist)
   if (!is.null(flist)) files <- files[files %in% flist]
-  if (length(files) == 0)  stop("selected .wav files are not in working directory")
+  if (length(files) == 0)  stop("selected sound files are not in working directory")
   
   # set W to null by default (this is the detection data.frame)
   W <- NULL
@@ -198,9 +204,9 @@ full_spectrograms <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, c
       # remove whole.file from sound file name
       W$sound.files <- gsub("-whole.file", "", W$sound.files)
       
-      # leave only wav file names
-      if (any(!grepl("\\.wav$", ignore.case = TRUE, W$sound.files)))
-        W$sound.files <- substr(x = W$sound.files, start = 0, stop =  sapply(gregexpr(pattern = "\\.wav", ignore.case = TRUE, W$sound.files), "[[", 1) + 3)
+      # leave only sound file names
+      if (any(!grepl("\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE, W$sound.files)))
+        W$sound.files <- substr(x = W$sound.files, start = 0, stop =  sapply(gregexpr(pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE, W$sound.files), "[[", 1) + 3)
       
       
       # get selection table and overwrite X
@@ -239,12 +245,14 @@ full_spectrograms <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, c
       
     }
     
+   
+    
   #stop if files are not in working directory
-  if (length(files) == 0) stop(".wav files in X are not in working directory")
+  if (length(files) == 0) stop("sound files in X are not in working directory")
     } 
  
 #if flim is not vector or length!=2 stop
-  if (is.null(flim)) stop("'flim' must be a numeric vector of length 2") else {
+  if (!is.null(flim)) {
     if (!is.vector(flim)) stop("'flim' must be a numeric vector of length 2") else{
       if (!length(flim) == 2) stop("'flim' must be a numeric vector of length 2")}}   
   
@@ -283,30 +291,33 @@ full_spectrograms <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, c
     Xsong <- song_analysis(X, song_colm = song, pb = FALSE)
   }
   
+  
   # overwrite
   if (!overwrite) 
-    files <- files[!gsub(".wav$","", list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE),ignore.case = TRUE) %in% 
+    files <- files[!gsub("\\.wav$|\\.wac$|\\.mp3$|\\.flac$","", list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE),ignore.case = TRUE) %in% 
       unlist(sapply(strsplit(as.character(list.files(path = path, pattern = paste(it, "$", 
                                                                      sep = ""), ignore.case = TRUE)), "-p",fixed = TRUE), "[",1))]
   
   files <- files[!is.na(files)]
   
   #stop if all files have been analyzed 
-  if (length(files) == 0) stop("all .wav files have been processed")
+  if (length(files) == 0) stop("all sound files have been processed")
   
   #create function for making spectrograms
   # z = sound files, fl = flim, sl = sxrow, li = rows, li = duplicated rows if Y provided, X = selection table, W = contours, autod = if Y comes from autodetec
 
   lspecFUN <-function(z, fl, sl, li, X, W) {
     
-    rec <- warbleR::read_wave(X = z, path = path) #read wave file 
+    rec <- warbleR::read_sound_file(X = z, path = path) #read wave file 
     
     f <- rec@samp.rate #set sampling rate
     
+    if (is.null(fl)) 
+      fl <- c(0, floor(f / 2000))
     #in case flim is higher than can be due to sampling rate
-    frli<- fl 
+    frli <- fl 
     if (frli[2] > ceiling(f/2000) - 1) frli[2] <- ceiling(f/2000) - 1 
-    
+
     #set duration    
     dur <- seewave::duration(rec)
     
@@ -322,7 +333,7 @@ full_spectrograms <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, c
     #loop over pages 
     no.out <- lapply(1 : ceiling(dur / (li * sl)), function(j)  
       {
-      img_wrlbr_int(filename = paste0(substring(z, first = 1, last = nchar(z)-4), "-", suffix, "-p", j, ".", it), path = path, units = "in", horizontal = horizontal, ...) 
+      img_wrlbr_int(filename = paste0(substring(z, first = 1, last = nchar(z)-4), "-", suffix, "-p", j, ".", it), path = dest.path, units = "in", horizontal = horizontal, ...) 
       
       # set number of rows
       mfrow <- c(li, 1)
@@ -485,15 +496,15 @@ full_spectrograms <- function(X = NULL, flim = c(0, 22), sxrow = 5, rows = 10, c
     )
     }
     
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  
+  
   
   # set clusters for windows OS
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # run loop apply function
-  sp <- pbapply::pblapply(X = files, cl = cl, FUN = function(i) 
+  sp <- pblapply_wrblr_int(pbar = pb, X = files, cl = cl, FUN = function(i) 
   { 
     lspecFUN(z = i, fl = flim, sl = sxrow, li = rows, X = X, W = W)
   })  

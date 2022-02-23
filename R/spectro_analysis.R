@@ -5,7 +5,7 @@
 #' @usage spectro_analysis(X, bp = "frange", wl = 512, wl.freq = NULL, threshold = 15,
 #'  parallel = 1, fast = TRUE, path = NULL, pb = TRUE, ovlp = 50,
 #' wn = "hanning", fsmooth = 0.1, harmonicity = FALSE, nharmonics = 3, ...)
-#' @param X 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
+#' @param X 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the sound 
 #' files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 #' end time of selections. The output \code{\link{auto_detec}} can
 #' be used as the input data frame.
@@ -100,8 +100,7 @@
 #' }
 #' @export
 #' @name spectro_analysis
-#' @details The output of \code{\link{auto_detec}} can be used 
-#'  directly without any additional modification. The function measures 29 acoustic parameters (if \code{fast = TRUE}) on 
+#' @details The function measures 29 acoustic parameters (if \code{fast = TRUE}) on 
 #'  each selection in the data frame. Most parameters are produced internally by 
 #'  \code{\link[seewave]{specprop}}, \code{\link[seewave]{fpeaks}}, \code{\link[seewave]{fund}},
 #'  and \code{\link[seewave]{dfreq}} from the package seewave and \code{\link[soundgen]{analyze}} 
@@ -122,7 +121,8 @@
 #' sp_param <- spectro_analysis(X = lbh_selec_table[1:8,], pb = FALSE, fast = FALSE, path = tempdir())
 #' 
 #' # measuring harmonic-related parameters using progress bar
-#' sp_param <- spectro_analysis(X = lbh_selec_table[1:8,], harmonicity = TRUE, path = tempdir())
+#' sp_param <- spectro_analysis(X = lbh_selec_table[1:8,], harmonicity = TRUE, 
+#' path = tempdir(), ovlp = 0)
 #' }
 #' 
 #' @references {
@@ -135,9 +135,6 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
                    parallel = 1, fast = TRUE, path = NULL, pb = TRUE, ovlp = 50, 
                    wn = "hanning", fsmooth = 0.1, harmonicity = FALSE, nharmonics = 3, ...){
   
-  # set pb options 
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
-  
   # error message if ape is not installed
   if (!requireNamespace("soundgen",quietly = TRUE) & harmonicity)
     stop("must install 'soundgen' when  harmonicity = TRUE")
@@ -148,9 +145,6 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -193,6 +187,7 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
   if (any(X$end - X$start>20)) warning(paste(length(which(X$end - X$start>20)), "selection(s) longer than 20 sec"))
   
   # bp checking
+  if (!is.null(bp))
   if (bp[1] != "frange")
   {if (!is.vector(bp)) stop("'bp' must be a numeric vector of length 2") else{
     if (!length(bp) == 2) stop("'bp' must be a numeric vector of length 2")} 
@@ -205,15 +200,15 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
   
   if (!is_extended_selection_table(X)){
   #return warning if not all sound files were found
-  fs <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+  fs <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
     write(file = "", x = paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
-                  ".wav file(s) not found"))
+                  "sound file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
   d <- which(X$sound.files %in% fs) 
   if (length(d) == 0){
-    stop("The .wav files are not in the working directory")
+    stop("The sound files are not in the working directory")
   }  else {
     X <- X[d, ]
   }
@@ -230,20 +225,23 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
   spFUN <- function(i, X, bp, wl, threshold) { 
     
     # read wave object
-    r <- warbleR::read_wave(X = X, path = path, index = i)
+    r <- warbleR::read_sound_file(X = X, path = path, index = i)
     
     if (length(r@left) < 7) stop(paste0("too few samples in selection row ", i, ", try check_sels() to find problematic selections"), call. = FALSE)
     
-    if (bp[1] == "frange") b <- c(X$bottom.freq[i], X$top.freq[i]) else b <- bp
-
+    if (!is.null(bp))
+      if (bp[1] == "frange") bp <- c(X$bottom.freq[i], X$top.freq[i]) 
+  
+      b <- bp
+    
      #in case bp its higher than can be due to sampling rate
-    if (b[2] > ceiling(r@samp.rate/2000) - 1) b[2] <- ceiling(r@samp.rate/2000) - 1 
+    if (b[2] > floor(r@samp.rate / 2000)) b[2] <- floor(r@samp.rate/2000) 
     
     # add a bit above and below to ensure range limits are included
     bpfr <- b
     bpfr <- bpfr + c(-0.2, 0.2)  
     if (bpfr[1] < 0) bpfr[1] <- 0
-    if (bpfr[2] > ceiling(r@samp.rate/2000) - 1) bpfr[2] <- ceiling(r@samp.rate/2000) - 1 
+    if (bpfr[2] > floor(r@samp.rate / 2000)) bpfr[2] <- floor(r@samp.rate / 2000) 
   
     # freq range to measure peak freq  
     # wl is adjusted when very short signals
@@ -252,7 +250,7 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
       # soungen measurements
     if (harmonicity)
     {
-      sg.param <- suppressMessages(try(soundgen::analyze(x = as.numeric(r@left), samplingRate = r@samp.rate, silence = threshold / 100, overlap = ovlp, windowLength = wl / r@samp.rate * 1000, plot = FALSE, wn = wn, pitchCeiling = b[2] * 1000, cutFreq = b[2] * 1000, nFormants = nharmonics, SPL_measured = 0, priorMean = NA, pitchMethods = c('dom', 'autocor'), ...), silent = TRUE))
+      sg.param <- suppressMessages(try(soundgen::analyze(x = as.numeric(r@left), samplingRate = r@samp.rate, silence = threshold / 100, overlap = ovlp, windowLength = wl / r@samp.rate * 1000, plot = FALSE, wn = wn, pitchCeiling = b[2] * 1000, cutFreq = b[2] * 1000, nFormants = nharmonics, SPL_measured = 0, voicedSeparate = FALSE, priorMean = NA, pitchMethods = c('dom', 'autocor'), ...), silent = TRUE))
     
       if (!is(sg.param, "try-error")){
       
@@ -267,7 +265,7 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
 
   sg.param[, grep("freq$|_width$", names(sg.param))] <- sg.param[, grep("freq$|_width$", names(sg.param))] / 1000
   
-  sg.param <- as.data.frame(t(apply(sg.param[, grep("harmonics|HNR|_freq$|_width$", names(sg.param))], 2, mean, na.rm = TRUE)))
+  sg.param <- as.data.frame(t(apply(sg.param[, grep("harmonics|HNR$|_freq$|_width$", names(sg.param))], 2, mean, na.rm = TRUE)))
     
   ff <- ff[!is.na(ff)]
   
@@ -290,7 +288,7 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
       
     #frequency spectrum analysis
     songspec <- seewave::spec(r, f = r@samp.rate, plot = FALSE, wl = wl.freq, wn = wn, flim = b)
-    analysis <- seewave::specprop(songspec, f = r@samp.rate, flim = b, plot = FALSE)
+    analysis <- specprop_wrblr_int(spec = songspec, f = r@samp.rate, flim = b, plot = FALSE)
 
     #from seewave's acoustat
     m <- sspectro(r, f = r@samp.rate, wl = ifelse(wl >= length(r@left), length(r@left) - 1, wl), ovlp = ovlp, wn = wn)
@@ -372,6 +370,7 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
     dfres <- cbind(dfres, sg.param, fun.pars)
     
     # add low high freq
+    if (!is.null(bp))
     if (bp[1] == "frange") {
       dfres$bottom.freq <- b[1]
      dfres$top.freq <- b[2]
@@ -381,15 +380,12 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
     
   }
   
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
-  
   # set clusters for windows OS
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # run loop apply function
-  sp <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
+  sp <- pblapply_wrblr_int(X = 1:nrow(X), cl = cl, pbar = pb, FUN = function(i) 
   { 
     spFUN(X = X, i = i, bp = bp, wl = wl, threshold = threshold)
   }) 

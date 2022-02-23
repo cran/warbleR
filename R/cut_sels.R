@@ -3,10 +3,10 @@
 #' \code{cut_sels} cuts selections from a selection table into individual sound files.
 #' @export cut_sels
 #' @usage cut_sels(X, mar = 0.05, parallel = 1, path = NULL, dest.path = NULL, pb = TRUE,
-#' labels = c("sound.files", "selec"), overwrite = FALSE, norm = FALSE, ...)
+#' labels = c("sound.files", "selec"), overwrite = FALSE, norm = FALSE,
+#' keep.stereo = FALSE, ...)
 #' @param X object of class 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name (sound.files), 
 #' selection number (selec), and start and end time of signals (start and end).
-#' The output of \code{\link{auto_detec}} can be used as the input data frame. 
 #' @param mar Numeric vector of length 1. Specifies the margins adjacent to the start and end points of selections,
 #' delineating spectrogram limits. Default is 0.05.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
@@ -22,14 +22,15 @@
 #' @param overwrite Logical. If \code{TRUE} sound files with the same name will be 
 #' overwritten. Default is \code{FALSE}.
 #' @param norm Logical indicating whether wave objects must be normalized first using the function \code{\link[tuneR]{normalize}}. Additional arguments can be passed to \code{\link[tuneR]{normalize}} using `...`.` Default is \code{FALSE}. See \code{\link[tuneR]{normalize}} for available options.
-#' @param ... Additional arguments to be passed to the internal \code{\link[tuneR]{normalize}}  function for customizing sound file output. Ignored if  \code{norm = FALSE}. 
+#' @param keep.stereo Logical. If \code{TRUE} both channels are kept in the clips, oterwise it will keep the channel referenced in the channel column (if supplied) or the first channel if a 'channel' column is not found in 'X'. Only applies to stereo (2-channel) files.
+#' @param ... Additional arguments to be passed to the internal \code{\link[tuneR]{normalize}} function for customizing sound file output. Ignored if  \code{norm = FALSE}. 
 #' @return Sound files of the signals listed in the input data frame.
 #' @family selection manipulation
 #' @seealso \code{\link{seltailor}} for tailoring selections 
 #'  \href{https://marce10.github.io/2017/06/06/Individual_sound_files_for_each_selection.html}{blog post on cutting sound files}
 #' @name cut_sels
 #' @details This function allow users to produce individual sound files from the selections
-#' listed in a selection table as in \code{\link{lbh_selec_table}}. Note that wave objects with a bit depth of 32 might not be readable by some programs after exporting. In this case they should be "normalized" (argument 'norm") with a lower bit depth.  
+#' listed in a selection table as in \code{\link{lbh_selec_table}}. Note that wave objects with a bit depth of 32 might not be readable by some programs after exporting. In this case they should be "normalized" (argument 'norm") with a lower bit depth. The function keeps the original number of channels in the output clips only for 1- and 2-channel files.
 #' @examples{ 
 #' # save wav file examples
 #' data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
@@ -52,10 +53,7 @@
 #last modification on mar-12-2018 (MAS)
 
 cut_sels <- function(X, mar = 0.05, parallel = 1, path = NULL, dest.path = NULL, pb = TRUE,
-                     labels = c("sound.files", "selec"), overwrite = FALSE, norm = FALSE, ...){
-  
-  # reset pb
-  on.exit(pbapply::pboptions(type = .Options$pboptions$type), add = TRUE)
+                     labels = c("sound.files", "selec"), overwrite = FALSE, norm = FALSE, keep.stereo = FALSE, ...){
   
   #### set arguments from options
   # get function arguments
@@ -63,9 +61,6 @@ cut_sels <- function(X, mar = 0.05, parallel = 1, path = NULL, dest.path = NULL,
   
   # get warbleR options
   opt.argms <- if(!is.null(getOption("warbleR"))) getOption("warbleR") else SILLYNAME <- 0
-  
-  # rename path for sound files
-  names(opt.argms)[names(opt.argms) == "wav.path"] <- "path"
   
   # remove options not as default in call and not in function arguments
   opt.argms <- opt.argms[!sapply(opt.argms, is.null) & names(opt.argms) %in% argms]
@@ -101,6 +96,10 @@ cut_sels <- function(X, mar = 0.05, parallel = 1, path = NULL, dest.path = NULL,
     stop(paste(paste(c("sound.files", "selec", "start", "end")[!(c("sound.files", "selec", 
                                                                    "start", "end") %in% colnames(X))], collapse=", "), "column(s) not found in data frame"))
   
+  # create channel if not found
+  if (!is.null(X$channel))
+    X$channel <- 1
+  
   #if there are NAs in start or end stop
   if (any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")  
   
@@ -117,15 +116,15 @@ cut_sels <- function(X, mar = 0.05, parallel = 1, path = NULL, dest.path = NULL,
   if (!is_extended_selection_table(X))
   {
     #return warning if not all sound files were found
-  recs.wd <- list.files(path = path, pattern = "\\.wav$", ignore.case = TRUE)
+  recs.wd <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% recs.wd)])) != length(unique(X$sound.files))) 
     (paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% recs.wd)])), 
-           ".wav file(s) not found"))
+           "sound file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
   d <- which(X$sound.files %in% recs.wd) 
   if (length(d) == 0){
-    stop("The .wav files are not in the working directory")
+    stop("The sound files are not in the working directory")
   }  else {
     X <- X[d, ]
   }
@@ -136,17 +135,17 @@ cut_sels <- function(X, mar = 0.05, parallel = 1, path = NULL, dest.path = NULL,
   
   #remove .wav from sound file names
   X2 <- X
-  X2$sound.files <- gsub("\\.wav$", "", X2$sound.files, ignore.case = TRUE)
+  X2$sound.files <- gsub("\\.wav$|\\.wac$|\\.mp3$|\\.flac$", "", X2$sound.files, ignore.case = TRUE)
   
   # If parallel is not numeric
   if (!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
   if (any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
 
   #create function to run within Xapply functions downstream     
-  cutFUN <- function(X, i, mar, labels, dest.path){
+  cutFUN <- function(X, i, mar, labels, dest.path, keep.stereo){
     
     # Read sound files, initialize frequency and time limits for spectrogram
-    r <- warbleR::read_wave(X = X, index = i, header = TRUE, path = path)
+    r <- warbleR::read_sound_file(X = X, index = i, header = TRUE, path = path)
     f <- r$sample.rate
     t <- c(X$start[i] - mar, X$end[i] + mar)
     
@@ -158,8 +157,17 @@ cut_sels <- function(X, mar = 0.05, parallel = 1, path = NULL, dest.path = NULL,
     if (t[2] > r$samples/f) t[2] <- r$samples/f
     
     # Cut wave
-    wvcut <- warbleR::read_wave(X = X, path = path, index = i, from = t[1], to = t[2])
-
+    wvcut <- warbleR::read_sound_file(X = X, path = path, index = i, from = t[1], to = t[2], channel = X$channel[i])
+    
+    # add second channel if stereo
+    if (keep.stereo & r$channels == 2){
+      wvcut_ch2 <- warbleR::read_sound_file(X = X, path = path, index = i, from = t[1], to = t[2],  channel = setdiff(1:2, X$channel[i]))
+      
+      if (X$channel[i] == 1)
+      wvcut <- Wave(left = wvcut@left, right = wvcut_ch2@left, samp.rate = wvcut@samp.rate, bit = wvcut@bit) else
+        wvcut <- Wave(left = wvcut_ch2@left, right = wvcut@left, samp.rate = wvcut@samp.rate, bit = wvcut@bit)
+    }
+    
     # save cut
     if (overwrite) unlink(file.path(dest.path, paste0(paste(X2[i, labels], collapse = "-"), ".wav")))
 
@@ -169,17 +177,17 @@ cut_sels <- function(X, mar = 0.05, parallel = 1, path = NULL, dest.path = NULL,
        
   }
   
-  # set pb options 
-  pbapply::pboptions(type = ifelse(pb, "timer", "none"))
+  
+  
   
   # set clusters for windows OS
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
   # run loop apply function
-  out <- pbapply::pblapply(X = 1:nrow(X), cl = cl, FUN = function(i) 
+  out <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(X), cl = cl, FUN = function(i) 
   { 
-    cutFUN(X = X, i = i, mar = mar, labels = labels, dest.path = dest.path)
+    cutFUN(X = X, i = i, mar = mar, labels = labels, dest.path = dest.path, keep.stereo)
   }) 
 }
 

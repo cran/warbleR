@@ -5,13 +5,13 @@
 \title{Detect frequency range iteratively}
 \usage{
 freq_range(X, wl = 512, it = "jpeg", line = TRUE, fsmooth = 0.1, threshold = 10, 
-dB.threshold = NULL, wn = "hanning", flim = c(0, 22), bp = NULL, 
+dB.threshold = NULL, wn = "hanning", flim = NULL, bp = NULL, 
 propwidth = FALSE, xl = 1, picsize = 1, res = 100, fast.spec = FALSE, ovlp = 50,
 pal = reverse.gray.colors.2, parallel = 1, widths = c(2, 1), main = NULL, 
 img = TRUE, mar = 0.05, path = NULL, pb = TRUE, impute = FALSE)
 }
 \arguments{
-\item{X}{object of class 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the .wav 
+\item{X}{object of class 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the sound 
 files, 2) "sel": number of the selections, 3) "start": start time of selections, 4) "end": 
 end time of selections. The output of \code{\link{auto_detec}} can
 also be used as the input data frame.}
@@ -38,7 +38,7 @@ Note that the power spectrum is normalized when using a dB scale, so it looks di
 "hanning". See function \code{\link[seewave]{ftwindow}} for more options. This is used for calculating the frequency spectrum (using \code{\link[seewave]{meanspec}}) and producing the spectrogram (using \code{\link[seewave]{spectro}}, if \code{img = TRUE}).}
 
 \item{flim}{A numeric vector of length 2 for the frequency limit of 
-the spectrogram (in kHz), as in \code{\link[seewave]{spectro}}. Default is c(0, 22).}
+the spectrogram (in kHz), as in \code{\link[seewave]{spectro}}. Default is \code{NULL}.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a 
 frequency bandpass filter (in kHz) or "frange" to indicate that values in 'bottom.freq' 

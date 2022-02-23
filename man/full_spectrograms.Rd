@@ -4,21 +4,21 @@
 \alias{full_spectrograms}
 \title{Create long spectrograms of whole sound files}
 \usage{
-full_spectrograms(X = NULL, flim = c(0,22), sxrow = 5, rows = 10, 
+full_spectrograms(X = NULL, flim = NULL, sxrow = 5, rows = 10, 
 collevels = seq(-40, 0, 1), ovlp = 50, parallel = 1, wl = 512, gr = FALSE, 
 pal = reverse.gray.colors.2, cex = 1, it = "jpeg", flist = NULL, 
 overwrite = TRUE, path = NULL, pb = TRUE, fast.spec = FALSE, labels = "selec",
- horizontal = FALSE, song = NULL, suffix = NULL, ...)
+ horizontal = FALSE, song = NULL, suffix = NULL, dest.path = NULL, ...)
 }
 \arguments{
 \item{X}{'selection_table' object or any data frame with columns
 for sound file name (sound.files), selection number (selec), and start and end time of signal
 (start and end). If given, a transparent box is  plotted around each selection and the selections are labeled with the selection number 
-(and selection comment, if available). Default is \code{NULL}.Alternatively, it can also take the output of \code{\link{cross_correlation}} or \code{\link{auto_detec}} (when 'output' is a 'list', see \code{\link{cross_correlation}} or \code{\link{auto_detec}}). If supplied a secondary row is displayed under each spectrogram showing the detection (either cross-correlation scores or wave envelopes) values across time.}
+(and selection comment, if available). Default is \code{NULL}. Alternatively, it can also take the output of \code{\link{cross_correlation}} or \code{\link{auto_detec}} (when 'output' is a 'list', see \code{\link{cross_correlation}} or \code{\link{auto_detec}}). If supplied a secondary row is displayed under each spectrogram showing the detection (either cross-correlation scores or wave envelopes) values across time.}
 
 \item{flim}{A numeric vector of length 2 indicating the highest and lowest 
 frequency limits (kHz) of the spectrogram, as in 
-\code{\link[seewave]{spectro}}. Default is c(0,22).}
+\code{\link[seewave]{spectro}}. Default is \code{NULL}.}
 
 \item{sxrow}{A numeric vector of length 1. Specifies seconds of spectrogram
 per row. Default is 5.}
@@ -81,6 +81,9 @@ organization level in the song (similar to 'song_colm' in \code{\link{song_analy
 'song' are plotted. Ignored if 'X' is not provided.}
 
 \item{suffix}{Character vector of length 1. Suffix for the output image file (to be added at the end of the default file name). Default is \code{NULL}.}
+
+\item{dest.path}{Character string containing the directory path where the image files will be saved.
+If \code{NULL} (default) then the folder containing the sound files will be used instead.}
 
 \item{...}{Additional arguments for image formatting. It accepts 'width', 'height' (which will overwrite 'horizontal') and 'res' as in \code{\link[grDevices]{png}}.}
 }
