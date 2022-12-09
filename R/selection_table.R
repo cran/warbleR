@@ -3,7 +3,8 @@
 #' \code{selection_table} converts data frames into an object of classes 'selection_table' or 'extended_selection_table'.
 #' @usage selection_table(X, max.dur = 10, path = NULL, whole.recs = FALSE,
 #' extended = FALSE, confirm.extended = TRUE, mar = 0.1, by.song = NULL, 
-#' pb = TRUE, parallel = 1, verbose = TRUE, ...)
+#' pb = TRUE, parallel = 1, verbose = TRUE, skip.error = FALSE, 
+#' file.format = "\\\.wav$|\\\.wac$|\\\.mp3$|\\\.flac$", ...)
 #' @param X data frame with the following columns: 1) "sound.files": name of the .wav 
 #' files, 2) "selec": unique selection identifier (within a sound file), 3) "start": start time and 4) "end": 
 #' end time of selections. Columns for 'top.freq', 'bottom.freq' and 'channel' are optional. Note that, when 'channel' is
@@ -36,9 +37,11 @@
 #' If \code{NULL} (default), wave objects are created for each selection (e.g. by selection). 
 #' Ignored if \code{extended = FALSE}.
 #' @param pb Logical argument to control progress bar and messages. Default is \code{TRUE}.
-#' @param parallel Numeric. Controls whether parallel computing is applied. 
+#' @param parallel Numeric. Controls whether parallel computing is applied.
 #' It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
-  #' @param verbose Logical argument to control if summary messages are printed to the console. Default is \code{TRUE}.
+#' @param verbose Logical argument to control if summary messages are printed to the console. Default is \code{TRUE}.
+#' @param skip.error Logical to control if errors are omitted. If so, files that could not be read will be excluded and their name printed in the console. Default is \code{FALSE}, which will return an error if some files are problematic.
+#' @param file.format Character string with the format of sound files. By default all sound file formats supported by warbleR are included ("\\.wav$|\\.wac$|\\.mp3$|\\.flac$"). Note that several formats can be included using regular expression syntax as in \code{\link[base]{grep}}. For instance \code{"\\.wav$|\\.mp3$"} will only include .wav and .mp3 files. Ignored if \code{whole.recs = FALSE}. 
 #' @param ... Additional arguments to be passed to \code{\link{check_sels}} for customizing
 #' checking routine.
 #' @return An object of class selection_table which includes the original data frame plus the following additional attributes:
@@ -57,7 +60,7 @@
 #'    }
 #' If no errors are found the a selection table or extended selection table will be generated. 
 #' Note that the sound files should be in the working directory (or the directory provided in 'path').
-#' This is useful for avoiding errors in downstream functions (e.g. \code{\link{spectro_analysis}}, \code{\link{cross_correlation}}, \code{\link{catalog}}, \code{\link{freq_DTW}}). Note also that corrupt files can be
+#' This is useful for avoiding errors in downstream functions (e.g. \code{\link{spectro_analysis}}, \code{\link{cross_correlation}},  \code{\link{catalog}}, \code{\link{freq_DTW}}). Note also that corrupt files can be
 #' fixed using \code{\link{fix_wavs}} ('sox' must be installed to be able to run this function).
 #' The 'selection_table' class can be input in subsequent functions. 
 #' 
@@ -112,7 +115,7 @@
 #last modification on may-9-2018 (MAS)
 
 selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
-                            extended = FALSE, confirm.extended = TRUE, mar = 0.1, by.song = NULL, pb = TRUE, parallel = 1, verbose = TRUE, ...)
+                            extended = FALSE, confirm.extended = TRUE, mar = 0.1, by.song = NULL, pb = TRUE, parallel = 1, verbose = TRUE, skip.error = FALSE, file.format = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ...)
 {
   
   #### set arguments from options
@@ -138,30 +141,42 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
   
   #check path if not provided set to working directory
   if (is.null(path)) path <- getwd() else 
-    if (!dir.exists(path)) stop("'path' provided does not exist") 
+    if (!dir.exists(path)) stop2("'path' provided does not exist") 
   
   # if by song but column not found
   if (!is.null(by.song))
-    if (!any(names(X) == by.song)) stop("'by.song' column not found")
+    if (!any(names(X) == by.song)) stop2("'by.song' column not found")
   
   # If parallel is not numeric
-  if (!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
-  if (any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
+  if (!is.numeric(parallel)) stop2("'parallel' must be a numeric vector of length 1") 
+  if (any(!(parallel %% 1 == 0),parallel < 1)) stop2("'parallel' should be a positive integer")
   
   # create a selection table for a row for each full length recording
   if (whole.recs){ 
-    sound.files <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
+    sound.files <- list.files(path = path, pattern = file.format, ignore.case = TRUE)
     
-    if (length(sound.files) == 0) stop("No sound files were found") 
+    if (length(sound.files) == 0) stop2("No sound files were found") 
     
-    X <- data.frame(sound.files, selec = 1, channel = 1, start = 0, end = duration_wavs(files = sound.files, path = path)$duration)
-  }
+    X <- data.frame(sound.files, selec = 1, channel = 1, start = 0, end = duration_wavs(files = sound.files, path = path, skip.error = skip.error)$duration)
+  
+    if (skip.error){
+      # get name of problematic files
+      error_files <- X$sound.files[is.na(X$end)]
+      
+      # remove them from output X
+      X <- X[!is.na(X$end), ]
+    } 
+    }
+  
+  # create error_files if not created
+  if (!exists("error_files"))
+      error_files <- vector()
   
   if (pb & verbose) write(file = "", x ="checking selections (step 1 of 2):")
   
   check.results <- warbleR::check_sels(X, path = path, wav.size = TRUE, pb = pb, verbose = FALSE, ...)        
   
-  if (any(check.results$check.res != "OK")) stop("Not all selections can be read (use check_sels() to locate problematic selections)")
+  if (any(check.results$check.res != "OK")) stop2("Not all selections can be read (use check_sels() to locate problematic selections)")
   
   X <- check.results[ , names(check.results) %in% names(X)]
   
@@ -277,6 +292,10 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
   
   attributes(X)$check.results <- check.results
   
+  # recalculate file size  
+  if (whole.recs)
+    attributes(X)$check.results$wav.size <- file.size(file.path(path, attributes(X)$check.results$sound.files)) / 1000000
+  
   if (is_extended_selection_table(X) & !is.null(by.song)) attributes(X)$by.song  <- list(by.song = TRUE, song.column = by.song) else attributes(X)$by.song  <- list(by.song = FALSE, song.column = by.song)
   
   attributes(X)$call <- base::match.call()
@@ -284,6 +303,8 @@ selection_table <- function(X, max.dur = 10, path = NULL, whole.recs = FALSE,
   attributes(X)$warbleR.version <- packageVersion("warbleR")
   
   if (extended & confirm.extended & !is_extended_selection_table(X)) cat(crayon::silver(crayon::bold("'extended_selection_table' was not created")))
+  
+  if (skip.error & length(error_files) > 0) cat(crayon::silver(paste("\nthe following file(s) couldn't be read and were not included:", crayon::bold(paste(error_files, collapse = ",")))))
   
   return(X)
 }
@@ -492,7 +513,10 @@ print.extended_selection_table <- function(x, ...) {
   if (!is.null(attributes(x)$call)){
     cat(crayon::silver(paste("* The output of the following", "call: \n")))
     
-    cll <- paste0(deparse(attributes(x)$call))
+    cll <- deparse(attributes(x)$call)
+    if (length(cll) > 1) cll <- paste(cll, collapse = " ")
+    if(nchar(as.character(cll)) > 250) 
+      cll <- paste(substr(x = as.character(cll), start = 0, stop = 250), "...")
     cat(crayon::silver(crayon::italic(gsub("    ", "", cll), "\n")))
   }
   
@@ -627,7 +651,7 @@ print.selection_table <- function(x, ...) {
 fix_extended_selection_table <- function(X, Y, to.by.song = FALSE){
   #X is new data frame and Y the original one
   #add wave objects
-  if (!is_extended_selection_table(Y)) stop("Y must be a extended selection table")
+  if (!is_extended_selection_table(Y)) stop2("Y must be a extended selection table")
   attributes(X)$wave.objects <- attributes(Y)$wave.objects[names(attributes(Y)$wave.objects) %in% X$sound.files] 
   
   attributes(X)$check.results <- attributes(Y)$check.results[attributes(Y)$check.results$sound.files %in% X$sound.files, ]
@@ -686,12 +710,10 @@ rbind.selection_table <- function(..., deparse.level = 1) {
   X <- mcall[[1]]
   Y <- mcall[[2]]
   
-  if (!is_selection_table(X) | !is_selection_table(Y)) stop("both objects must be of class 'selection_table'")
+  if (!is_selection_table(X) | !is_selection_table(Y)) stop2("both objects must be of class 'selection_table'")
   
-  if (any(paste(X$sound.files, X$selec) %in% paste(Y$sound.files, Y$selec))) stop("Some sound files/selec are found in both selection tables")
-  
-  
-  
+  if (any(paste(X$sound.files, X$selec) %in% paste(Y$sound.files, Y$selec))) stop2("Some sound files/selec are found in both selection tables")
+
   cl.nms <- intersect(names(X), names(Y))
   
   W <- rbind(as.data.frame(X[ , cl.nms, drop = FALSE]), as.data.frame(Y[ , cl.nms, drop = FALSE]), make.row.names = TRUE,
@@ -747,16 +769,16 @@ rbind.extended_selection_table <- function(..., deparse.level = 1) {
   X <- mcall[[1]]
   Y <- mcall[[2]]
 
-  if (!is_extended_selection_table(X) | !is_extended_selection_table(Y)) stop("both objects must be of class 'extended_selection_table'")
+  if (!is_extended_selection_table(X) | !is_extended_selection_table(Y)) stop2("both objects must be of class 'extended_selection_table'")
   
-  if (attr(X, "by.song")[[1]] != attr(Y, "by.song")[[1]]) stop("both objects should have been created either 'by song' or by element' (see 'by.song' argument in selection_table())")
+  if (attr(X, "by.song")[[1]] != attr(Y, "by.song")[[1]]) stop2("both objects should have been created either 'by song' or by element' (see 'by.song' argument in selection_table())")
   
-  if (any(paste(X$sound.files, X$selec) %in% paste(Y$sound.files, Y$selec))) stop("Some sound files/selec are found in both extended selection tables")
+  if (any(paste(X$sound.files, X$selec) %in% paste(Y$sound.files, Y$selec))) stop2("Some sound files/selec are found in both extended selection tables")
   
   waves.X <- names(attr(X, "wave.objects"))
   waves.Y <- names(attr(Y, "wave.objects"))
   
-  if (any(waves.X %in% waves.Y)) cat("Some wave object names are found in both extended selection tables, they are assumed to refer to the same wave object and only one copy will be kept (use rename_est_waves() to change sound file/wave objetc names if needed)")
+  if (any(waves.X %in% waves.Y)) warning2("Some wave object names are found in both extended selection tables, they are assumed to refer to the same wave object and only one copy will be kept (use rename_est_waves() to change sound file/wave object names if needed)")
   
   cl.nms <- intersect(names(X), names(Y))
   
@@ -782,23 +804,3 @@ rbind.extended_selection_table <- function(..., deparse.level = 1) {
   
   return(W)
 }
-
-## Example
-# data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
-#
-# 
-#
-# writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
-# writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
-# writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
-# writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
-# 
-# # create extended selection table
-# # st <- selection_table(lbh_selec_table, extended = TRUE, confirm.extended = FALSE)
-# st1 <- st[1:5, ]
-# 
-# st2 <- st[6:10, ]
-# 
-# # fix selection table
-# st <- rbind(X = st1, Y = st2)
-

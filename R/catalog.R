@@ -1,4 +1,4 @@
-#' Create catalog of vocal signals
+#' Create catalogs of vocal signals
 #' 
 #' \code{catalog} produces spectrograms of selections (signals) split into multiple rows and columns.
 #' @usage catalog(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
@@ -10,7 +10,7 @@
 #' legend = 3, cex = 1, leg.wd = 1, img.suffix = NULL, img.prefix = NULL, 
 #' tag.widths = c(1, 1), hatching = 0, breaks = c(5, 5), group.tag = NULL, 
 #' spec.mar = 0, spec.bg = "white", max.group.cols = NULL, sub.legend = FALSE, 
-#' rm.axes = FALSE, title = NULL, by.row = TRUE, box = TRUE)
+#' rm.axes = FALSE, title = NULL, by.row = TRUE, box = TRUE, highlight = FALSE, alpha = 0.5)
 #' @param X 'selection_table', 'extended_selection_table' or data frame with columns for sound file name (sound.files), selection number (selec), 
 #' and start and end time of signal (start and end). Default is \code{NULL}.
 #' @param flim A numeric vector of length 2 indicating the highest and lowest 
@@ -34,7 +34,7 @@
 #' @param prop.mar Numeric vector of length 1. Specifies the margins adjacent to the 
 #' start and end points of selections as a proportion of the duration of the signal. If
 #' provided 'mar' argument is ignored. Default is \code{NULL}. Useful when having high 
-#' variation in signal duration. Ignored if \code{same.time.scale = FALSE}.
+#' variation in signal duration. Ignored if \code{same.time.scale = FALSE}. Must be > 0 and <= 1. 
 #' @param lab.mar Numeric vector of length 1. Specifies the space allocated to labels and tags (the upper margin). Default is 1.   
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default 
 #'   is 512.
@@ -118,7 +118,8 @@
 #' @param by.row Logical. If \code{TRUE} (default) catalogs are filled by rows. 
 #' @param box Logical. If \code{TRUE} (default) a box is drawn around spectrograms and 
 #' corresponding labels and tags. 
-#' are 
+#' @param highlight Logical. If \code{TRUE} a transparent white layer is plotted on the spectrogram areas outside the selection. The level of transparency is controlled with the argument 'alpha'. Default is \code{FAlSE}.
+#' @param alpha Numeric vector of length 1 controlling the level of transparency when highlighting selections (i.e. when \code{highlight = TRUE}, see highlight argument. Default is 0.5.
 #' @return Image files with spectrograms of whole sound files in the working directory. Multiple pages
 #' can be returned, depending on the length of each sound file. 
 #' @export
@@ -211,7 +212,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
                     leg.wd = 1, img.suffix = NULL, img.prefix = NULL, tag.widths = c(1, 1), hatching = 0, 
                     breaks = c(5, 5), group.tag = NULL, spec.mar = 0, spec.bg = "white", 
                     max.group.cols = NULL, sub.legend = FALSE, rm.axes = FALSE, title = NULL,
-                    by.row = TRUE, box = TRUE)
+                    by.row = TRUE, box = TRUE, highlight = FALSE, alpha = 0.5)
 {
 
   #### set arguments from options
@@ -236,11 +237,11 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   #if X is not a data frame
-  if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
+  if (!any(is.data.frame(X), is_selection_table(X), is_extended_selection_table(X))) stop2("X is not of a class 'data.frame', 'selection_table' or 'extended_selection_table'")
   
   #check path to working directory
   if (is.null(path)) path <- getwd() else 
-    if (!dir.exists(path)) stop("'path' provided does not exist") else
+    if (!dir.exists(path)) stop2("'path' provided does not exist") else
       path <- normalizePath(path)
   
   #read files
@@ -255,7 +256,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
       #count number of sound files in working directory and if 0 stop
       d <- which(X$sound.files %in% recs.wd)
       if (length(d) == 0){
-        stop("The sound files are not in the working directory")
+        stop2("The sound files are not in the working directory")
       }  else {
         X <- X[d, ]
       }
@@ -271,19 +272,19 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
     X$collev.min <- collevels[1]  else collevels <- NULL
   
   #nrow must be equal or higher than 2
-  if (nrow < 2) stop("number of rows must be equal or higher than 2")
+  if (nrow < 2) stop2("number of rows must be equal or higher than 2")
   
   #rows must be equal or higher than 2
-  if (ncol < 1) stop("number of columns (ncol) must be equal or higher than 1")
+  if (ncol < 1) stop2("number of columns (ncol) must be equal or higher than 1")
   
   #missing columns
   if (!all(c("sound.files", "selec",
             "start", "end") %in% colnames(X)))
-    stop(paste(paste(c("sound.files", "selec", "start", "end")[!(c("sound.files", "selec",
+    stop2(paste(paste(c("sound.files", "selec", "start", "end")[!(c("sound.files", "selec",
                                                                    "start", "end") %in% colnames(X))], collapse=", "), "column(s) not found in data frame"))
   
   #tag.pal must be a color function
-  if (!is.list(tag.pal) & !is.null(tag.pal)) stop("'tag.pal' must be a list of color palette functions of length 1, 2 or 3")
+  if (!is.list(tag.pal) & !is.null(tag.pal)) stop2("'tag.pal' must be a list of color palette functions of length 1, 2 or 3")
   
   if (length(tag.pal) == 1) tag.pal[[2]] <- tag.pal[[1]]
   if (length(tag.pal) == 2 & !is.null(group.tag)) tag.pal[[3]] <- tag.pal[[2]]
@@ -297,106 +298,104 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
   if (is.function(unlist(pal))) X$pal <- list(pal)
   
   # orientation
-  if (!orientation %in% c("v", "h")) stop("orientation should be either 'v' or 'h'")
+  if (!orientation %in% c("v", "h")) stop2("orientation should be either 'v' or 'h'")
   
   #missing label columns
   if (!all(labels %in% colnames(X)))
-    stop(paste(paste(labels[!(labels %in% colnames(X))], collapse=", "), "label column(s) not found in data frame"))
+    stop2(paste(paste(labels[!(labels %in% colnames(X))], collapse=", "), "label column(s) not found in data frame"))
   
   #if tags> 2
-  if (length(tags) > 2) stop("No more than 2 tags can be used at a time")
+  if (length(tags) > 2) stop2("No more than 2 tags can be used at a time")
   
   #missing tag columns
   if (!all(tags %in% colnames(X)))
-    stop(paste(paste(tags[!(tags %in% colnames(X))], collapse=", "), "tag column(s) not found in data frame"))
+    stop2(paste(paste(tags[!(tags %in% colnames(X))], collapse=", "), "tag column(s) not found in data frame"))
   
   #missing tag columns
   if (!all(tags %in% colnames(X)))
-    stop(paste(paste(tags[!(tags %in% colnames(X))], collapse=", "), "tag column(s) not found in data frame"))
+    stop2(paste(paste(tags[!(tags %in% colnames(X))], collapse=", "), "tag column(s) not found in data frame"))
   
   #if NAs in tags
   if (!is.null(tags))
   if (anyNA(X[,tags]))
-    stop("NAs are not allowed in tag columns")
+    stop2("NAs are not allowed in tag columns")
   
   if (!is.null(group.tag))
   {if (!group.tag %in% colnames(X))
-    stop("group.tag column not found in data frame") else
+    stop2("group.tag column not found in data frame") else
       X <- X[order(X[, group.tag]),]
     
     if (is.numeric(X[, group.tag]))
-      stop("group tag cannot be numeric")
+      stop2("group tag cannot be numeric")
     
     if (anyNA(X[,group.tag]))
-      stop("NAs are not allowed in 'group.tag' column")
+      stop2("NAs are not allowed in 'group.tag' column")
   }
   
   #if sel.comment column not found create it
   if (is.null(X$sel.comment) & !is.null(X)) X <- data.frame(X,sel.comment="")
   
   #if there are NAs in start or end stop
-  if (any(is.na(c(X$end, X$start)))) stop("NAs found in start and/or end")
+  if (any(is.na(c(X$end, X$start)))) stop2("NAs found in start and/or end")
   
   #if end or start are not numeric stop
-  if (any(!is(X$end, "numeric"), !is(X$start, "numeric"))) stop("'start' and 'end' must be numeric")
+  if (any(!is(X$end, "numeric"), !is(X$start, "numeric"))) stop2("'start' and 'end' must be numeric")
   
   #if any start higher than end stop
-  if (any(X$end - X$start <= 0)) stop(paste("Start is higher than or equal to end in", length(which(X$end - X$start <= 0)), "case(s)"))
+  if (any(X$end - X$start <= 0)) stop2(paste("Start is higher than or equal to end in", length(which(X$end - X$start <= 0)), "case(s)"))
   
   #if it argument is not "jpeg" or "tiff"
-  if (!any(it == "jpeg", it == "tiff")) stop(paste("Image type", it, "not allowed"))
-  
-  
-  
-  
+  if (!any(it == "jpeg", it == "tiff")) stop2(paste("Image type", it, "not allowed"))
   
   #if flim is not vector or length!=2 stop
   if (is.null(flim)) {
-    if (!is.vector(flim)) stop("'flim' must be a numeric vector of length 2") else
-      if (!length(flim) == 2) stop("'flim' must be a numeric vector of length 2")}
+    if (!is.vector(flim)) stop2("'flim' must be a numeric vector of length 2") else
+      if (!length(flim) == 2) stop2("'flim' must be a numeric vector of length 2")}
   
   #if wl is not vector or length!=1 stop
-  if (is.null(wl)) stop("'wl' must be a numeric vector of length 1") else {
-    if (!is.vector(wl)) stop("'wl' must be a numeric vector of length 1") else{
+  if (is.null(wl)) stop2("'wl' must be a numeric vector of length 1") else {
+    if (!is.vector(wl)) stop2("'wl' must be a numeric vector of length 1") else{
       if (!length(wl) > 2) wl <- wl[1]}}
   
   #if rows is not vector or length!=1 stop
-  if (is.null(nrow)) stop("'nrow' must be a numeric vector of length 1") else {
-    if (!is.vector(nrow)) stop("'nrow' must be a numeric vector of length 1") else{
-      if (!length(nrow) == 1) stop("'nrow' must be a numeric vector of length 1")}}
+  if (is.null(nrow)) stop2("'nrow' must be a numeric vector of length 1") else {
+    if (!is.vector(nrow)) stop2("'nrow' must be a numeric vector of length 1") else{
+      if (!length(nrow) == 1) stop2("'nrow' must be a numeric vector of length 1")}}
   
   #if ncol is not vector or length!=1 stop
-  if (is.null(ncol)) stop("'ncol' must be a numeric vector of length 1") else {
-    if (!is.vector(ncol)) stop("'ncol' must be a numeric vector of length 1") else{
-      if (!length(ncol) == 1) stop("'ncol' must be a numeric vector of length 1")}}
+  if (is.null(ncol)) stop2("'ncol' must be a numeric vector of length 1") else {
+    if (!is.vector(ncol)) stop2("'ncol' must be a numeric vector of length 1") else{
+      if (!length(ncol) == 1) stop2("'ncol' must be a numeric vector of length 1")}}
   
   # if levels are shared between tags
-  if (length(tags) == 2) if (any(unique(X[ ,tags[1]]) %in% unique(X[ ,tags[2]]))) stop("Tags cannot contained levels with the same labels")
+  if (length(tags) == 2) if (any(unique(X[ ,tags[1]]) %in% unique(X[ ,tags[2]]))) stop2("Tags cannot contained levels with the same labels")
   
   #legend
   if (!is.numeric(legend) | legend < 0 | legend > 3)
-    stop("legend should be be a value between 0 and 3")
+    stop2("legend should be be a value between 0 and 3")
   
   #lab.mar
   if (!is.numeric(lab.mar) | lab.mar < 0)
-    stop("lab.mar should be <= 0")
+    stop2("lab.mar should be >= 0")
   
   #prop.mar
   if (!is.null(prop.mar))
   {
-    if (!is.numeric(prop.mar) | prop.mar < 0)
-      stop("prop.mar should be <= 0")
-    if (!same.time.scale) prop.mar <- NULL
+    if (prop.mar < 0)
+      stop2("prop.mar should be  > 0 and <= 1")
+    if (!same.time.scale){ 
+      prop.mar <- NULL
     cat("'prop.mar' ignored as same.time.scale = FALSE")
+    }
   }
   
   #spec.mar
   if (!is.numeric(spec.mar) | spec.mar < 0)
-    stop("spec.mar should be <= 0")
+    stop2("spec.mar should be >= 0")
   
   #hatching
   if (!is.numeric(hatching) | hatching < 0 | hatching > 3)
-    stop("hatching should be be a value between 0 and 3")
+    stop2("hatching should be be a value between 0 and 3")
   
   #set dimensions
   if (is.null(width))
@@ -550,8 +549,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
    f <- r$sample.rate
 
     # change mar to prop.mar (if provided)
-    if (!is.null(prop.mar)) adj.mar <- (X$end[i] - X$start[i]) * prop.mar else
-      adj.mar <- mar
+   adj.mar <- if (!is.null(prop.mar)) (X$end[i] - X$start[i]) * prop.mar else mar
     
     t <- c(X$start[i] - adj.mar, X$end[i] + adj.mar) 
     
@@ -580,6 +578,8 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
     X2 <- lapply(1:nrow(X), function(x)
     {
       Y <- as.data.frame(X)[x, ]
+      Y$orig.end <- Y$end
+      Y$orig.start <- Y$start
       dur <- Y$end - Y$start
       if (dur < max(rangs$mardur)) {
         Y$end  <- Y$end + (max(rangs$mardur) - dur)/2
@@ -594,7 +594,11 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
     X <- do.call(rbind, X2)
     
     if (exists("X.orig")) X <- fix_extended_selection_table(X = as.data.frame(X), Y = X.orig)
+    
+    on.exit(cat(paste0("Time range: ", round(max(X$end - X$start) + (2 * mar), 3), "s;", " frequency range: ", min(rangs$fl1), "-", flim[2], " kHz")))
     }
+  
+  
   
   # function to run on data frame subset   
   catalFUN <- function(X, nrow, ncol, page, labels, grid, fast.spec, flim,pal, width, height, tag.col.df, legend, cex, 
@@ -753,8 +757,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
          f <- r$sample.rate
           
           # change mar to prop.mar (if provided)
-          if (!is.null(prop.mar)) adj.mar <- (X3$end[i] - X3$start[i]) * prop.mar else
-            adj.mar <- mar
+         adj.mar <-  if (!is.null(prop.mar))(X3$end[i] - X3$start[i]) * prop.mar else  mar
           
           t <- c(X3$start[i] - adj.mar, X3$end[i] + adj.mar)
           
@@ -784,10 +787,25 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
           
           # draw spectro
           if (fast.spec & !is.null(group.tag)) par(bg =  X3$colgroup[i], new = TRUE)
+          
           spectro_wrblr_int2(wave = rec, f = rec@samp.rate, flim = flim, wl = X3$...wl...[i], wn = X3$...wn...[i], ovlp = X3$...ovlp...[i], axisX = axisX, axisY = axisY, tlab = NULL, flab = NULL, palette = X3$pal[i], fast.spec = fast.spec, main = NULL, grid = gr, rm.zero = TRUE, cexlab = cex * 1.2, collevels = collevels, collev.min = X3$collev.min[i], cexaxis = cex * 1.2, add = TRUE)
           
+          #add transparent boxes around to highlight signals
+          if (highlight){
+            
+            if (!same.time.scale)
+              sig.pos <- c(adj.mar - (t[1] - (X3$start[i] - adj.mar)), X3$end[i] - X3$start[i] + adj.mar - (t[1] - (X3$start[i] - adj.mar))) else
+                sig.pos <- c(adj.mar - (t[1] - (X3$orig.start[i] - adj.mar)), X3$orig.end[i] - X3$orig.start[i] + adj.mar - (t[1] - (X3$orig.start[i] - adj.mar)))   
+                  
+                rect(xleft = c(par("usr")[1], sig.pos[2]), xright = c(sig.pos[1], par("usr")[2]), ybottom = flim[1], ytop = flim[2], border = NA, col = adjustcolor("white", alpha.f = alpha))
+              
+              if (!is.null(X3$bottom.freq[i]))
+                rect(xleft = sig.pos[c(1, 1)], xright = sig.pos[c(2, 2)], ybottom = c(flim[1], X3$top.freq[i]), ytop = c(X3$bottom.freq[i], flim[2]), border = NA, col = adjustcolor("white", alpha.f = alpha))
+        }    
+    
           #add box
-          if (box) boxw_wrblr_int(xys = m[i,], bty = "u", lwd = 1.5)
+          if (box) 
+            boxw_wrblr_int(xys = m[i,], bty = "u", lwd = 1.5)
         } 
         
         if (fig.type[i] == "lab") #plot labels

@@ -6,7 +6,8 @@
 \usage{
 selection_table(X, max.dur = 10, path = NULL, whole.recs = FALSE,
 extended = FALSE, confirm.extended = TRUE, mar = 0.1, by.song = NULL, 
-pb = TRUE, parallel = 1, verbose = TRUE, ...)
+pb = TRUE, parallel = 1, verbose = TRUE, skip.error = FALSE, 
+file.format = "\\\.wav$|\\\.wac$|\\\.mp3$|\\\.flac$", ...)
 }
 \arguments{
 \item{X}{data frame with the following columns: 1) "sound.files": name of the .wav 
@@ -50,10 +51,14 @@ Ignored if \code{extended = FALSE}.}
 
 \item{pb}{Logical argument to control progress bar and messages. Default is \code{TRUE}.}
 
-\item{parallel}{Numeric. Controls whether parallel computing is applied. 
+\item{parallel}{Numeric. Controls whether parallel computing is applied.
 It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
 
 \item{verbose}{Logical argument to control if summary messages are printed to the console. Default is \code{TRUE}.}
+
+\item{skip.error}{Logical to control if errors are omitted. If so, files that could not be read will be excluded and their name printed in the console. Default is \code{FALSE}, which will return an error if some files are problematic.}
+
+\item{file.format}{Character string with the format of sound files. By default all sound file formats supported by warbleR are included ("\\.wav$|\\.wac$|\\.mp3$|\\.flac$"). Note that several formats can be included using regular expression syntax as in \code{\link[base]{grep}}. For instance \code{"\\.wav$|\\.mp3$"} will only include .wav and .mp3 files. Ignored if \code{whole.recs = FALSE}.}
 
 \item{...}{Additional arguments to be passed to \code{\link{check_sels}} for customizing
 checking routine.}
@@ -80,7 +85,7 @@ in the working directory
    }
 If no errors are found the a selection table or extended selection table will be generated. 
 Note that the sound files should be in the working directory (or the directory provided in 'path').
-This is useful for avoiding errors in downstream functions (e.g. \code{\link{spectro_analysis}}, \code{\link{cross_correlation}}, \code{\link{catalog}}, \code{\link{freq_DTW}}). Note also that corrupt files can be
+This is useful for avoiding errors in downstream functions (e.g. \code{\link{spectro_analysis}}, \code{\link{cross_correlation}},  \code{\link{catalog}}, \code{\link{freq_DTW}}). Note also that corrupt files can be
 fixed using \code{\link{fix_wavs}} ('sox' must be installed to be able to run this function).
 The 'selection_table' class can be input in subsequent functions. 
 

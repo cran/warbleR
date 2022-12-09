@@ -4,8 +4,8 @@
 #' @usage fix_wavs(checksels = NULL, files = NULL, samp.rate = NULL, bit.depth = NULL,
 #'  path = NULL, mono = FALSE)
 #' @param checksels Data frame with results from \code{\link{check_sels}}. Default is \code{NULL}. If  both 'checksels' and 'files' are \code{NULL}
-#' then all files in 'path' are converted. 
-#' @param files Character vector with the names of the wav files to fix. Default is \code{NULL}. If  both 'checksels' and 'files'  are \code{NULL}
+#' then all files in 'path' are converted. Note that it only fixes/convert sound files in .wav format.
+#' @param files Character vector with the names of the .wav files to fix. Default is \code{NULL}. If  both 'checksels' and 'files'  are \code{NULL}
 #' then all files in 'path' are converted. 
 #' @param samp.rate Numeric vector of length 1 with the sampling rate (in kHz) for output files. Default is \code{NULL}. 
 #' (remain unchanged).
@@ -14,7 +14,7 @@
 #' @param path Character string containing the directory path where the sound files are located. 
 #' If \code{NULL} (default) then the current working directory is used.
 #' @param mono Logical indicating if stereo (2 channel) files should be converted to mono (1 channel). Default is \code{NULL} (remain unchanged).
-# #' @param sox Logical indicating if \href{http://sox.sourceforge.net/sox.html}{SOX} should be used for resampling. If \code{TRUE} SOX must be installed. Default is \code{FALSE}.
+# #' @param sox Logical indicating if \href{https://sox.sourceforge.net/sox.html}{SOX} should be used for resampling. If \code{TRUE} SOX must be installed. Default is \code{FALSE}.
 #' @return  A folder inside the working directory (or path provided) all 'converted_sound_files', containing 
 #' sound files in a format that can be imported in R. 
 #' @export
@@ -22,9 +22,9 @@
 #' @details This function aims to simplify the process of converting sound files that cannot be imported into R and/or homogenizing sound files. Problematic files can be determined using \code{\link{check_wavs}} or \code{\link{check_sels}}. The  
 #' \code{\link{check_sels}} output can be directly input using the argument 'checksels'. Alternatively a vector of file 
 #' names to be "fixed" can be provided (argument 'files'). If neither of those 2 are provided the function will convert
-#' all sound files in the working directory to the specified sample rate/bit depth. Files are saved in a new directory
-#' ('converted_sound_files'). Internally the function calls \href{http://sox.sourceforge.net/sox.html}{SOX} (if 'sox = TRUE', \href{http://sox.sourceforge.net/sox.html}{SOX} must be installed). If  both 'checksels' and 'files' are \code{NULL}
-#' then all files in 'path' are converted. 
+#' all .wav sound files in the working directory to the specified sample rate/bit depth. Files are saved in a new directory
+#' ('converted_sound_files'). Internally the function calls \href{https://sox.sourceforge.net/sox.html}{SOX} (if 'sox = TRUE', \href{https://sox.sourceforge.net/sox.html}{SOX} must be installed). If  both 'checksels' and 'files' are \code{NULL}
+#' then all files in 'path' are converted. Note that it only fixes/convert sound files in .wav format.
 #'   
 #' @examples
 #' \dontrun{
@@ -52,7 +52,7 @@ fix_wavs <- function(checksels = NULL, files = NULL, samp.rate = NULL, bit.depth
 
   # error message if bioacoustics is not installed
   if (!requireNamespace("bioacoustics", quietly = TRUE) & !is.null(samp.rate))
-    stop("must install 'bioacoustics' to use for changing sampling rate")
+    stop2("must install 'bioacoustics' to use for changing sampling rate")
   
   #### set arguments from options
   # get function arguments
@@ -77,7 +77,7 @@ fix_wavs <- function(checksels = NULL, files = NULL, samp.rate = NULL, bit.depth
   
   #check path to working directory
   if (is.null(path)) path <- getwd() else 
-    if (!dir.exists(path)) stop("'path' provided does not exist") else
+    if (!dir.exists(path)) stop2("'path' provided does not exist") else
       path <- normalizePath(path)
   
   #  If  both 'checksels' and 'files'  are NULL
@@ -85,24 +85,24 @@ fix_wavs <- function(checksels = NULL, files = NULL, samp.rate = NULL, bit.depth
 
     if (!is.null(checksels))
   {fls <-unique(checksels$sound.files[checksels$check.res == "Sound file can't be read" | checksels$check.res == "file header corrupted"])
-  if (length(fls) == 0) stop("All files were OK according tochecksels")
+  if (length(fls) == 0) stop2("All files were OK according tochecksels")
 
     #if X is not a data frame
-  if (!is(checksels, "data.frame")) stop("checksels is not a data frame")
+  if (!is(checksels, "data.frame")) stop2("checksels is not a data frame")
   
   if (!all(c("sound.files", "check.res") %in% colnames(checksels))) 
-    stop(paste(paste(c("sound.files", "check.res")[!(c("sound.files", "check.res") %in% colnames(checksels))], collapse=", "), "column(s) not found in data frame (does not seem to be the output of checksels)"))
+    stop2(paste(paste(c("sound.files", "check.res")[!(c("sound.files", "check.res") %in% colnames(checksels))], collapse=", "), "column(s) not found in data frame (does not seem to be the output of checksels)"))
   } else fls <- unique(files)
 
-  if (length(list.files(pattern = "\\.wav$", ignore.case = TRUE, path = path)) == 0) if (is.null(path)) stop("No .wav files in working directory") else stop("No .wav files in 'path' provided") 
+  if (length(list.files(pattern = "\\.wav$", ignore.case = TRUE, path = path)) == 0) if (is.null(path)) stop2("No .wav files in working directory") else stop2("No .wav files in 'path' provided") 
   
   if (!is.null(samp.rate)) 
-    if (!is.vector(samp.rate)) stop("'samp.rate' must be a numeric vector of length 1") else 
-      if (!length(samp.rate) == 1) stop("'samp.rate' must be a numeric vector of length 1")
+    if (!is.vector(samp.rate)) stop2("'samp.rate' must be a numeric vector of length 1") else 
+      if (!length(samp.rate) == 1) stop2("'samp.rate' must be a numeric vector of length 1")
   
   if (!is.null(bit.depth)) 
-    if (!is.vector(bit.depth)) stop("'bit.depth' must be a numeric vector of length 1") else 
-      if (!length(bit.depth) == 1) stop("'bit.depth' must be a numeric vector of length 1")
+    if (!is.vector(bit.depth)) stop2("'bit.depth' must be a numeric vector of length 1") else 
+      if (!length(bit.depth) == 1) stop2("'bit.depth' must be a numeric vector of length 1")
   
     
 if (!is.null(samp.rate) & is.null(bit.depth)) bit.depth <- 16

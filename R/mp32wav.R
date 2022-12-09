@@ -3,7 +3,7 @@
 #' \code{mp32wav} converts several .mp3 files in working directory to .wav format
 #' @usage mp32wav(samp.rate = NULL, parallel = 1, path = NULL, 
 #'  dest.path = NULL, bit.depth = 16, pb = TRUE, overwrite = FALSE)  
-#' @param samp.rate Sampling rate in kHz at which the .wav files should be written. If not provided the sample rate of the original .mp3 file is used. THIS FEATURE IS CURRENTLY NOT AVAILABLE. However, downsampling can be done after .mp3's have been converted using the \code{\link{fix_wavs}} function (which uses \href{http://sox.sourceforge.net/sox.html}{SOX} instead). Default is \code{NULL} (e.g. keep original sampling rate).
+#' @param samp.rate Sampling rate in kHz at which the .wav files should be written. If not provided the sample rate of the original .mp3 file is used. THIS FEATURE IS CURRENTLY NOT AVAILABLE. However, downsampling can be done after .mp3's have been converted using the \code{\link{fix_wavs}} function (which uses \href{https://sox.sourceforge.net/sox.html}{SOX} instead). Default is \code{NULL} (e.g. keep original sampling rate).
 #' @param parallel Numeric. Controls whether parallel computing is applied. 
 #'  It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).
 #' @param path Character string containing the directory path where the .mp3 files are located.   
@@ -43,10 +43,17 @@ mp32wav <- function(samp.rate = NULL, parallel = 1, path = NULL,
   
   # error message if bioacoustics is not installed
   if (!requireNamespace("bioacoustics", quietly = TRUE) & !is.null(samp.rate))
-    stop("must install 'bioacoustics' to use mp32wav() for changing sampling rate")
+    stop2("must install 'bioacoustics' to use mp32wav() for changing sampling rate")
   
-  
-  
+  # error message if sox is not installed
+    sox_installed <-
+            system(paste("which sox", sep = " "),
+                   ignore.stderr = TRUE,
+                   intern = FALSE,
+                   ignore.stdout = TRUE)
+
+    if (sox_installed == 1) 
+            stop2("Sox is not installed or is not available in path")
   
   #### set arguments from options
   # get function arguments
@@ -72,38 +79,38 @@ mp32wav <- function(samp.rate = NULL, parallel = 1, path = NULL,
   #check path to working directory
   if (is.null(path)) path <- getwd() else 
     if (!dir.exists(path)) 
-      stop("'path' provided does not exist") else
+      stop2("'path' provided does not exist") else
         path <- normalizePath(path)
   
   #check dest.path to working directory
   if (is.null(dest.path)) dest.path <- getwd() else 
     if (!dir.exists(dest.path)) 
-      stop("'dest.path' provided does not exist") else
+      stop2("'dest.path' provided does not exist") else
         dest.path <- normalizePath(dest.path)
   
   #normalize
-  if (length(bit.depth) > 1) stop("'bit.depth' should have a single value")
+  if (length(bit.depth) > 1) stop2("'bit.depth' should have a single value")
     bit.depth <- as.character(bit.depth)
   
-  if (!bit.depth %in% c("1", "8", "16", "24", "32", "64", "0")) stop('only this "bit.depth" values allowed c("1", "8", "16", "24", "32", "64", "0") \n see ?tuneR::normalize')
+  if (!bit.depth %in% c("1", "8", "16", "24", "32", "64", "0")) stop2('only this "bit.depth" values allowed c("1", "8", "16", "24", "32", "64", "0") \n see ?tuneR::normalize')
     
   #if parallel is not numeric
-  if (!is.numeric(parallel)) stop("'parallel' must be a numeric vector of length 1") 
-  if (any(!(parallel %% 1 == 0),parallel < 1)) stop("'parallel' should be a positive integer")
+  if (!is.numeric(parallel)) stop2("'parallel' must be a numeric vector of length 1") 
+  if (any(!(parallel %% 1 == 0),parallel < 1)) stop2("'parallel' should be a positive integer")
           
   files <- list.files(path = path, pattern = ".mp3$", ignore.case = TRUE) #list .mp3 files in working directory
-  if (length(files) == 0) stop("no 'mp3' files in working directory")
+  if (length(files) == 0) stop2("no 'mp3' files in working directory")
   
   #exclude the ones that already have a .wav version
   if (!overwrite) {
     wavs <- list.files(path = dest.path, pattern = "\\.wav$", ignore.case = TRUE)
   files <- files[!substr(files, 0, nchar(files) - 4) %in% substr(wavs, 0, nchar(wavs) - 4)]
-  if (length(files) == 0) stop("all 'mp3' files have been converted")
+  if (length(files) == 0) stop2("all 'mp3' files have been converted")
   }
   
  # function to convert single mp3  
  mp3_conv_FUN <- function(x, bit.depth) {
-   
+   print(x)
    # read mp3
    wv <- try(tuneR::readMP3(filename =  file.path(path, x)), silent = TRUE)
    
@@ -111,7 +118,7 @@ mp32wav <- function(samp.rate = NULL, parallel = 1, path = NULL,
    if(is(wv, "Wave") & !is.null(samp.rate))
    {
      if (wv@samp.rate != samp.rate * 1000) {
-      cat("'samp.rate' currently not available")
+      cat("'samp.rate' modification currently not available")
        
       # # filter first to avoid aliasing 
       #  if (wv@samp.rate > samp.rate * 1000)
@@ -126,14 +133,44 @@ mp32wav <- function(samp.rate = NULL, parallel = 1, path = NULL,
      
      }
    
-   wv <- try(tuneR::writeWave(extensible = FALSE, object = wv, filename = file.path(path, paste0(substr(x, 0, nchar(x) - 4), ".wav"))), silent = TRUE)
+   wv <- try(tuneR::writeWave(extensible = FALSE, object = wv, filename = file.path(dest.path, paste0(substr(x, 0, nchar(x) - 4), ".wav"))), silent = TRUE)
    
    return(NULL)
    }
 
+###### 
  
+ fix_sox_FUN <- function(x)
+ {
+   
+   px <- normalizePath(file.path(path, x))
+   
+   #name  and path of original file
+   cll <- paste0("sox '", px, "' -t wavpcm")
+   
+   if (!is.null(bit.depth))
+     cll <- paste(cll, paste("-b", bit.depth))
+   
+   cll <- paste0(cll, " '", file.path(dest.path, paste0(substr(x, 0, nchar(x) - 4), ".wav")), "'")
+
+   if (!is.null(samp.rate))
+     cll <- paste(cll, "rate", samp.rate * 1000)
+   
+   if (!is.null(mono))
+     cll <- paste(cll, "remix 1")
+   
+   if (!is.null(bit.depth))
+     cll <- paste(cll, "dither -s")
+   
+   if (Sys.info()[1] == "Windows")
+     cll <- gsub("'", "\"", cll)
+   
+   out <- system(cll, ignore.stdout = FALSE, intern = TRUE) 
+ }
  
- 
+
+###### 
+  
  # set clusters for windows OS
  if (Sys.info()[1] == "Windows" & parallel > 1)
    cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
@@ -141,8 +178,10 @@ mp32wav <- function(samp.rate = NULL, parallel = 1, path = NULL,
  # run loop apply function
  out_l <- pblapply_wrblr_int(pbar = pb, X = files, cl = cl, FUN = function(i) 
  { 
-   suppressWarnings(mp3_conv_FUN(x = i, bit.depth))
- })
+   # suppressWarnings(mp3_conv_FUN(x = i, bit.depth))
+   fix_sox_FUN(i)
+   
+   })
  
  # make it a vector
  out <- unlist(out_l)

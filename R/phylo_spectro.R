@@ -2,7 +2,8 @@
 #' 
 #' \code{phylo_spectro} Add spectrograms to the tips of an objects of class phylo.
 #' @usage phylo_spectro(X, tree, type = "phylogram", par.mar = rep(1, 4), 
-#' size = 1, offset = 0, path = NULL, ladder = NULL, horizontal = TRUE, ...) 
+#' size = 1, offset = 0, path = NULL, ladder = NULL, horizontal = TRUE, axis = TRUE, 
+#' box = TRUE, ...) 
 #' @param X 'selection_table', 'extended_selection_table' or data frame containing columns for sound file name 
 #' (sound.files), selection number (selec), and start and end time of signals (start and end). 
 #' 'top.freq' and 'bottom.freq' columns are optional. In addition, the data frame must include the column 'tip.label' that contains the names of the tip labels found in the tree (e.g. '\code{tree$tip.label}). This column is used to match rows and tip labels. If using an 
@@ -24,6 +25,8 @@
 #' \code{NULL} (no ladderization). See \code{\link[ape]{ladderize}} for more details.
 #' @param horizontal Logical. Controls whether spectrograms in a fan phylogeny are place in a horizontal position 
 #' \code{FALSE} or in the same angle as the tree tips. Currently only horizontal spectrograms are available. 
+#' @param box Logical to control if the box around spectrograms is plotted (see \code{\link[graphics]{box}}). Default is \code{TRUE}.
+#' @param axis Logical to control if the Y and X axis of spectrograms are plotted (see \code{\link[graphics]{box}}). Default is \code{TRUE}.
 #' @param ... Additional arguments to be passed to the internal spectrogram 
 #' creating function (\code{\link{spectrograms}}) or phylogeny plotting function (\code{\link[ape]{plot.phylo}}) for 
 #' customizing graphical output. Only rightwards phylogenies can be plotted.
@@ -68,15 +71,16 @@
 #'
 #' # no margin in spectrograms and showing tip labels (higher offset)
 #' phylo_spectro(X = X, tree = tree, offset = 0.1, par.mar = c(0, 0, 0, 6), 
-#' inner.mar = rep(0, 4), size = 2)
+#' inner.mar = rep(0, 4), size = 2, box = FALSE, axis = FALSE)
 #' 
 #' # print fan tree and no margin in spectrograms
 #' phylo_spectro(X = X, tree = tree, offset = 0.6, par.mar = rep(3, 4),
-#' inner.mar = rep(0, 4), size = 2, type = "fan", show.tip.label = FALSE)
+#' inner.mar = rep(0, 4), size = 2, type = "fan", show.tip.label = FALSE, box = FALSE, axis = FALSE)
 #' 
 #' # changing edge color and witdh
 #' phylo_spectro(X = X, tree = tree, offset = 0.2, par.mar = rep(3, 4), inner.mar = rep(0, 4), 
-#' size = 2, type = "fan", show.tip.label = FALSE, edge.color = "red", edge.width = 2)
+#' size = 2, type = "fan", show.tip.label = FALSE, edge.color = "red", edge.width = 2, 
+#' box = FALSE, axis = FALSE)
 #' 
 #' # plotting a tree representing cross-correlation distances 
 #' xcorr_mat <- cross_correlation(X, bp = c(1, 10))
@@ -87,7 +91,7 @@
 #' 
 #' phylo_spectro(X = X, tree = xc.tree, offset = 0.03, par.mar = rep(3, 4), 
 #' inner.mar = rep(0, 4), size = 0.3, type = "fan", show.tip.label = FALSE, 
-#' edge.color = "red", edge.width = 2)
+#' edge.color = "red", edge.width = 2, box = FALSE, axis = FALSE)
 #'   }
 #' }
 #' @references {
@@ -97,15 +101,15 @@
 #last modification on oct-1-2018 (MAS)
 
 phylo_spectro <- function(X, tree, type = "phylogram", par.mar = rep(1, 4), size = 1, offset = 0, 
-                         path = NULL, ladder = NULL, horizontal = TRUE, ...) {
+                         path = NULL, ladder = NULL, horizontal = TRUE, axis = TRUE, box = TRUE, ...) {
 
   # error message if ape is not installed
   if (!requireNamespace("ape",quietly = TRUE))
-    stop("must install 'ape' to use phylo_spectro()")
+    stop2("must install 'ape' to use phylo_spectro()")
   
   # error message if jpeg package is not installed
   if (!requireNamespace("jpeg",quietly = TRUE))
-    stop("must install 'jpeg' to use this function")
+    stop2("must install 'jpeg' to use this function")
   
   # currenlt only horizontal is allowed
   if (!horizontal) cat("Currently only horizontal spectrograms are allowed")
@@ -113,7 +117,7 @@ phylo_spectro <- function(X, tree, type = "phylogram", par.mar = rep(1, 4), size
   
   #check path if not provided set to working directory
   if (is.null(path)) path <- getwd() else 
-    if (!dir.exists(path)) stop("'path' provided does not exist") else
+    if (!dir.exists(path)) stop2("'path' provided does not exist") else
       path <- normalizePath(path)
   
   ## save par current setting and restores it later
@@ -145,7 +149,7 @@ phylo_spectro <- function(X, tree, type = "phylogram", par.mar = rep(1, 4), size
   if (!is.null(ladder)) tree <- ape::ladderize(phy = tree, right = ladder == "right")
   
  # check tip labels match
- if (!identical(sort(as.character(X$tip.label)), sort(tree$tip.label))) stop("tree tip labels (tree$tip.label) and 'tip.label' column in 'X' do not match")
+ if (!identical(sort(as.character(X$tip.label)), sort(tree$tip.label))) stop2("tree tip labels (tree$tip.label) and 'tip.label' column in 'X' do not match")
  
   #sort X as in tip labels
   X <- X[match(tree$tip.label, X$tip.label), ]

@@ -183,7 +183,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 ## ---- echo=TRUE, eval=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Fundamental frequency contour
-#  ff_df <- freq_ts(Phae.hisnrt, wl = 300, length.out = 20, threshold = 15, img = TRUE, img.suffix = "ff", type = "p", ovlp = 70, clip.edges = FALSE, leglab = "ffts", ff.method = "tuneR")
+#  ff_df <- freq_ts(Phae.hisnrt, wl = 300, length.out = 20, threshold = 15, img = TRUE, img.suffix = "ff", type = "p", ovlp = 70, clip.edges = FALSE, leglab = "freq_ts", ff.method = "tuneR")
 #  
 #  str(ff_df)
 #  
@@ -193,7 +193,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  # Dominant frequency contour
 #  
 #  # Uses seewave function dfreq by default
-#  df_df <- freq_ts(Phae.hisnrt, wl = 300, length.out = 20, threshold = 15, img = TRUE, img.suffix = "ff", type = "p", ovlp = 70, clip.edges = FALSE, leglab = "ffts", fsmooth = 0.2)
+#  df_df <- freq_ts(Phae.hisnrt, wl = 300, length.out = 20, threshold = 15, img = TRUE, img.suffix = "ff", type = "p", ovlp = 70, clip.edges = FALSE, leglab = "freq_ts", fsmooth = 0.2)
 #  
 #  str(df_df)
 #  
