@@ -10,7 +10,7 @@ make.selection.table(
   path = NULL,
   whole.recs = FALSE,
   extended = FALSE,
-  confirm.extended = TRUE,
+  confirm.extended = FALSE,
   mar = 0.1,
   by.song = NULL,
   pb = TRUE,
@@ -18,6 +18,7 @@ make.selection.table(
   verbose = TRUE,
   skip.error = FALSE,
   file.format = "\\\\.wav$|\\\\.wac$|\\\\.mp3$|\\\\.flac$",
+  files = NULL,
   ...
 )
 }

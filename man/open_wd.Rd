@@ -12,6 +12,9 @@ open_wd(path = getwd(), verbose = TRUE)
 
 \item{verbose}{Logical to control whether the 'path' is printed in the console. Defaut is \code{TRUE}.}
 }
+\value{
+Opens the working directory using the default file browser.
+}
 \description{
 \code{open_wd} opens the working directory in the default file browser.
 }
@@ -35,7 +38,7 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 \code{\link{move_imgs}}
 
 Other data manipulation: 
-\code{\link{move_imgs}()},
+\code{\link{move_images}()},
 \code{\link{split_sound_files}()}
 }
 \author{

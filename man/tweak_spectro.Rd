@@ -46,7 +46,7 @@ palette most be provided as character string rather than as a function. See
 graphical output. Check out \code{\link{catalog}} for more details.}
 }
 \value{
-Image files with spectrograms of whole sound files in the working directory. Multiple pages
+Image files with spectrograms of entire sound files in the working directory. Multiple pages
 can be returned, depending on the length of each sound file.
 }
 \description{
@@ -80,24 +80,24 @@ writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
 # variable collevels
 tweak_spectro(X = lbh_selec_table, wl = 164, ovlp = c(90), wn = c("flattop"), 
 length.out = 16, nrow = 4, ncol = 4, width = 20, height = 11.3, rm.axes = TRUE, 
-cex = 1, box = F, collev.min = c(-20, -150), path = tempdir())
+cex = 1, box = F, collev.min = c(-20, -150), path = tempdir(), flim = c(0, 10))
 
 # variable overlap and wn
 tweak_spectro(X = lbh_selec_table, wl = 164, ovlp = c(50, 90), 
 wn = c("hanning", "hamming", "rectangle", "bartlett", "blackman", "flattop"),
 length.out = 7, nrow = 6, ncol = 7, width = 20, height = 11.3, rm.axes = TRUE, 
-cex = 1, box = F), path = tempdir()
+cex = 1, box = F, path = tempdir(), flim = c(0, 10))
 
 # variable wl and wn
 tweak_spectro(X = lbh_selec_table, wl = c(100, 1000), ovlp = c(50, 90), wn = "all", 
 length.out = 5, nrow = 10, ncol = 14, width = 20, height = 11.3, rm.axes = TRUE, 
-cex = 0.7, path = tempdir())
+cex = 0.7, path = tempdir(), flim = c(0, 10))
 
 # variable wl, collev.min and wn 
 tweak_spectro(X = lbh_selec_table, wl = c(100, 1000), ovlp = 90, 
 wn = c("hanning", "hamming", "rectangle"), collev.min = c(-110, -25), 
 length.out = 3, nrow = 10, ncol = 14, width = 20, height = 11.3, rm.axes = TRUE,
- cex = 0.7, path = tempdir())
+ cex = 0.7, path = tempdir(), flim = c(0, 10))
  
  # variable wl, wn and pal
  tweak_spectro(X = lbh_selec_table, wl = c(100, 1000), ovlp = 90, 
@@ -105,7 +105,7 @@ length.out = 3, nrow = 10, ncol = 14, width = 20, height = 11.3, rm.axes = TRUE,
  pal = c("reverse.gray.colors.2", "reverse.topo.colors", 
  "reverse.terrain.colors", "reverse.cm.colors"), 
  length.out = 4, nrow = 5, ncol = 10, width = 20, height = 11.3,
-  rm.axes = TRUE, cex = 0.7, lab.mar = 2, path = tempdir())
+  rm.axes = TRUE, cex = 0.7, lab.mar = 2, path = tempdir(), flim = c(0, 10))
   
   # wl, wn and pal
   tweak_spectro(X = lbh_selec_table, wl = c(100, 1000), ovlp = 90,
@@ -114,16 +114,14 @@ length.out = 3, nrow = 10, ncol = 14, width = 20, height = 11.3, rm.axes = TRUE,
   "reverse.terrain.colors", "reverse.cm.colors"), 
   length.out = 4, nrow = 5, ncol = 10, width = 20, height = 11.3, rm.axes = TRUE,
    cex = 0.7, group.tag = "wn",  spec.mar = 0.4, lab.mar = 0.8, box = FALSE, 
-   tag.pal = list(reverse.cm.colors), path = tempdir())
+   tag.pal = list(reverse.cm.colors), path = tempdir(), flim = c(0, 10))
 
 check this floder
 tempdir()
 }
 }
 \seealso{
-\href{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}{blog post on creating catalogs},
-\href{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}{blog post on customizing catalogs}
-, \code{\link{catalog2pdf}}
+\code{\link{catalog2pdf}}
 }
 \author{
 Marcelo Araya-Salas (\email{marcelo.araya@ucr.ac.cr})

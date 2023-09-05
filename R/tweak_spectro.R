@@ -31,7 +31,7 @@
 #' @param rm.axes Logical. If \code{TRUE} frequency and time axes are excluded. Default is \code{TRUE}.
 #' @param ... Additional arguments to be passed to \code{\link{catalog}} function for customizing
 #' graphical output. Check out \code{\link{catalog}} for more details.
-#' @return Image files with spectrograms of whole sound files in the working directory. Multiple pages
+#' @return Image files with spectrograms of entire sound files in the working directory. Multiple pages
 #' can be returned, depending on the length of each sound file. 
 #' @export
 #' @name tweak_spectro
@@ -49,9 +49,7 @@
 #'  Outputs are similar to those of \code{\link{catalog}}. The output image files can be put together in a single pdf file with \code{\link{catalog2pdf}}.
 #'   We recommend using low resolution (~60-100) and smaller dimensions (width & height < 10) if
 #'   aiming to generate pdfs (otherwise pdfs could be pretty big).
-#' @seealso \href{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}{blog post on creating catalogs},
-#' \href{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}{blog post on customizing catalogs}
-#' , \code{\link{catalog2pdf}}
+#' @seealso \code{\link{catalog2pdf}}
 #' @examples
 #' \dontrun{
 #' # Save to temporary working directory
@@ -63,24 +61,24 @@
 #' # variable collevels
 #' tweak_spectro(X = lbh_selec_table, wl = 164, ovlp = c(90), wn = c("flattop"), 
 #' length.out = 16, nrow = 4, ncol = 4, width = 20, height = 11.3, rm.axes = TRUE, 
-#' cex = 1, box = F, collev.min = c(-20, -150), path = tempdir())
+#' cex = 1, box = F, collev.min = c(-20, -150), path = tempdir(), flim = c(0, 10))
 #' 
 #' # variable overlap and wn
 #' tweak_spectro(X = lbh_selec_table, wl = 164, ovlp = c(50, 90), 
 #' wn = c("hanning", "hamming", "rectangle", "bartlett", "blackman", "flattop"),
 #' length.out = 7, nrow = 6, ncol = 7, width = 20, height = 11.3, rm.axes = TRUE, 
-#' cex = 1, box = F), path = tempdir()
+#' cex = 1, box = F, path = tempdir(), flim = c(0, 10))
 #' 
 #' # variable wl and wn
 #' tweak_spectro(X = lbh_selec_table, wl = c(100, 1000), ovlp = c(50, 90), wn = "all", 
 #' length.out = 5, nrow = 10, ncol = 14, width = 20, height = 11.3, rm.axes = TRUE, 
-#' cex = 0.7, path = tempdir())
+#' cex = 0.7, path = tempdir(), flim = c(0, 10))
 #' 
 #' # variable wl, collev.min and wn 
 #' tweak_spectro(X = lbh_selec_table, wl = c(100, 1000), ovlp = 90, 
 #' wn = c("hanning", "hamming", "rectangle"), collev.min = c(-110, -25), 
 #' length.out = 3, nrow = 10, ncol = 14, width = 20, height = 11.3, rm.axes = TRUE,
-#'  cex = 0.7, path = tempdir())
+#'  cex = 0.7, path = tempdir(), flim = c(0, 10))
 #'  
 #'  # variable wl, wn and pal
 #'  tweak_spectro(X = lbh_selec_table, wl = c(100, 1000), ovlp = 90, 
@@ -88,7 +86,7 @@
 #'  pal = c("reverse.gray.colors.2", "reverse.topo.colors", 
 #'  "reverse.terrain.colors", "reverse.cm.colors"), 
 #'  length.out = 4, nrow = 5, ncol = 10, width = 20, height = 11.3,
-#'   rm.axes = TRUE, cex = 0.7, lab.mar = 2, path = tempdir())
+#'   rm.axes = TRUE, cex = 0.7, lab.mar = 2, path = tempdir(), flim = c(0, 10))
 #'   
 #'   # wl, wn and pal
 #'   tweak_spectro(X = lbh_selec_table, wl = c(100, 1000), ovlp = 90,
@@ -97,7 +95,7 @@
 #'   "reverse.terrain.colors", "reverse.cm.colors"), 
 #'   length.out = 4, nrow = 5, ncol = 10, width = 20, height = 11.3, rm.axes = TRUE,
 #'    cex = 0.7, group.tag = "wn",  spec.mar = 0.4, lab.mar = 0.8, box = FALSE, 
-#'    tag.pal = list(reverse.cm.colors), path = tempdir())
+#'    tag.pal = list(reverse.cm.colors), path = tempdir(), flim = c(0, 10))
 #' 
 #' check this floder
 #' tempdir()
@@ -129,7 +127,7 @@ tweak_spectro <- function(X, length.out = 5, ovlp = 90, wl = c(100, 1000),
   
   # set options left
   if (length(opt.argms) > 0)
-    for (q in 1:length(opt.argms))
+    for (q in seq_len(length(opt.argms)))
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   # stop if pal is function
@@ -145,7 +143,7 @@ tweak_spectro <- function(X, length.out = 5, ovlp = 90, wl = c(100, 1000),
   
   if (nrow(X) > 1){
   X <- X[1, , drop = FALSE]
-  write(file = "", x = "Data frame provided has more than 1 selection (row), only the first one was used")
+   warning2(x = "Data frame provided has more than 1 selection (row), only the first one was used")
   }
   
   if (length.out < 2) stop2("'length.out' should be equal or higher than 2")
@@ -207,6 +205,8 @@ tweak_spectro <- function(X, length.out = 5, ovlp = 90, wl = c(100, 1000),
     catalog(X = X, ovlp = X$ovlp, wl = X$wl, collevels = "collev.min", title = paste(X$sound.files[1], X$selec2[1]), rm.axes = rm.axes, img.suffix = "tweak_spectro", 
                   wn = X$wn, pal = "pal.list", path = path, labels = c("lbs"), ...)
   
+    
+  return(NULL)  
 }
 
 ##############################################################################################################

@@ -4,29 +4,30 @@
 rm(list = ls())
 
 # unload all non-based packages
-out <- sapply(paste('package:', names(sessionInfo()$otherPkgs), sep = ""), function(x) try(detach(x, unload = FALSE, character.only = TRUE), silent = TRUE))
+out <- sapply(paste("package:", names(sessionInfo()$otherPkgs), sep = ""), function(x) try(detach(x, unload = FALSE, character.only = TRUE), silent = TRUE))
 
 # load packages
 X <- c("warbleR", "knitr")
 invisible(lapply(X, library, character.only = TRUE))
 # library(kableExtra)
 
-options(knitr.table.format = "html") 
+options(knitr.table.format = "html")
 # opts_chunk$set(comment = "")
 # opts_knit$set(root.dir = tempdir())
 options(width = 150, max.print = 100)
 
 # from https://stackoverflow.com/questions/28961431/computationally-heavy-r-vignettes, so that vignettes will be built upon installation, but not executed during R CMD check (which is contributing to the /doc being too large)
-is_check <- ("CheckExEnv" %in% search()) || any(c("_R_CHECK_TIMINGS_",
-             "_R_CHECK_LICENSE_") %in% names(Sys.getenv()))
+is_check <- ("CheckExEnv" %in% search()) || any(c(
+  "_R_CHECK_TIMINGS_",
+  "_R_CHECK_LICENSE_"
+) %in% names(Sys.getenv()))
 knitr::opts_chunk$set(eval = !is_check, comment = "")
 
 # for vignette checking and image file output
 # setwd("~/Desktop/R/warbleR_example2/")
 
-#website to fix gifs
-#https://ezgif.com/optimize
-
+# website to fix gifs
+# https://ezgif.com/optimize
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
@@ -36,17 +37,15 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  # setwd("/path/to/working directory")
 #  
 #  # run this if you have restarted RStudio between vignettes without saving your workspace (assuming that you are in your /home/username directory)
-#  setwd(file.path(getwd(),"warbleR_example"))
+#  setwd(file.path(getwd(), "warbleR_example"))
 #  
 #  # Check your location
 #  getwd()
-#  
 
 ## ---- echo = TRUE, eval=FALSE-----------------------------------------------------------------------------------------------------------------------
 #  
 #  # The package must be loaded in your working environment
 #  ls("package:warbleR")
-#  
 
 ## ---- echo=TRUE, eval=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
@@ -62,25 +61,21 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  
 #  # run the function again but this time retain only the signals that don't overlap
 #  Phae.hisnr <- overlapping_sels(X = Phae.hisnr, max.ovlp = 0, drop = TRUE)
-#  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  spectrograms(Phae.hisnr, wl = 300, flim = c(2, 10), it = "jpeg", res = 150, osci = TRUE, ovlp = 90)
-#  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # remove selections after deleting corresponding image files
 #  Phae.hisnr2 <- filtersels(Phae.hisnr, it = "jpeg", incl.wav = TRUE)
 #  nrow(Phae.hisnr2)
-#  
 
 ## ---- echo=TRUE, eval=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # if selections can be read, "OK" will be printed to check.res column
 #  checksels(Phae.hisnr2, check.header = FALSE)
-#  
 
 ## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
@@ -98,22 +93,19 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  #   dim(X) must have a positive length
 #  
 #  # cut_sels(selec.table) # this works!
-#  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
-#  tailor_sels(Phae.hisnr2, wl = 300, flim = c(2,10), wn = "hanning", mar = 0.1, osci = TRUE, title = c("sound.files", "selec"), auto.next = TRUE)
+#  tailor_sels(Phae.hisnr2, wl = 300, flim = c(2, 10), wn = "hanning", mar = 0.1, osci = TRUE, title = c("sound.files", "selec"), auto.next = TRUE)
 #  
 #  # Read in tailor_sels output after renaming the csv file
 #  Phae.hisnrt <- read.csv("Phae_hisnrt.csv", header = TRUE)
 #  str(Phae.hisnrt)
-#  
 
 ## ---- eval=TRUE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 
 Phae.hisnrt <- read.csv("Phae_hisnrt.csv", header = TRUE)
 str(Phae.hisnrt)
-
 
 ## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
 #  
@@ -123,22 +115,20 @@ str(Phae.hisnrt)
 #  # concatenate full_spectrograms image files into a single PDF per recording
 #  # full_spectrograms images must be jpegs
 #  full_spectrograms2pdf(keep.img = FALSE, overwrite = TRUE)
-#  
 
 ## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Note for later...full_spectrograms2pdf works on auto_detec files in the working directory too...maybe including a suffix argument would help
-#  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # we will use Phaethornis songs and selections from the warbleR package
 #  data(list = c("Phae.long1", "selec.table"))
-#  writeWave(Phae.long1, "Phae.long1.wav") #save sound files
+#  writeWave(Phae.long1, "Phae.long1.wav") # save sound files
 #  
 #  # subset selection table
 #  # already contains the frequency range for these signals
-#  st <- selec.table[selec.table$sound.files == "Phae.long1.wav",]
+#  st <- selec.table[selec.table$sound.files == "Phae.long1.wav", ]
 #  
 #  # read wave file as an R object
 #  sgnl <- tuneR::readWave(as.character(st$sound.files[1]))
@@ -147,8 +137,7 @@ str(Phae.hisnrt)
 #  st$colors <- c("red2", "blue", "green")
 #  
 #  # highlight selections
-#  color_spectro(wave = sgnl, wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5), dB = "B", X = st, col.clm = "colors", base.col = "skyblue",  t.mar = 0.07, f.mar = 0.1)
-#  
+#  color_spectro(wave = sgnl, wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5), dB = "B", X = st, col.clm = "colors", base.col = "skyblue", t.mar = 0.07, f.mar = 0.1)
 
 ## ---- eval = FALSE, echo = FALSE--------------------------------------------------------------------------------------------------------------------
 #  
@@ -163,21 +152,21 @@ str(Phae.hisnrt)
 #  X2 <- frange(X)
 #  # View(X2)
 #  
-#  color_spectro(wave = readWave("Phaethornis-longirostris-154072.wav"), wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5),
-#                dB = "B", X = X2, col.clm = "colors", base.col = "skyblue",  t.mar = 0.07, f.mar = 0.1)
-#  
+#  color_spectro(
+#    wave = readWave("Phaethornis-longirostris-154072.wav"), wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5),
+#    dB = "B", X = X2, col.clm = "colors", base.col = "skyblue", t.mar = 0.07, f.mar = 0.1
+#  )
 
 ## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
 #  # spec_param takes a single selection from the selection table as input
 #  spec_param(Phae.hisnrt[1, ], length.out = 5, ovlp = 90, wl = c(150, 900), wn = c("hanning", "bartlett"), collev.min = c(-60, -30), pal = "reverse.gray.colors.2", path = NULL, rm.axes = TRUE, cex = 0.45, flim = c(2, 10))
-#  
 
 ## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # create a column of recording IDs for friendlier catalog labels
-#  rec_ID <- sapply(1:nrow(Phae.hisnrt), function(x){
-#      gsub(x = strsplit(as.character(Phae.hisnrt$sound.files[x]), split = "-")[[1]][3], pattern = ".wav$", replacement = "")
+#  rec_ID <- sapply(1:nrow(Phae.hisnrt), function(x) {
+#    gsub(x = strsplit(as.character(Phae.hisnrt$sound.files[x]), split = "-")[[1]][3], pattern = ".wav$", replacement = "")
 #  })
 #  rec_ID
 #  
@@ -196,7 +185,6 @@ str(Phae.hisnrt)
 #  # the ~/ format does not apply to Windows
 #  # make sure you have already moved or deleted all other pdf files
 #  move_imgs(from = ".", it = "pdf", create.folder = TRUE, folder.name = "Catalog_image_files")
-#  
 
 ## ---- eval = FALSE, echo = FALSE--------------------------------------------------------------------------------------------------------------------
 #  
@@ -213,5 +201,4 @@ str(Phae.hisnrt)
 #  catalog(X = Phae.hisnrt, flim = c(1, 10), nrow = 4, ncol = 3, height = 10, width = 10, tag.pal = list(cmc), cex = 0.8, same.time.scale = TRUE, mar = 0.01, wl = 300, gr = FALSE, labels = "no_label", spec.mar = 0.4, lab.mar = 0.8, max.group.cols = 5, img.suffix = "nolabels")
 #  
 #  catalog2pdf(keep.img = FALSE, overwrite = TRUE)
-#  
 

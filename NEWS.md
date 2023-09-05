@@ -1,3 +1,11 @@
+# *warbleR 1.1.29*
+
+## Changes and additions:
+
+* `full_spectrograms()` new argument 'only.annotated' to only print pages that contain annotations.
+* New method ('time.closest') in `test_coordination()` which estimate coordination between more than 2 individuals 
+* Default value of 'confirm.extended' argument in `selection_table()` set to FALSE. Will be deprecated in future versions.
+
 # *warbleR 1.1.28*
 
 ## Changes and additions:
@@ -132,7 +140,7 @@
 * argument 'cor.mat' in 'xcorr()' has been deprecated 
 * new argument 'output' in 'xcorr()'
 * new example data 'comp_matrix' and 'lbh_selec_table2' for using on 'find_peaks()'
-* 'xcorr()' can run cross-correlation over whole sound files
+* 'xcorr()' can run cross-correlation over entire sound files
 * 'seltailor()' can take now extended selection tables
 
 ## New functions:

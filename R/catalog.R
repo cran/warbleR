@@ -120,7 +120,7 @@
 #' corresponding labels and tags. 
 #' @param highlight Logical. If \code{TRUE} a transparent white layer is plotted on the spectrogram areas outside the selection. The level of transparency is controlled with the argument 'alpha'. Default is \code{FAlSE}.
 #' @param alpha Numeric vector of length 1 controlling the level of transparency when highlighting selections (i.e. when \code{highlight = TRUE}, see highlight argument. Default is 0.5.
-#' @return Image files with spectrograms of whole sound files in the working directory. Multiple pages
+#' @return Image files with spectrogram catalogs in the working directory. Multiple pages
 #' can be returned, depending on the length of each sound file. 
 #' @export
 #' @name catalog
@@ -133,9 +133,7 @@
 #'   This files can be put together in a single pdf file with \code{\link{catalog2pdf}}.
 #'   We recommend using low resolution (~60-100) and smaller dimensions (width & height < 10) if
 #'   aiming to generate pdfs (otherwise pdfs could be pretty big).
-#' @seealso \href{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}{blog post on catalogs},
-#' \href{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}{blog post on customizing catalogs}, 
-#' \code{\link{catalog2pdf}}
+#' @seealso \code{\link{catalog2pdf}}
 #' @examples
 #' \dontrun{
 #' # save sound file examples
@@ -233,7 +231,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
   
   # set options left
   if (length(opt.argms) > 0)
-    for (q in 1:length(opt.argms))
+    for (q in seq_len(length(opt.argms)))
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   #if X is not a data frame
@@ -320,10 +318,10 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
   if (anyNA(X[,tags]))
     stop2("NAs are not allowed in tag columns")
   
-  if (!is.null(group.tag))
-  {if (!group.tag %in% colnames(X))
+  if (!is.null(group.tag)){
+    if (!group.tag %in% colnames(X))
     stop2("group.tag column not found in data frame") else
-      X <- X[order(X[, group.tag]),]
+      X <- X[order(X[[group.tag]]),]
     
     if (is.numeric(X[, group.tag]))
       stop2("group tag cannot be numeric")
@@ -383,10 +381,10 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
   {
     if (prop.mar < 0)
       stop2("prop.mar should be  > 0 and <= 1")
-    if (!same.time.scale){ 
-      prop.mar <- NULL
-    cat("'prop.mar' ignored as same.time.scale = FALSE")
-    }
+    # if (!same.time.scale){ 
+    #   prop.mar <- NULL
+    # message2("'prop.mar' ignored as same.time.scale = FALSE")
+    # }
   }
   
   #spec.mar
@@ -445,7 +443,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
     }  else {
       X$col1 <- as.factor(X$col1)
       X$col1 <- droplevels(X$col1)
-      levels(X$col1) <- boxcols[1:length(unique(X$col1))]
+      levels(X$col1) <- boxcols[seq_len(length(unique(X$col1)))]
     }
     
     #add to df for legend
@@ -537,7 +535,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
     X <- rapply(X, as.factor, classes="character", how="replace")
     X$colgroup <- X[,group.tag] 
     X$colgroup <- droplevels(as.factor(X$colgroup))
-    levels(X$colgroup) <- grcl[1:length(unique(X$colgroup))]
+    levels(X$colgroup) <- grcl[seq_len(length(unique(X$colgroup)))]
   }
  
    ## repair sel table
@@ -567,7 +565,6 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
     return(data.frame(fl1 = fl[1], fl2 = fl[2], mardur = t[2] - t[1]))
     })
   
-  
   rangs <- do.call(rbind, rangs)
   
   flim[2] <- min(rangs$fl2)
@@ -595,7 +592,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
     
     if (exists("X.orig")) X <- fix_extended_selection_table(X = as.data.frame(X), Y = X.orig)
     
-    on.exit(cat(paste0("Time range: ", round(max(X$end - X$start) + (2 * mar), 3), "s;", " frequency range: ", min(rangs$fl1), "-", flim[2], " kHz")))
+    on.exit(message2(paste0("Time range: ", round(max(X$end - X$start) + (2 * mar), 3), "s;", " frequency range: ", min(rangs$fl1), "-", flim[2], " kHz")))
     }
   
   
@@ -874,7 +871,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
             sq <- sq[finncol]
             out <- lapply(sq, function(p)
             {
-              out <- lapply(1:length(xs), function(w)
+              out <- lapply(seq_len(length(xs)), function(w)
               {
                 lines(y = c(0.9, 1.04), x = c(xs[w], xs[w]) + p)
                 text(y = 0.75, x = xs[w] + p, labels = xlab[w], cex = cex)
@@ -1026,7 +1023,7 @@ catalog <- function(X, flim = NULL, nrow = 4, ncol = 3, same.time.scale = TRUE, 
   if (Sys.info()[1] == "Windows" & parallel > 1)
     cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel)) else cl <- parallel
   
-  out <- pblapply_wrblr_int(pbar = pb, X = 1:length(Xlist), cl = cl, FUN = function(z) 
+  out <- pblapply_wrblr_int(pbar = pb, X = seq_len(length(Xlist)), cl = cl, FUN = function(z) 
     { 
     catalFUN(X = Xlist[[z]], nrow, ncol, page = z, labels, grid, fast.spec, flim,pal, 
              width, height, tag.col.df, legend, cex, img.suffix, img.prefix, title)}

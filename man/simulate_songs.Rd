@@ -59,14 +59,12 @@ Default is 0.2. Note that 'fin' + 'fout' cannot be higher than 1.}
 \item{shape}{Character string of length 1 controlling the shape of in and out amplitude fading of the song sub-units
 ('fin' and 'fout'). "linear" (default), "exp" (exponential), and "cos" (cosine) are currently allowed.}
 
-\item{selec.table}{Logical. If \code{TRUE} a data frame containing the start/end time, and bottom/top frequency of the sub-units is also returned and the wave object
-is returned. In that case the function returns a list with the selection table and the wave object. In addition,
-a ".wav" file in savd in the working directory. Default is \code{FALSE}.}
+\item{selec.table}{Logical. If \code{TRUE} the function returns a list with two elements: 1) a data frame containing the start/end time, and bottom/top frequency of the sub-units and  2) the wave object containing the simulated songs. If \code{FALSE} (default) no objects are returned. Regardless of the value of this argument a .wav file is always saved in the working directory.}
 
 \item{file.name}{Character string for naming the ".wav" file. Ignored if
 'selec.table' is \code{FALSE}. If not provided the date-time stamp will be used.}
 
-\item{path}{Character string containing the directory path where the sound files are located. Ignored if 'selec.table' is \code{FALSE}.
+\item{path}{Character string with the directory path where the sound file should be saved. Ignored if 'selec.table' is \code{FALSE}.
 If \code{NULL} (default) then the current working directory is used.}
 
 \item{hrm.freqs}{Numeric vector with the frequencies of the harmonics relative to the fundamental frequency. The default values are c(1/2, 1/3, 2/3, 1/4, 3/4, 1/5, 1/6, 1/7, 1/8, 1/9, 1/10).}
@@ -84,22 +82,24 @@ Several song subunits (e.g. elements) can be simulated as well as the correspond
 }
 \examples{
 \dontrun{
- # simulate a song with 3 elements and no harmonics
- sm_sng <- simulate_songs(n = 3, harms = 1)
+# simulate a song with 3 elements and no harmonics
+sm_sng <- simulate_songs(n = 3, harms = 1)
 
- # plot spectro
- seewave::spectro(sm_sng)
+# plot spectro
+seewave::spectro(sm_sng)
 
- # simulate a song with 5 elements and 2 extra harmonics
+# simulate a song with 5 elements and 2 extra harmonics
 sm_sng2 <- simulate_songs(n = 5, harms = 3)
 
- # plot spectrogram
- seewave::spectro(sm_sng2)
+# plot spectrogram
+seewave::spectro(sm_sng2)
 
 # six pure tones with frequency ranging form 4 to 6 and returning selection table
-sm_sng <- simulate_songs(n = 6, harms = 1, seed = 1, diff.fun = "pure.tone",
-                  freqs = seq(4, 6, length.out = 6), selec.table = TRUE,
-                  path = tempdir())
+sm_sng <- simulate_songs(
+  n = 6, harms = 1, seed = 1, diff.fun = "pure.tone",
+  freqs = seq(4, 6, length.out = 6), selec.table = TRUE,
+  path = tempdir()
+)
 
 # plot spectro
 seewave::spectro(sm_sng$wave, flim = c(2, 8))

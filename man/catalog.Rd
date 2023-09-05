@@ -171,7 +171,7 @@ corresponding labels and tags.}
 \item{alpha}{Numeric vector of length 1 controlling the level of transparency when highlighting selections (i.e. when \code{highlight = TRUE}, see highlight argument. Default is 0.5.}
 }
 \value{
-Image files with spectrograms of whole sound files in the working directory. Multiple pages
+Image files with spectrogram catalogs in the working directory. Multiple pages
 can be returned, depending on the length of each sound file.
 }
 \description{
@@ -256,8 +256,6 @@ tempdir()
 {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
 }
 \seealso{
-\href{https://marce10.github.io/2017/03/17/Creating_song_catalogs.html}{blog post on catalogs},
-\href{https://marce10.github.io/2017/07/31/Updates_on_catalog_function.html}{blog post on customizing catalogs}, 
 \code{\link{catalog2pdf}}
 }
 \author{

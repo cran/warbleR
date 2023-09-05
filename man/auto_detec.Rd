@@ -5,11 +5,11 @@
 \title{\code{auto_detec} automatically detects the start and end of vocalizations in sound files based
 on amplitude, duration, and frequency range attributes.}
 \usage{
-auto_detec(X = NULL, wl = 512, threshold = 15, parallel = 1, power = 1, 
-   output = 'data.frame', thinning = 1, path = NULL, pb = TRUE, ssmooth = 0, 
+auto_detec(X = NULL, wl = 512, threshold = 15, parallel = 1, power = 1,
+   output = 'data.frame', thinning = 1, path = NULL, pb = TRUE, ssmooth = 0,
    bp = NULL, flist = NULL, hold.time = 0, mindur = NULL, maxdur = NULL, envt = NULL,
-   msmooth = NULL, osci = NULL, xl = NULL, picsize = NULL, res = NULL, flim = NULL, 
-   ls = NULL, sxrow = NULL, rows = NULL,  redo = NULL, img = NULL, it = NULL, 
+   msmooth = NULL, osci = NULL, xl = NULL, picsize = NULL, res = NULL, flim = NULL,
+   ls = NULL, sxrow = NULL, rows = NULL,  redo = NULL, img = NULL, it = NULL,
    set = NULL, smadj = NULL, pal = NULL, fast.spec = NULL)
 }
 \arguments{
@@ -108,19 +108,21 @@ This function determines the start and end of signals in the sound file selectio
   each entire sound file. It can also create long spectrograms highlighting the start and of the detected
   signals for all sound files in the working directory (if \code{img = TRUE}). Sound files should be located in the
    working directory or the path to the sound files should be provided using the 'path' argument. The input
-   data frame should have the following columns: c("sound.files","selec","start","end"). This function uses a modified version of the \code{\link[seewave]{timer}} function from seewave package to detect signals.
+   data frame should have the following columns: c("sound.files","selec","start","end"). This function uses a modified version of the \code{\link[seewave]{timer}} function from seewave package to detect signals. Note that warbleR function for signal detection will be deprecated in future warbleR versions. Look at the ohun package for automatic signal detection functions.
 }
 \examples{
 {
-# Save to temporary working directory
-data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4"))
-writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
-writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
-writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
-writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
+  # Save to temporary working directory
+  data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4"))
+  writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+  writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+  writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+  writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
 
-ad <- auto_detec(threshold = 5, ssmooth = 300,
-bp = c(2, 9), wl = 300, path = tempdir())
+  ad <- auto_detec(
+    threshold = 5, ssmooth = 300,
+    bp = c(2, 9), wl = 300, path = tempdir()
+  )
 }
 
 }
@@ -130,7 +132,7 @@ Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamlin
 }
 }
 \seealso{
-\code{\link{optimize_auto_detec}}
+\code{\link{cross_correlation}}
 }
 \author{
 Marcelo Araya-Salas (\email{marcelo.araya@ucr.ac.cr}). Implements a

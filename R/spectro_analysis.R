@@ -122,7 +122,7 @@
 #' \donttest{
 #' # measuring harmonic-related parameters using progress bar
 #' sp_param <- spectro_analysis(X = lbh_selec_table[1:8,], harmonicity = TRUE, 
-#' path = tempdir(), ovlp = 0)
+#' path = tempdir(), ovlp = 70)
 #' }
 #' }
 #' @references {
@@ -157,7 +157,7 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
   
   # set options left
   if (length(opt.argms) > 0)
-    for (q in 1:length(opt.argms))
+    for (q in seq_len(length(opt.argms)))
       assign(names(opt.argms)[q], opt.argms[[q]])
   
   #check path to working directory
@@ -202,7 +202,7 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
   #return warning if not all sound files were found
   fs <- list.files(path = path, pattern = "\\.wav$|\\.wac$|\\.mp3$|\\.flac$", ignore.case = TRUE)
   if (length(unique(X$sound.files[(X$sound.files %in% fs)])) != length(unique(X$sound.files))) 
-    write(file = "", x = paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
+    warning2(x = paste(length(unique(X$sound.files))-length(unique(X$sound.files[(X$sound.files %in% fs)])), 
                   "sound file(s) not found"))
   
   #count number of sound files in working directory and if 0 stop
@@ -287,7 +287,7 @@ spectro_analysis <- function(X, bp = "frange", wl = 512, wl.freq = NULL, thresho
   }
       
     #frequency spectrum analysis
-    songspec <- seewave::spec(r, f = r@samp.rate, plot = FALSE, wl = wl.freq, wn = wn, flim = b)
+    songspec <- suppressWarnings(seewave::spec(r, f = r@samp.rate, plot = FALSE, wl = wl.freq, wn = wn, flim = b))
     analysis <- specprop_wrblr_int(spec = songspec, f = r@samp.rate, flim = b, plot = FALSE)
 
     #from seewave's acoustat
