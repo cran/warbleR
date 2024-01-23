@@ -56,11 +56,11 @@ kbl
 #  
 #  st
 
-## ---- eval = TRUE, echo = FALSE-------------------------------------------------------------------
+## ----eval = TRUE, echo = FALSE--------------------------------------------------------------------
 
 st <- selection_table(X = lbh_selec_table, pb = FALSE)
 
-## ---- eval = TRUE, echo = FALSE-------------------------------------------------------------------
+## ----eval = TRUE, echo = FALSE--------------------------------------------------------------------
 
 st
 
@@ -186,7 +186,7 @@ is_extended_selection_table(mrg_ext_st)
 #  
 #  sp
 
-## ---- extn_sel_12.2, echo= FALSE, eval = FALSE----------------------------------------------------
+## ----extn_sel_12.2, echo= FALSE, eval = FALSE-----------------------------------------------------
 #  
 #  sp <- spectro_analysis(ext_st)
 #  
@@ -207,7 +207,7 @@ is_extended_selection_table(mrg_ext_st)
 #  
 #  snr
 
-## ---- extn_sel_12.6, echo= FALSE, eval = FALSE----------------------------------------------------
+## ----extn_sel_12.6, echo= FALSE, eval = FALSE-----------------------------------------------------
 #  
 #  snr <- sig2noise(ext_st, mar = 0.05)
 #  
@@ -228,7 +228,7 @@ is_extended_selection_table(mrg_ext_st)
 #  
 #  dtw.dist
 
-## ---- extn_sel_12.8, echo= FALSE, eval = FALSE----------------------------------------------------
+## ----extn_sel_12.8, echo= FALSE, eval = FALSE-----------------------------------------------------
 #  
 #  dtw.dist <- freq_DTW(ext_st, img = FALSE)
 #  
@@ -281,7 +281,7 @@ Phae.long.est
 
 table(Phae.long.est$lek.song.type)
 
-## ---- eval = FALSE, echo = FALSE------------------------------------------------------------------
+## ----eval = FALSE, echo = FALSE-------------------------------------------------------------------
 #  
 #  library(warbleR)
 #  
@@ -316,7 +316,7 @@ table(Phae.long.est$lek.song.type)
 #  
 #  # write.csv(df4, "cuadro de funciones warbleR.csv", row.names = FALSE)
 
-## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+## ----echo = FALSE, eval = TRUE--------------------------------------------------------------------
 
 library(kableExtra)
 
@@ -336,7 +336,7 @@ kbl <- kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
 
 kbl
 
-## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+## ----echo = FALSE, eval = TRUE--------------------------------------------------------------------
 
 cf2 <- cf[cf$Anotar == "x", c("Function", "Description", "Works on", "Output")]
 
@@ -352,7 +352,7 @@ kbl <- kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
 
 kbl
 
-## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+## ----echo = FALSE, eval = TRUE--------------------------------------------------------------------
 
 cf2 <- cf[cf$`Organizar anotaciones` == "x", c("Function", "Description", "Works on", "Output")]
 
@@ -368,7 +368,7 @@ kbl <- kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
 
 kbl
 
-## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+## ----echo = FALSE, eval = TRUE--------------------------------------------------------------------
 
 cf2 <- cf[cf$`Medir estructura` == "x", c("Function", "Description", "Works on", "Output")]
 
@@ -384,7 +384,7 @@ kbl <- kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
 
 kbl
 
-## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+## ----echo = FALSE, eval = TRUE--------------------------------------------------------------------
 
 cf2 <- cf[cf$Verificar == "x", c("Function", "Description", "Works on", "Output")]
 
@@ -400,7 +400,7 @@ kbl <- kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
 
 kbl
 
-## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+## ----echo = FALSE, eval = TRUE--------------------------------------------------------------------
 
 cf2 <- cf[cf$`Inspeccion visual` == "x", c("Function", "Description", "Works on", "Output")]
 
@@ -416,7 +416,7 @@ kbl <- kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
 
 kbl
 
-## ---- echo = FALSE, eval = TRUE-------------------------------------------------------------------
+## ----echo = FALSE, eval = TRUE--------------------------------------------------------------------
 
 cf2 <- cf[cf$`Analisis estadistico` == "x" | cf$Otros == "x", c("Function", "Description", "Works on", "Output")]
 

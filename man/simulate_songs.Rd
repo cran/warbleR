@@ -9,7 +9,8 @@ gaps = 0.1, freqs = 5, samp.rate = 44.1, sig2 = 0.5,
 steps = 10, bgn = 0.5, seed = NULL, diff.fun = "GBM",
 fin = 0.1, fout = 0.2, shape = "linear", selec.table = FALSE,
 file.name = NULL, path = NULL,
-hrm.freqs = c(1/2, 1/3, 2/3, 1/4, 3/4, 1/5, 1/6, 1/7, 1/8, 1/9, 1/10))
+hrm.freqs = c(1/2, 1/3, 2/3, 1/4, 3/4, 1/5, 1/6, 1/7, 1/8, 1/9, 1/10),
+freq.range = 4)
 }
 \arguments{
 \item{n}{Number of song subunits (e.g. elements). Default is 1.}
@@ -34,7 +35,7 @@ It should either be a single value (which would  be used for all subunits) or a 
 
 \item{sig2}{Numeric vector defining the sigma value of the brownian motion model. It should either be a single value
  (which would be used for all subunits) or a vector of length \code{n + 1}.  Higher values will produce faster
-frequency modulations. Ignored if \code{diff.fun == "BB"}. Default is 0.1. Check the 'BB' function in the Sim.DiffProc package
+frequency modulations. Only applied if \code{diff.fun == "GBM"}. Default is 0.1. Check the \code{\link[Sim.DiffProc]{GBM}} function from the Sim.DiffProc package
 for more details.}
 
 \item{steps}{Numeric vector of length 1. Controls the mean number of segments in which each song subunit is split during
@@ -44,10 +45,10 @@ the average duration subunit will have the predefined number of steps). Default 
 \item{bgn}{Numeric vector of length 1 indicating the background noise level. 0 means no additional noise will 1 means
 noise at the same amplitude than the song subunits. Default is 0.5.}
 
-\item{seed}{Numeric vector of length 1. This allows users to get the same results in different runs (using  \code{\link[base:Random]{set.seed}} internally). Default is \code{NULL}.}
+\item{seed}{Numeric vector of length 1. This allows users to get the same results in different runs (using \code{\link[base:Random]{set.seed}} internally). Default is \code{NULL}.}
 
 \item{diff.fun}{Character vector of length 1 controlling the function used to simulate the brownian motion process of
-frequency drift across time. Only "BB", "GBM" and "pure.tone" are accepted at this time. Check the 'BB' function in the Sim.DiffProc package
+frequency drift across time. Only "BB", "GBM" and "pure.tone" are accepted at this time. Check the \code{\link[Sim.DiffProc]{GBM}} function from the Sim.DiffProc package
 for more details.}
 
 \item{fin}{Numeric vector of length 1 setting the proportion of the sub-unit to fade-in amplitude (value between 0 and 1).
@@ -68,6 +69,8 @@ Default is 0.2. Note that 'fin' + 'fout' cannot be higher than 1.}
 If \code{NULL} (default) then the current working directory is used.}
 
 \item{hrm.freqs}{Numeric vector with the frequencies of the harmonics relative to the fundamental frequency. The default values are c(1/2, 1/3, 2/3, 1/4, 3/4, 1/5, 1/6, 1/7, 1/8, 1/9, 1/10).}
+
+\item{freq.range}{Numeric vector of length 1 with the frequency range around the simulated frequency in which signals will modulate. Default is 4 which means that sounds will range +/- 2 kHz around the target frequency. If \code{NULL} the frequency range is not constrained.}
 }
 \value{
 A wave object containing the simulated songs. If 'selec.table' is \code{TRUE} the function saves the wave object as a '.wav' sound file in the working directory (or 'path') and returns a list including 1) a selection table with the start/end time, and bottom/top frequency of the sub-units and 2) the wave object.
@@ -78,7 +81,7 @@ A wave object containing the simulated songs. If 'selec.table' is \code{TRUE} th
 \details{
 This functions uses a geometric (\code{diff.fun == "GBM"}) or Brownian bridge (\code{diff.fun == "BB"}) motion stochastic process to simulate modulation in animal vocalizations (i.e. frequency traces across time).
 The function can also simulate pure tones (\code{diff.fun == "pure.tone"}, 'sig2' is ignored).
-Several song subunits (e.g. elements) can be simulated as well as the corresponding harmonics.
+Several song subunits (e.g. elements) can be simulated as well as the corresponding harmonics. Modulated sounds are adjusted so the mean frequency of the frequency contour is equal to the target frequency supplied by the user.
 }
 \examples{
 \dontrun{

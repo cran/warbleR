@@ -1,4 +1,4 @@
-## ---- echo = FALSE, message = FALSE-----------------------------------------------------------------------------------------------------------------
+## ----echo = FALSE, message = FALSE------------------------------------------------------------------------------------------------------------------
 
 # remove all objects
 rm(list = ls())
@@ -34,7 +34,7 @@ vgn.path <- getwd()
 # read data example for Rraven code
 sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 
-## ---- echo = TRUE, eval=FALSE-----------------------------------------------------------------------------------------------------------------------
+## ----echo = TRUE, eval=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
 #  ### Install packages from CRAN
 #  # Note that if you install from CRAN, then don't run the code to install from GitHub below, and vice versa
@@ -57,12 +57,12 @@ sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 #  X <- c("warbleR", "Rraven")
 #  invisible(lapply(X, library, character.only = TRUE))
 
-## ---- echo = TRUE, eval=FALSE-----------------------------------------------------------------------------------------------------------------------
+## ----echo = TRUE, eval=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
 #  # The package must be loaded in your working environment
 #  ls("package:warbleR")
 
-## ---- echo = TRUE, eval=FALSE-----------------------------------------------------------------------------------------------------------------------
+## ----echo = TRUE, eval=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Create a new directory and set your working directory (assuming that you are in your /home/username directory)
 #  dir.create(file.path(getwd(), "warbleR_example"))
@@ -71,7 +71,7 @@ sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 #  # Check your location
 #  getwd()
 
-## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Load Raven example selection tables
 #  data("selection_files")
@@ -87,7 +87,7 @@ sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 #  writeWave(Phae.long1, "Phae.long1.wav")
 #  writeWave(Phae.long2, "Phae.long2.wav")
 
-## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Import selections
 #  sels <- imp_raven(all.data = FALSE, freq.cols = FALSE, warbler.format = TRUE)
@@ -96,13 +96,13 @@ sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 #  # Write out the imported selections as a .csv for later use
 #  write.csv(sels, "Raven_sels.csv", row.names = FALSE)
 
-## ---- echo=TRUE, eval=FALSE-------------------------------------------------------------------------------------------------------------------------
+## ----echo=TRUE, eval=FALSE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  sels <- selection_table(X = sels)
 #  str(sels)
 #  class(sels)
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Query xeno-canto for all Phaethornis recordings (e.g., by genus)
 #  Phae <- query_xc(qword = "Phaethornis", download = FALSE)
@@ -110,7 +110,7 @@ sels <- read.csv("Raven_sels.csv", stringsAsFactors = FALSE)
 #  # Check out the structure of resulting the data frame
 #  str(Phae)
 
-## ---- eval = TRUE, echo = FALSE, message = FALSE----------------------------------------------------------------------------------------------------
+## ----eval = TRUE, echo = FALSE, message = FALSE-----------------------------------------------------------------------------------------------------
 
 # Phae <- query_xc(qword = "Phaethornis", download = FALSE)
 
@@ -121,7 +121,7 @@ Phae <- read.csv(file.path(vgn.path, "Phae.XC.csv"), stringsAsFactors = FALSE)
 # Check out the structure of resulting the data frame
 str(Phae)
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Query xeno-canto for all Phaethornis longirostris recordings
 #  Phae.lon <- query_xc(qword = "Phaethornis longirostris", download = FALSE)
@@ -129,7 +129,7 @@ str(Phae)
 #  # Check out the structure of resulting the data frame
 #  str(Phae.lon)
 
-## ---- eval = TRUE, echo = FALSE, message = FALSE----------------------------------------------------------------------------------------------------
+## ----eval = TRUE, echo = FALSE, message = FALSE-----------------------------------------------------------------------------------------------------
 
 # Phae.lon <- query_xc(qword = "Phaethornis longirostris", download = FALSE)
 
@@ -140,7 +140,7 @@ Phae.lon <- read.csv(file.path(vgn.path, "Phae.lon.XC.csv"), stringsAsFactors = 
 # Check out the structure of resulting the data frame
 str(Phae.lon)
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Image type default is jpeg, but tiff files have better resolution
 #  
@@ -148,11 +148,11 @@ str(Phae.lon)
 #  map_xc(X = Phae, img = TRUE, it = "tiff") # all species in the genus
 #  map_xc(X = Phae.lon, img = FALSE) # a single species
 
-## ---- eval=TRUE, echo=FALSE, message=FALSE----------------------------------------------------------------------------------------------------------
+## ----eval=TRUE, echo=FALSE, message=FALSE-----------------------------------------------------------------------------------------------------------
 
 map_xc(X = Phae.lon, img = FALSE)
 
-## ---- eval=TRUE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
+## ----eval=TRUE, echo=TRUE---------------------------------------------------------------------------------------------------------------------------
 
 # How many recordings are available for Phaethornis longirostris?
 nrow(Phae.lon)
@@ -163,7 +163,7 @@ unique(Phae.lon$Vocalization_type)
 # How many recordings per signal type?
 table(Phae.lon$Vocalization_type)
 
-## ---- eval=TRUE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
+## ----eval=TRUE, echo=TRUE---------------------------------------------------------------------------------------------------------------------------
 
 # Filter the metadata to select the signals we want to retain
 
@@ -181,12 +181,12 @@ Phae.lon.LS <- Phae.lon.song[grep("La Selva Biological Station, Sarapiqui, Hered
 # Check resulting data frame, 6 recordings remain
 str(Phae.lon.LS)
 
-## ---- eval=TRUE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
+## ----eval=TRUE, echo=TRUE---------------------------------------------------------------------------------------------------------------------------
 
 # map in the RStudio graphics device (img = FALSE)
 map_xc(Phae.lon.LS, img = FALSE)
 
-## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Not working as of 01 Aug 2017
 #  # This copies the selected sound files to a dropbox folder so they can be shared
@@ -200,7 +200,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  
 #  saveRDS(wlist, file = "/home/m/Dropbox/Sharing/warbleR/recs.RDS")
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Download sound files
 #  query_xc(X = Phae.lon.LS)
@@ -208,7 +208,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # Save the metadata object as a .csv file
 #  write.csv(Phae.lon.LS, "Phae_lon.LS.csv", row.names = FALSE)
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Always check you're in the right directory beforehand
 #  # getwd()
@@ -219,7 +219,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # Use checkwavs to see if wav files can be read
 #  check_wavs()
 
-## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Not working 01 Aug 2017
 #  
@@ -233,7 +233,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # for(i in 1:length(recs))
 #  #   writeWave(recs[[i]], filename = names(recs)[i])
 
-## ---- echo=TRUE, eval=FALSE, message=FALSE----------------------------------------------------------------------------------------------------------
+## ----echo=TRUE, eval=FALSE, message=FALSE-----------------------------------------------------------------------------------------------------------
 #  
 #  # Make sure you are in the right working directory
 #  # Note that all the example sound files begin with the pattern "Phae.long"
@@ -248,7 +248,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # Only xeno-cant wav files should remain
 #  list.files(pattern = "wav$")
 
-## ---- echo=TRUE, eval=FALSE, message=FALSE----------------------------------------------------------------------------------------------------------
+## ----echo=TRUE, eval=FALSE, message=FALSE-----------------------------------------------------------------------------------------------------------
 #  
 #  # For this example, set your working directory to an empty temporary directory
 #  setwd(tempdir())
@@ -274,7 +274,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  
 #  # set your working directory back to "/home/user/warbleR_example" for the rest of the vignette, or to whatever working directory you were using originally
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Create a vector of all the recordings in the directory
 #  wavs <- list.files(pattern = "wav$")
@@ -298,7 +298,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # the number of seconds per row, and number of rows
 #  full_spectrograms(flist = sub, flim = c(2, 10), sxrow = 6, rows = 15, ovlp = 10, it = "tiff")
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Make long spectrograms for the xeno-canto sound files
 #  full_spectrograms(flim = c(2, 10), ovlp = 10, sxrow = 6, rows = 15, it = "jpeg", flist = fl)
@@ -307,11 +307,11 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # full_spectrograms images must be jpegs to do this
 #  full_spectrograms2pdf(keep.img = FALSE, overwrite = TRUE)
 
-## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # make all page-size images 700 pxls width
 
-## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  ### Remove silence in sound files
 #  
@@ -324,7 +324,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # perform this on only the longer xeno-canto recordings
 #  remove_silence(flist = wavs, min.sil.dur = 0.2, img = TRUE, it = "jpeg", flim = c(0, 12))
 
-## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Select a subset of sound files
 #  # Reinitialize the wav object
@@ -339,19 +339,19 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # you can run this in parallel to speed up computation time
 #  auto_detec(flist = sub, bp = c(1, 10), threshold = 10, mindur = 0.05, maxdur = 0.5, envt = "abs", ssmooth = 300, ls = TRUE, res = 100, flim = c(1, 12), wl = 300, set = TRUE, sxrow = 6, rows = 15, redo = FALSE)
 
-## ---- eval=FALSE, echo = TRUE-----------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo = TRUE------------------------------------------------------------------------------------------------------------------------
 #  
 #  auto_detec(flist = sub, bp = c(2, 10), threshold = 20, mindur = 0.09, maxdur = 0.22, envt = "abs", ssmooth = 900, ls = TRUE, res = 100, flim = c(1, 12), wl = 300, set = TRUE, sxrow = 6, rows = 15, redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
 
-## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  Phae.ad <- auto_detec(bp = c(2, 10), threshold = 20, mindur = 0.09, maxdur = 0.22, envt = "abs", ssmooth = 900, ls = TRUE, res = 100, flim = c(2, 10), wl = 300, set = TRUE, sxrow = 6, rows = 15, redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
 
-## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  table(Phae.ad$sound.files)
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # A margin that's too large causes other signals to be included in the noise measurement
 #  # Re-initialize X as needed, for either auto_detec output
@@ -365,16 +365,16 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  
 #  snr_spectrograms(X = X, flim = c(2, 10), snrmar = 0.5, mar = 0.7, it = "jpeg")
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # This smaller margin is better
 #  snr_spectrograms(X = X, flim = c(2, 10), snrmar = 0.04, mar = 0.7, it = "jpeg")
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  Phae.snr <- sig2noise(X = Phae.ad[seq(1, nrow(Phae.ad), 2), ], mar = 0.04)
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  Phae.hisnr <- Phae.snr[ave(-Phae.snr$SNR, Phae.snr$sound.files, FUN = rank) <= 5, ]
 #  
@@ -385,7 +385,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # Only the xeno-canto sound files will have 5 selections, the other sound files started off with less than 5 selections
 #  table(Phae.hisnr$sound.files)
 
-## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  Phae.hisnr <- read.csv("Phae_hisnr.csv", header = TRUE)
 #  table(Phae.hisnr$sound.files)

@@ -1,4 +1,4 @@
-## ---- echo = FALSE, message = FALSE-----------------------------------------------------------------------------------------------------------------
+## ----echo = FALSE, message = FALSE------------------------------------------------------------------------------------------------------------------
 
 # remove all objects
 rm(list = ls())
@@ -29,7 +29,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 # website to fix gifs
 # https://ezgif.com/optimize
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  library(warbleR)
 #  
@@ -42,12 +42,12 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  # Check your location
 #  getwd()
 
-## ---- echo = TRUE, eval=FALSE-----------------------------------------------------------------------------------------------------------------------
+## ----echo = TRUE, eval=FALSE------------------------------------------------------------------------------------------------------------------------
 #  
 #  # The package must be loaded in your working environment
 #  ls("package:warbleR")
 
-## ---- echo=TRUE, eval=FALSE-------------------------------------------------------------------------------------------------------------------------
+## ----echo=TRUE, eval=FALSE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  # To run this example:
 #  # Open Phae_hisnr.csv and modify the start coordinate of the first selection and the end coordinate of the second selection so that the signals overlap
@@ -62,22 +62,22 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  # run the function again but this time retain only the signals that don't overlap
 #  Phae.hisnr <- overlapping_sels(X = Phae.hisnr, max.ovlp = 0, drop = TRUE)
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  spectrograms(Phae.hisnr, wl = 300, flim = c(2, 10), it = "jpeg", res = 150, osci = TRUE, ovlp = 90)
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # remove selections after deleting corresponding image files
 #  Phae.hisnr2 <- filtersels(Phae.hisnr, it = "jpeg", incl.wav = TRUE)
 #  nrow(Phae.hisnr2)
 
-## ---- echo=TRUE, eval=FALSE-------------------------------------------------------------------------------------------------------------------------
+## ----echo=TRUE, eval=FALSE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  # if selections can be read, "OK" will be printed to check.res column
 #  checksels(Phae.hisnr2, check.header = FALSE)
 
-## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # ### Cut selections into individual sound files
 #  #
@@ -94,7 +94,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  
 #  # cut_sels(selec.table) # this works!
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  tailor_sels(Phae.hisnr2, wl = 300, flim = c(2, 10), wn = "hanning", mar = 0.1, osci = TRUE, title = c("sound.files", "selec"), auto.next = TRUE)
 #  
@@ -102,12 +102,12 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  Phae.hisnrt <- read.csv("Phae_hisnrt.csv", header = TRUE)
 #  str(Phae.hisnrt)
 
-## ---- eval=TRUE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
+## ----eval=TRUE, echo=FALSE--------------------------------------------------------------------------------------------------------------------------
 
 Phae.hisnrt <- read.csv("Phae_hisnrt.csv", header = TRUE)
 str(Phae.hisnrt)
 
-## ---- eval=FALSE, echo=TRUE-------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  # highlight selected signals
 #  full_spectrograms(Phae.hisnrt, wl = 300, flim = c(2, 10), ovlp = 10, sxrow = 6, rows = 15, it = "jpeg")
@@ -116,11 +116,11 @@ str(Phae.hisnrt)
 #  # full_spectrograms images must be jpegs
 #  full_spectrograms2pdf(keep.img = FALSE, overwrite = TRUE)
 
-## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # Note for later...full_spectrograms2pdf works on auto_detec files in the working directory too...maybe including a suffix argument would help
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # we will use Phaethornis songs and selections from the warbleR package
 #  data(list = c("Phae.long1", "selec.table"))
@@ -139,7 +139,7 @@ str(Phae.hisnrt)
 #  # highlight selections
 #  color_spectro(wave = sgnl, wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5), dB = "B", X = st, col.clm = "colors", base.col = "skyblue", t.mar = 0.07, f.mar = 0.1)
 
-## ---- eval = FALSE, echo = FALSE--------------------------------------------------------------------------------------------------------------------
+## ----eval = FALSE, echo = FALSE---------------------------------------------------------------------------------------------------------------------
 #  
 #  # was getting bugs using the xeno-canto recordings
 #  # but code sort of works for the following code:
@@ -157,12 +157,12 @@ str(Phae.hisnrt)
 #    dB = "B", X = X2, col.clm = "colors", base.col = "skyblue", t.mar = 0.07, f.mar = 0.1
 #  )
 
-## ---- eval=FALSE, echo=FALSE------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # spec_param takes a single selection from the selection table as input
 #  spec_param(Phae.hisnrt[1, ], length.out = 5, ovlp = 90, wl = c(150, 900), wn = c("hanning", "bartlett"), collev.min = c(-60, -30), pal = "reverse.gray.colors.2", path = NULL, rm.axes = TRUE, cex = 0.45, flim = c(2, 10))
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # create a column of recording IDs for friendlier catalog labels
 #  rec_ID <- sapply(1:nrow(Phae.hisnrt), function(x) {
@@ -186,13 +186,13 @@ str(Phae.hisnrt)
 #  # make sure you have already moved or deleted all other pdf files
 #  move_imgs(from = ".", it = "pdf", create.folder = TRUE, folder.name = "Catalog_image_files")
 
-## ---- eval = FALSE, echo = FALSE--------------------------------------------------------------------------------------------------------------------
+## ----eval = FALSE, echo = FALSE---------------------------------------------------------------------------------------------------------------------
 #  
 #  # suggestion for move_imgs
 #  # add argument for regex so as not to delete/move all image files of a given type
 #  # and be able to move just "Cat*.pdf"...etc
 
-## ---- eval=FALSE------------------------------------------------------------------------------------------------------------------------------------
+## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  # now create a catalog without labels, tags, groups or axes
 #  Phae.hisnrt$no_label <- ""
 #  
