@@ -1,3 +1,6 @@
+params <-
+list(EVAL = FALSE)
+
 ## ----echo = FALSE, message = FALSE------------------------------------------------------------------------------------------------------------------
 
 # remove all objects
@@ -13,6 +16,13 @@ invisible(lapply(X, library, character.only = TRUE))
 
 options(knitr.table.format = "html")
 # opts_chunk$set(comment = "")
+knitr::opts_chunk$set(
+  comment = "",
+  fig.width = 5, 
+  fig.height = 3.5,
+  dpi = 40,
+  out.width = "80%"
+)
 # opts_knit$set(root.dir = tempdir())
 options(width = 150, max.print = 100)
 
@@ -69,7 +79,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 ## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # remove selections after deleting corresponding image files
-#  Phae.hisnr2 <- filtersels(Phae.hisnr, it = "jpeg", incl.wav = TRUE)
+#  Phae.hisnr2 <- filter_sels(Phae.hisnr, it = "jpeg", incl.wav = TRUE)
 #  nrow(Phae.hisnr2)
 
 ## ----echo=TRUE, eval=FALSE--------------------------------------------------------------------------------------------------------------------------
@@ -123,15 +133,15 @@ str(Phae.hisnrt)
 ## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # we will use Phaethornis songs and selections from the warbleR package
-#  data(list = c("Phae.long1", "selec.table"))
+#  data(list = c("Phae.long1", "lbh_selec_table"))
 #  writeWave(Phae.long1, "Phae.long1.wav") # save sound files
 #  
 #  # subset selection table
 #  # already contains the frequency range for these signals
-#  st <- selec.table[selec.table$sound.files == "Phae.long1.wav", ]
+#  st <- lbh_selec_table[lbh_selec_table$sound.files == "Phae.long1.wav", ]
 #  
 #  # read wave file as an R object
-#  sgnl <- tuneR::readWave(as.character(st$sound.files[1]))
+#  sgnl <- read_sound_file(as.character(st$sound.files[1]))
 #  
 #  # create color column
 #  st$colors <- c("red2", "blue", "green")
@@ -153,14 +163,14 @@ str(Phae.hisnrt)
 #  # View(X2)
 #  
 #  color_spectro(
-#    wave = readWave("Phaethornis-longirostris-154072.wav"), wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5),
+#    wave = read_sound_file("Phaethornis-longirostris-154072.wav"), wl = 300, ovlp = 90, flim = c(1, 8.6), collevels = seq(-90, 0, 5),
 #    dB = "B", X = X2, col.clm = "colors", base.col = "skyblue", t.mar = 0.07, f.mar = 0.1
 #  )
 
 ## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # spec_param takes a single selection from the selection table as input
-#  spec_param(Phae.hisnrt[1, ], length.out = 5, ovlp = 90, wl = c(150, 900), wn = c("hanning", "bartlett"), collev.min = c(-60, -30), pal = "reverse.gray.colors.2", path = NULL, rm.axes = TRUE, cex = 0.45, flim = c(2, 10))
+#  tweak_spectro(Phae.hisnrt[1, ], length.out = 5, ovlp = 90, wl = c(150, 900), wn = c("hanning", "bartlett"), collev.min = c(-60, -30), pal = "reverse.gray.colors.2", path = NULL, rm.axes = TRUE, cex = 0.45, flim = c(2, 10))
 
 ## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
@@ -184,7 +194,7 @@ str(Phae.hisnrt)
 #  # assuming we are working from the warbleR_example directory
 #  # the ~/ format does not apply to Windows
 #  # make sure you have already moved or deleted all other pdf files
-#  move_imgs(from = ".", it = "pdf", create.folder = TRUE, folder.name = "Catalog_image_files")
+#  move_images(from = ".", it = "pdf", create.folder = TRUE, folder.name = "Catalog_image_files")
 
 ## ----eval = FALSE, echo = FALSE---------------------------------------------------------------------------------------------------------------------
 #  

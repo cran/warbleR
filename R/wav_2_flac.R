@@ -1,8 +1,6 @@
 #' Convert .wav files to .flac
 #'
-#' \code{wav_2_flac} converts several .wav files to .flac compressed lossless format
-#' @usage wav_2_flac(files = NULL, path = NULL, overwrite = FALSE,
-#' pb = TRUE, parallel = 1, reverse = FALSE, compression = 5, flac.path)
+#' \code{wav2flac} converts several .wav files to .flac compressed lossless format
 #' @param files character vector with the names of files to be converted. If \code{NULL} all files in the working directory (or 'path' if supplied) are converted.
 #' @param path Character string containing the directory path where the .wav files are located.
 #' If \code{NULL} (default) then the current working directory is used.
@@ -19,7 +17,7 @@
 #' @return .flac files saved in the working directory with same name as original wav files.
 #' @export
 #' @details The function will convert all .wav files in working directory or 'path' supplied to .flac format (or the opposite if \code{reverse = TRUE}). For reading 'flac' files on windows the path to the .exe is required. This can be set using the 'flac.path' argument (or globally using the same argument in \code{\link{warbleR_options}}). Note that reading 'flac' files requires creating a temporary copy in 'wav' format, which can be particularly slow for long files.
-#' @name wav_2_flac
+#' @name wav2flac
 #' @examples
 #' \dontrun{
 #' # create some .wav files
@@ -30,7 +28,7 @@
 #' writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
 #'
 #' # Convert all files to .flac format
-#' wav_2_flac(path = tempdir())
+#' wav2flac(path = tempdir())
 #'
 #' # check this folder!!
 #' open_wd(tempdir())
@@ -40,7 +38,7 @@
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 # last modification on abr-13-2021 (MAS)
 
-wav_2_flac <-
+wav2flac <-
   function(files = NULL,
            path = NULL,
            overwrite = FALSE,
@@ -51,7 +49,7 @@ wav_2_flac <-
            flac.path = "") {
     #### set arguments from options
     # get function arguments
-    argms <- methods::formalArgs(wav_2_flac)
+    argms <- methods::formalArgs(wav2flac)
 
     # get warbleR options
     opt.argms <-
@@ -159,9 +157,14 @@ wav_2_flac <-
         stop2("some (or all) sound files were not found")
       }
     }
-
-    # check path to flac programs
-
+    
+    # update progress info
+    if (pb) {
+      reset_onexit <- .update_progress("converting sound files")
+      
+        on.exit(expr = eval(parse(text = reset_onexit)), add = TRUE)
+    }
+    
     # set clusters for windows OS
     if (Sys.info()[1] == "Windows" & parallel > 1) {
       cl <- parallel::makePSOCKcluster(getOption("cl.cores", parallel))
@@ -177,7 +180,7 @@ wav_2_flac <-
         X = files,
         cl = cl,
         FUN = function(i) {
-          # warbleR::try_na(
+          # .try_na(
           flacwav(
             file = file.path(path, i),
             overwrite = overwrite,
@@ -305,3 +308,22 @@ flacwav <-
       }
     }
   }
+
+##############################################################################################################
+#' alternative name for \code{\link{duration_sound_files}}
+#'
+#' @keywords internal
+#' @details see \code{\link{duration_sound_files}} for documentation. \code{\link{wavdur}} will be deprecated in future versions.
+#' @export
+
+wavdur <- duration_sound_files
+
+
+##############################################################################################################
+#' alternative name for \code{\link{wav2flac}}
+#'
+#' @keywords internal
+#' @details see \code{\link{wav2flac}} for documentation. \code{\link{wav_2_flac}} will be deprecated in future versions.
+#' @export
+
+wav_2_flac <- wav2flac

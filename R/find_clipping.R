@@ -1,7 +1,6 @@
 #' Find clipped selections
 #'
 #' \code{find_clipping} gets the proportion of samples that are clipped.
-#' @usage find_clipping(X, path = NULL, parallel = 1, pb = TRUE)
 #' @param X 'selection_table', 'extended_selection_table' or data frame with the following columns: 1) "sound.files": name of the sound
 #' files, 2) "selec": number of the selections, 3) "start": start time of selections, 4) "end":
 #' end time of selections.
@@ -89,7 +88,7 @@ find_clipping <- function(X, path = NULL, parallel = 1, pb = TRUE) {
 
   out <- pblapply_wrblr_int(1:nrow(X), pbar = pb, cl = parallel, function(x) {
     # read wave
-    wv <- read_wave(X, index = x, path = path)
+    wv <- read_sound_file(X, index = x, path = path)
 
     # table with expected range of amplitudes by bit depth
     bit_ranges <- data.frame(bit = c(1, 8, 16, 24, 32, 64), low = c(-1, 0, -32767, -8388607, -2147483647, -1), high = c(1, 254, 32767, 8388607, 2147483647, 1))

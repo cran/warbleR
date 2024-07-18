@@ -1,3 +1,6 @@
+params <-
+list(EVAL = FALSE)
+
 ## ----echo = FALSE, message = FALSE------------------------------------------------------------------------------------------------------------------
 
 # remove all objects
@@ -12,7 +15,13 @@ invisible(lapply(X, library, character.only = TRUE))
 # library(kableExtra)
 
 options(knitr.table.format = "html")
-# opts_chunk$set(comment = "")
+knitr::opts_chunk$set(
+  comment = "",
+  fig.width = 5, 
+  fig.height = 3.5,
+  dpi = 40,
+  out.width = "80%"
+)
 # opts_knit$set(root.dir = tempdir())
 options(width = 150, max.print = 100)
 
@@ -93,20 +102,20 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  str(Tin.sels)
 #  
 #  # cut the original wave file by selections for freq_range_detec below
-#  writeWave(seewave::cutw(readWave("Tinamus-major-154191.wav"), from = Tin.sels$start[1], to = Tin.sels$end[1], f = 44100, plot = FALSE, output = "Wave"), filename = "Tinamus-major-154191-1.wav")
+#  writeWave(seewave::cutw(read_sound_file("Tinamus-major-154191.wav"), from = Tin.sels$start[1], to = Tin.sels$end[1], f = 44100, plot = FALSE, output = "Wave"), filename = "Tinamus-major-154191-1.wav")
 #  
-#  writeWave(seewave::cutw(readWave("Tinamus-major-154191.wav"), from = Tin.sels$start[2], to = Tin.sels$end[2], f = 44100, plot = FALSE, output = "Wave"), filename = "Tinamus-major-154191-2.wav")
+#  writeWave(seewave::cutw(read_sound_file("Tinamus-major-154191.wav"), from = Tin.sels$start[2], to = Tin.sels$end[2], f = 44100, plot = FALSE, output = "Wave"), filename = "Tinamus-major-154191-2.wav")
 
 ## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  # note that changing the threshold argument in combination with the bandpass argument can improve the detection
-#  freq_range_detec(readWave("Tinamus-major-154191-1.wav"), flim = c(0, 2.5), bp = c(0, 3), threshold = 15, plot = TRUE)
+#  freq_range_detec(read_sound_file("Tinamus-major-154191-1.wav"), flim = c(0, 2.5), bp = c(0, 3), threshold = 15, plot = TRUE)
 
 ## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
 #  # here, giving a strict bandpass with very low threshold improves freq_range detection
 #  # since the curving end of the tinamou signal is lower amplitude than the rest of the signal
-#  c(readWave("Tinamus-major-154191-1.wav"), flim = c(0, 2.5), bp = c(0, 3), threshold = 1, plot = TRUE)
+#  c(read_sound_file("Tinamus-major-154191-1.wav"), flim = c(0, 2.5), bp = c(0, 3), threshold = 1, plot = TRUE)
 
 ## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
@@ -123,7 +132,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  Phae.hisnrt <- read.csv("Phae_hisnrt.csv", header = TRUE)
 #  str(Phae.hisnrt)
 #  
-#  se <- entropy_ts(Phae.hisnrt, wl = 300, length.out = 10, threshold = 10, img = TRUE, img.suffix = "entropy_ts", type = "b", ovlp = 90, sp.en.range = c(-25, 10), flim = c(2, 10), picsize = 0.75, title = FALSE)
+#  se <- freq_ts(Phae.hisnrt, wl = 300, length.out = 10, threshold = 10, img = TRUE, img.suffix = "entropy_ts", type = "b", ovlp = 90, sp.en.range = c(-25, 10), flim = c(2, 10), picsize = 0.75, title = FALSE, type = "entropy")
 #  
 #  str(se)
 
@@ -145,12 +154,12 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 #  # with a Phaethornis harmonic signal
 #  nm <- paste(paste(as.character(Phae.hisnrt$sound.files[1]), as.character(Phae.hisnrt$selec[1]), sep = "-"), ".wav", sep = "")
 #  
-#  writeWave(seewave::cutw(readWave(as.character(Phae.hisnrt$sound.files[1])), from = Phae.hisnrt$start[1], to = Phae.hisnrt$end[1], f = 44100, plot = FALSE, output = "Wave"), filename = nm)
+#  writeWave(seewave::cutw(read_sound_file(as.character(Phae.hisnrt$sound.files[1])), from = Phae.hisnrt$start[1], to = Phae.hisnrt$end[1], f = 44100, plot = FALSE, output = "Wave"), filename = nm)
 #  
-#  trck_hrm <- track_harmonic(readWave(nm), f = 44100, ovlp = 70, fftw = FALSE, threshold = 15, bandpass = NULL, clip = 0.1, plot = TRUE, xlab = "Time (s)", ylab = "Frequency (kHz)", adjust.wl = FALSE, dfrq = FALSE)
+#  trck_hrm <- track_harmonic(read_sound_file(nm), f = 44100, ovlp = 70, fftw = FALSE, threshold = 15, bandpass = NULL, clip = 0.1, plot = TRUE, xlab = "Time (s)", ylab = "Frequency (kHz)", adjust.wl = FALSE, dfrq = FALSE)
 #  
 #  # plot spectrogram
-#  spectro(readWave(nm), grid = FALSE, scale = FALSE, f = 22050, ovlp = 90, palette = reverse.gray.colors.2, collevels = seq(-40, 0, 1), wl = 300, osc = FALSE, flim = c(2, 10), main = "warbleR's 'track_harmonic'")
+#  spectro(read_sound_file(nm), grid = FALSE, scale = FALSE, f = 22050, ovlp = 90, palette = reverse.gray.colors.2, collevels = seq(-40, 0, 1), wl = 300, osc = FALSE, flim = c(2, 10), main = "warbleR's 'track_harmonic'")
 #  
 #  # plot detected frequency contour
 #  points(x = trck_hrm[, 1] + 0.1, y = trck_hrm[, 2], cex = 1, col = "red", pch = 20)
@@ -158,10 +167,10 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 ## ----echo=FALSE, eval=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
 #  # with a Tinamou tonal signal
-#  trck_hrm <- track_harmonic(readWave("Tinamus-major-154191-1.wav"), f = 44100, ovlp = 70, fftw = FALSE, threshold = 15, bandpass = NULL, plot = TRUE, xlab = "Time (s)", ylab = "Frequency (kHz)", adjust.wl = FALSE, dfrq = FALSE)
+#  trck_hrm <- track_harmonic(read_sound_file("Tinamus-major-154191-1.wav"), f = 44100, ovlp = 70, fftw = FALSE, threshold = 15, bandpass = NULL, plot = TRUE, xlab = "Time (s)", ylab = "Frequency (kHz)", adjust.wl = FALSE, dfrq = FALSE)
 #  
 #  # plot spectrogram
-#  spectro(readWave("Tinamus-major-154191-2.wav"), grid = FALSE, scale = FALSE, f = 44100, ovlp = 90, palette = reverse.gray.colors.2, collevels = seq(-40, 0, 1), wl = 300, osc = FALSE, flim = c(0, 4), main = "warbleR's 'track_harmonic'")
+#  spectro(read_sound_file("Tinamus-major-154191-2.wav"), grid = FALSE, scale = FALSE, f = 44100, ovlp = 90, palette = reverse.gray.colors.2, collevels = seq(-40, 0, 1), wl = 300, osc = FALSE, flim = c(0, 4), main = "warbleR's 'track_harmonic'")
 #  
 #  # plot detected frequency contour
 #  points(x = trck_hrm[, 1] + 0.1, y = trck_hrm[, 2], cex = 1, col = "red", pch = 20)
@@ -226,20 +235,20 @@ params <- read.csv("acoustic_parameters.csv")
 
 ## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 #  
-#  data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "selec.table"))
+#  data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
 #  writeWave(Phae.long1, "Phae.long1.wav")
 #  writeWave(Phae.long2, "Phae.long2.wav")
 #  writeWave(Phae.long3, "Phae.long3.wav")
 #  writeWave(Phae.long4, "Phae.long4.wav")
 #  
 #  # Add a 'song' column
-#  selec.table$song <- rep(1:4, each = 3)[1:11]
+#  lbh_selec_table$song <- rep(1:4, each = 3)[1:11]
 #  
 #  # Measure acoustic parameters
-#  sp <- spectro_analysis(selec.table, bp = c(1, 11), 300, fast = TRUE)
+#  sp <- spectro_analysis(lbh_selec_table, bp = c(1, 11), 300, fast = TRUE)
 #  
 #  # Add song data
-#  sp <- merge(sp, selec.table, by = c("sound.files", "selec"))
+#  sp <- merge(sp, lbh_selec_table, by = c("sound.files", "selec"))
 #  
 #  # Caculate song-level parameters for all numeric parameters
 #  sng <- song_analysis(X = sp, song_colm = "song", parallel = 1, pb = TRUE)
@@ -340,13 +349,13 @@ text(x, y, unique(songtype), cex = 1)
 ## ----eval = FALSE, echo = TRUE----------------------------------------------------------------------------------------------------------------------
 #  
 #  # simulate a song with 3 tonal elements
-#  ss <- sim_songs(n = 3, harms = 1)
+#  ss <- simulate_songs(n = 3, harms = 1)
 #  
 #  # plot the simulated song
 #  # seewave::spectro(ss)
 #  
 #  # simulate a song with 3 harmonic elements of differing amplitude
-#  ss <- sim_songs(n = 3, harms = 3)
+#  ss <- simulate_songs(n = 3, harms = 3)
 #  
 #  # plot the simulated song
 #  seewave::spectro(ss)

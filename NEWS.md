@@ -1,3 +1,14 @@
+# *warbleR 1.1.31* 
+
+## Changes and additions:
+
+* function `freq_DTW()` now parallelizes dynamic time warping computing
+* new vignette 'Annotation data format'
+* `confirm.extended` argument in `selection_table()` has been deprecated.
+* `song_param()` alternative name for `song_analysis()` has been deprecated.
+* alternative names of must functions have been deprecated
+* the system for letting users know the number of process in a routine have been upgraded
+
 # *warbleR 1.1.30* 
 
 ## Changes and additions:

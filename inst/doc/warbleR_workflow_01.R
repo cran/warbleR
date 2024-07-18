@@ -1,3 +1,6 @@
+params <-
+list(EVAL = FALSE)
+
 ## ----echo = FALSE, message = FALSE------------------------------------------------------------------------------------------------------------------
 
 # remove all objects
@@ -12,7 +15,13 @@ invisible(lapply(X, library, character.only = TRUE))
 # library(kableExtra)
 
 options(knitr.table.format = "html")
-# opts_chunk$set(comment = "")
+knitr::opts_chunk$set(
+  comment = "",
+  fig.width = 5, 
+  fig.height = 3.5,
+  dpi = 40,
+  out.width = "80%"
+)
 opts_knit$set(root.dir = tempdir())
 options(width = 150, max.print = 100)
 
@@ -217,7 +226,7 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  mp32wav(samp.rate = 22.05)
 #  
 #  # Use checkwavs to see if wav files can be read
-#  check_wavs()
+#  check_sound_files()
 
 ## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
 #  
@@ -324,33 +333,6 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # perform this on only the longer xeno-canto recordings
 #  remove_silence(flist = wavs, min.sil.dur = 0.2, img = TRUE, it = "jpeg", flim = c(0, 12))
 
-## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
-#  
-#  # Select a subset of sound files
-#  # Reinitialize the wav object
-#  wavs <- list.files(pattern = ".wav$", ignore.case = TRUE)
-#  
-#  # Set a seed so we all have the same results
-#  set.seed(1)
-#  sub <- wavs[sample(1:length(wavs), 3)]
-#  
-#  # Run auto_detec() on subset of recordings
-#  # The data frame object output is printed to the console, we are not saving this in an object yet, since we are just playing around with argument settings
-#  # you can run this in parallel to speed up computation time
-#  auto_detec(flist = sub, bp = c(1, 10), threshold = 10, mindur = 0.05, maxdur = 0.5, envt = "abs", ssmooth = 300, ls = TRUE, res = 100, flim = c(1, 12), wl = 300, set = TRUE, sxrow = 6, rows = 15, redo = FALSE)
-
-## ----eval=FALSE, echo = TRUE------------------------------------------------------------------------------------------------------------------------
-#  
-#  auto_detec(flist = sub, bp = c(2, 10), threshold = 20, mindur = 0.09, maxdur = 0.22, envt = "abs", ssmooth = 900, ls = TRUE, res = 100, flim = c(1, 12), wl = 300, set = TRUE, sxrow = 6, rows = 15, redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
-
-## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
-#  
-#  Phae.ad <- auto_detec(bp = c(2, 10), threshold = 20, mindur = 0.09, maxdur = 0.22, envt = "abs", ssmooth = 900, ls = TRUE, res = 100, flim = c(2, 10), wl = 300, set = TRUE, sxrow = 6, rows = 15, redo = TRUE, it = "tiff", img = TRUE, smadj = "end")
-
-## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
-#  
-#  table(Phae.ad$sound.files)
-
 ## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # A margin that's too large causes other signals to be included in the noise measurement
@@ -360,7 +342,13 @@ map_xc(Phae.lon.LS, img = FALSE)
 #  # Set a seed first, so we all have the same results
 #  set.seed(5)
 #  
-#  X <- Phae.ad[sample(1:nrow(Phae.ad), (nrow(Phae.ad) * 0.05)), ]
+#  # save wav file examples
+#  data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4", "lbh_selec_table"))
+#  writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+#  writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+#  writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
+#  #'
+#  X <- lbh_selec_table[1:2, ] # suhbset
 #  nrow(X)
 #  
 #  snr_spectrograms(X = X, flim = c(2, 10), snrmar = 0.5, mar = 0.7, it = "jpeg")
@@ -368,11 +356,11 @@ map_xc(Phae.lon.LS, img = FALSE)
 ## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
 #  # This smaller margin is better
-#  snr_spectrograms(X = X, flim = c(2, 10), snrmar = 0.04, mar = 0.7, it = "jpeg")
+#  snr_spectrograms(X = lbh_selec_table, flim = c(2, 10), snrmar = 0.04, mar = 0.7, it = "jpeg")
 
 ## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  
-#  Phae.snr <- sig2noise(X = Phae.ad[seq(1, nrow(Phae.ad), 2), ], mar = 0.04)
+#  Phae.snr <- sig2noise(X = lbh_selec_table, mar = 0.04)
 
 ## ----eval=FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #  

@@ -1,3 +1,6 @@
+params <-
+list(EVAL = FALSE)
+
 ## ----extn_sel_2, echo = FALSE, message = FALSE----------------------------------------------------
 
 # load packages
@@ -17,7 +20,13 @@ writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
 warbleR_options(wav.path = tempdir())
 
 options(knitr.table.format = "html")
-opts_chunk$set(comment = "")
+knitr::opts_chunk$set(
+  comment = "",
+  fig.width = 5, 
+  fig.height = 3.5,
+  dpi = 40,
+  out.width = "80%"
+)
 opts_knit$set(root.dir = tempdir())
 options(width = 100, max.print = 100)
 
@@ -40,246 +49,6 @@ kbl <- scroll_box(kbl,
 )
 
 kbl
-
-## ----extn_sel_4.32, eval = FALSE------------------------------------------------------------------
-#  
-#  data(list = c("Phae.long1", "Phae.long2", "Phae.long3", "Phae.long4"))
-#  writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
-#  writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
-#  writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
-#  writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
-#  
-#  # parametros globales
-#  warbleR_options(wav.path = tempdir())
-#  
-#  st <- selection_table(X = lbh_selec_table, pb = FALSE)
-#  
-#  st
-
-## ----eval = TRUE, echo = FALSE--------------------------------------------------------------------
-
-st <- selection_table(X = lbh_selec_table, pb = FALSE)
-
-## ----eval = TRUE, echo = FALSE--------------------------------------------------------------------
-
-st
-
-## -------------------------------------------------------------------------------------------------
-
-class(st)
-
-## ----extn_sel_4.3, eval = FALSE-------------------------------------------------------------------
-#  
-#  #  global parameters
-#  warbleR_options(wav.path = tempdir())
-#  
-#  
-#  ext_st <- selection_table(
-#    X = lbh_selec_table, pb = FALSE,
-#    extended = TRUE, confirm.extended = FALSE
-#  )
-
-## ----extn_sel_4.33, eval = TRUE, echo = FALSE-----------------------------------------------------
-
-ext_st <- selection_table(
-  X = lbh_selec_table, pb = FALSE,
-  extended = TRUE, confirm.extended = FALSE
-)
-
-## ----extn_sel_5-----------------------------------------------------------------------------------
-
-is_extended_selection_table(ext_st)
-
-## ----extn_sel_6-----------------------------------------------------------------------------------
-
-ext_st2 <- ext_st[1:2, ]
-
-is_extended_selection_table(ext_st2)
-
-## ----extn_sel_7-----------------------------------------------------------------------------------
-
-## print
-print(ext_st)
-
-## ----extn_sel_7.1, eval=FALSE---------------------------------------------------------------------
-#  
-#  ext_st
-
-## ----extn_sel_7/2, echo=FALSE---------------------------------------------------------------------
-
-print(ext_st)
-
-## ----extn_sel_8, eval = FALSE---------------------------------------------------------------------
-#  
-#  ext_st3 <- ext_st[1:5, ]
-#  
-#  ext_st4 <- ext_st[6:11, ]
-#  
-#  ext_st5 <- rbind(ext_st3, ext_st4)
-#  
-#  # print
-#  ext_st5
-
-## ----extn_sel_8.1, echo=FALSE---------------------------------------------------------------------
-
-ext_st3 <- ext_st[1:5, ]
-
-ext_st4 <- ext_st[6:11, ]
-
-ext_st5 <- rbind(ext_st3, ext_st4)
-
-# print
-print(ext_st5)
-
-## ----extn_sel_8.2---------------------------------------------------------------------------------
-
-# igual q el original
-all.equal(ext_st, ext_st5)
-
-## ----extn_sel_8.21--------------------------------------------------------------------------------
-
-wv1 <- read_wave(X = ext_st, index = 3, from = 0, to = 0.37)
-
-## ----extn_sel_8.22, out.width= 750----------------------------------------------------------------
-
-class(wv1)
-
-wv1
-
-spectro(wv1, wl = 150, grid = FALSE, scale = FALSE, ovlp = 90)
-
-## ----extn_sel_8.23, out.width= 750----------------------------------------------------------------
-par(mfrow = c(3, 2), mar = rep(0, 4))
-
-for (i in 1:6) {
-  wv <- read_wave(X = ext_st, index = i, from = 0.05, to = 0.32)
-
-  spectro(wv,
-    wl = 150, grid = FALSE, scale = FALSE, axisX = FALSE,
-    axisY = FALSE, ovlp = 90
-  )
-}
-
-## ----extn_sel_8.24--------------------------------------------------------------------------------
-
-# create new data frame
-Y <- data.frame(sound.files = ext_st$sound.files, site = "La Selva", lek = c(rep("SUR", 5), rep("CCL", 6)))
-
-# combine
-mrg_ext_st <- merge(ext_st, Y, by = "sound.files")
-
-# check class
-is_extended_selection_table(mrg_ext_st)
-
-## ----extn_sel_8.25--------------------------------------------------------------------------------
-
-# fix est
-mrg_ext_st <- fix_extended_selection_table(X = mrg_ext_st, Y = ext_st)
-
-# check class
-is_extended_selection_table(mrg_ext_st)
-
-## ----extn_sel_12.1, eval=FALSE--------------------------------------------------------------------
-#  
-#  #  parametros espectrales
-#  sp <- spectro_analysis(ext_st)
-#  
-#  sp
-
-## ----extn_sel_12.2, echo= FALSE, eval = FALSE-----------------------------------------------------
-#  
-#  sp <- spectro_analysis(ext_st)
-#  
-#  kbl <- kable(sp, align = "c", row.names = F, format = "html")
-#  
-#  kbl <- kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl <- scroll_box(kbl,
-#    width = "740px",
-#    box_css = "border: 1px solid #ddd; padding: 1px; ", extra_css = NULL
-#  )
-#  
-#  kbl
-
-## ----extn_sel_12.5, eval=FALSE--------------------------------------------------------------------
-#  
-#  snr <- sig2noise(ext_st, mar = 0.05)
-#  
-#  snr
-
-## ----extn_sel_12.6, echo= FALSE, eval = FALSE-----------------------------------------------------
-#  
-#  snr <- sig2noise(ext_st, mar = 0.05)
-#  
-#  kbl <- kable(snr, align = "c", row.names = F, format = "html")
-#  
-#  kbl <- kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl <- scroll_box(kbl,
-#    width = "740px",
-#    box_css = "border: 1px solid #ddd; padding: 1px; ", extra_css = NULL
-#  )
-#  
-#  kbl
-
-## ----extn_sel_12.7, eval=FALSE--------------------------------------------------------------------
-#  
-#  dtw.dist <- freq_DTW(ext_st, img = FALSE)
-#  
-#  dtw.dist
-
-## ----extn_sel_12.8, echo= FALSE, eval = FALSE-----------------------------------------------------
-#  
-#  dtw.dist <- freq_DTW(ext_st, img = FALSE)
-#  
-#  kbl <- kable(dtw.dist, align = "c", row.names = T, format = "html")
-#  
-#  kbl <- kable_styling(kbl, bootstrap_options = "striped", font_size = 14)
-#  
-#  kbl <- scroll_box(kbl,
-#    width = "740px",
-#    box_css = "border: 1px solid #ddd; padding: 1px; ", extra_css = NULL
-#  )
-#  
-#  kbl
-
-## ----extn_sel_13, eval = FALSE--------------------------------------------------------------------
-#  
-#  # create long selection table
-#  lng.selec.table <- do.call(rbind, replicate(10, lbh_selec_table,
-#    simplify = FALSE
-#  ))
-#  
-#  # relabels selec
-#  lng.selec.table$selec <- 1:nrow(lng.selec.table)
-#  
-#  # create extended selection table
-#  lng_ext_st <- selection_table(
-#    X = lng.selec.table, pb = FALSE,
-#    extended = TRUE, confirm.extended = FALSE
-#  )
-#  
-#  
-#  # load packages
-#  library(microbenchmark)
-#  library(ggplot2)
-#  
-#  # check performance
-#  mbmrk.snr <- microbenchmark(extended = sig2noise(lng_ext_st,
-#    mar = 0.05
-#  ), regular = sig2noise(lng.selec.table,
-#    mar = 0.05
-#  ), times = 50)
-#  
-#  autoplot(mbmrk.snr) + ggtitle("sig2noise")
-
-## -------------------------------------------------------------------------------------------------
-
-data("Phae.long.est")
-
-Phae.long.est
-
-table(Phae.long.est$lek.song.type)
 
 ## ----eval = FALSE, echo = FALSE-------------------------------------------------------------------
 #  

@@ -5,8 +5,8 @@
 \alias{lbh_selec_table}
 \title{Example data frame of selections (i.e. selection table).}
 \format{
-A data frame with 11 rows and 7 variables: \describe{
- \item{sound.files}{recording names}
+A data frame with 11 rows and 7 columns: \describe{
+ \item{sound.files}{sound file names}
  \item{channel}{channel in which signal is found}
  \item{selec}{selection numbers within recording}
  \item{start}{start times of selected signal}
@@ -22,13 +22,8 @@ Marcelo Araya-Salas, warbleR
 data(lbh_selec_table)
 }
 \description{
-\code{lbh_selec_table} alternative name for \code{selec.table}. \code{selec.table} will be deprecated in
-future versions.
-}
-\details{
 A data frame containing the start, end, low and high frequency of
 \emph{Phaethornis longirostris} (Long-billed Hermit) songs from the
-example sound files included in this package. Same data than 'selec_table'.
-'selec_table' will be removed in future package version.
+example sound files included in this package.
 }
 \keyword{datasets}
