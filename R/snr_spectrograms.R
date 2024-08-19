@@ -273,9 +273,7 @@ snr_spectrograms <- function(X, wl = 512, flim = NULL, wn = "hanning", ovlp = 70
 
   ## update progress message
   if (pb) {
-    reset_onexit <- .update_progress("creating SNR spectrograms")
-    
-      on.exit(expr = eval(parse(text = reset_onexit)), add = TRUE)
+    .update_progress("creating SNR spectrograms")
   }
 
   # set clusters for windows OS
@@ -286,7 +284,7 @@ snr_spectrograms <- function(X, wl = 512, flim = NULL, wn = "hanning", ovlp = 70
   }
 
   # run loop apply function
-  out <- pblapply_wrblr_int(pbar = pb, X = 1:nrow(X), cl = cl, FUN = function(i) {
+  out <- .pblapply(pbar = pb, X = 1:nrow(X), cl = cl, FUN = function(i) {
     snrspeFUN(X = X, i = i, wl = wl, flim = flim, ovlp = ovlp, inner.mar = inner.mar, outer.mar = outer.mar, picsize = picsize, res = res, cexlab = cexlab, xl = xl, mar = mar, snrmar = snrmar, before, eq.dur)
   })
 }

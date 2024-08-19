@@ -957,11 +957,25 @@ img_wrlbr_int <-
 # that allows to define internally if progress bar would be used (pbapply::pblapply uses pboptions to do this)
 # last modification on aug-10-2021 (MAS)
 #'
-pblapply_wrblr_int <- function(X,
+pblapply_wrblr_int <- .pblapply <- function(X,
                                FUN,
                                cl = 1,
                                pbar = TRUE,
+                               message = NULL,
+                               current = 0,
+                               total = 1,
+                               verbose = TRUE,
                                ...) {
+  
+
+  if (pbar)  {
+    .update_progress(message, current, total, verbose)
+    
+    reset_call <- .reset_progress()
+    if (!is.null(reset_call))
+    on.exit(expr = eval(parse(text = reset_call)), add = TRUE)
+  }
+  
   # conver parallel 1 to null
   if (!inherits(cl, "cluster")) {
     if (cl == 1) {
@@ -2538,23 +2552,32 @@ lessdB <- lessdB_wrblr_int <- function(signal.noise, noise) {
 
 
 # parallelize DTW 
-
-.dtwDist <- function(mx, my = mx, parallel = 1, pb = TRUE, ...) {
+.dtwDist <- function(mx, my = mx, parallel = 1, pb = TRUE, max.obs.per.core = 20, ...) {
   
   if (parallel == 1 | parallel >= nrow(mx)){
+    if (pb)
+    cat("calculating DTW distances, no progress bar ...")
+    
     dtw_dists <- dtw::dtwDist(mx, my, ...)
   } else {
-      
-    # Create intervals using cut
-    row_intervals <- cut(1:nrow(mx), breaks = parallel, labels = FALSE)
    
-  if (pb)  {
-    reset_onexit <- .update_progress("calculating DTW distances", total = 1)
+    # get number of breaks for splitting data base on max.obs.per.core
+    breaks <- floor(nrow(mx) / max.obs.per.core)
     
-      on.exit(expr = eval(parse(text = reset_onexit)), add = TRUE)
-    }
+    # if less than 10 breaks make them 10
+    if (breaks > 10) breaks <- 10
+
+    # if breaks is less than 1, make it 1
+    if (breaks < 1) breaks <- floor(1 / breaks)
+    if (breaks == 1) breaks <- 2
     
-    dtw_dist_list <- pblapply_wrblr_int(pbar = pb, X = unique(row_intervals), cl = parallel, FUN = function(j, ...) {
+    # Create intervals using cut
+    row_intervals <- cut(seq_len(nrow(mx)), breaks = breaks, labels = FALSE)
+    
+    # fix if surpasses number of rows in data
+    row_intervals <- row_intervals[row_intervals <= nrow(mx)]
+    
+    dtw_dist_list <- .pblapply(pbar = pb, X = unique(row_intervals), cl = parallel, message = "calculating DTW distances", FUN = function(j, ...) {
       
       sub_dtw_dist <- dtw::dtwDist(mx = mx, my = my[row_intervals == j, ], ...)
       
@@ -2577,33 +2600,41 @@ lessdB <- lessdB_wrblr_int <- function(signal.noise, noise) {
            current =  if (is.null(message))
              0 else 1,
            total = 1,
-           within_function = length(sys.calls()) > 2) {
+           verbose = TRUE,
+           within_function = length(sys.calls()) > 3) {
     # if the function is being called inside another function
     if (within_function) {
       steps <- getOption("int_warbleR_steps")
       current <- steps$current
       total <- steps$total
       options("int_warbleR_steps" = list(current = current + 1, total = total))
-      reset_onexit <- "NULL"
     } else {
+      # only use if the function is called by the top function
+      if (length(sys.calls()) == 2)
       options("int_warbleR_steps" = list(current = current + 1, total = total))
-
-      # to reset values only if is the top function
-      reset_onexit <- "options('int_warbleR_steps' = list(current = 0, total = 1))"
     }
     
     if (!is.null(message)) {
       out_message <-
         sprintf("%s (step %d of %d):", message, current, total)
       
-      if (!grepl("(step 1 of 1)", out_message)) {
+      # print message if is not a single step process
+      if (!grepl(" of 1)", out_message) & verbose) {
         message2(out_message)
       }
-      
     }
-    return(reset_onexit)
   }
 
+
+# set progress steps back to defaul
+.reset_progress <- function(){
+  
+  steps <- getOption("int_warbleR_steps")
+
+  on_exit_call <- if (steps$current >= steps$total + 1) "options('int_warbleR_steps' = list(current = 0, total = 1))" else NULL
+    
+  return(on_exit_call)
+}
 
 # Wrapper for "try" function
 # silly wrapper for  function that returns an NA if an error is found.
@@ -3215,7 +3246,7 @@ lessdB <- lessdB_wrblr_int <- function(signal.noise, noise) {
     }
     
     # run function over sound files or selections in loop
-    ad <- pblapply_wrblr_int(
+    ad <- .pblapply(
       pbar = pb,
       X = 1:nrow(X),
       cl = cl,
@@ -3299,7 +3330,7 @@ lessdB <- lessdB_wrblr_int <- function(signal.noise, noise) {
       if (nrow(ovlp) > 0) {
         # loop to merge selections
         out <-
-          pblapply_wrblr_int(pbar = pb, X = unique(ovlp$ovlp.sels), cl = cl, FUN = function(x) {
+          .pblapply(pbar = pb, X = unique(ovlp$ovlp.sels), cl = cl, FUN = function(x) {
             # subset for one level
             Y <- ovlp[ovlp$ovlp.sels == x, ]
             

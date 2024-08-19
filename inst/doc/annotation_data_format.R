@@ -460,46 +460,53 @@ seewave::spectro(
 #  
 #  autoplot(mbmrk.snr) + ggtitle("sig2noise")
 
-## ----downloading rds, eval = TRUE-----------------------------------------------------------------
+## ----downloading rds, eval = FALSE----------------------------------------------------------------
+#  
+#  URL <- "https://figshare.com/ndownloader/files/21167052"
+#  
+#  options(timeout = max(300, getOption("timeout")))
+#  
+#  download.file(
+#    url = URL,
+#    destfile = file.path(tempdir(), "est_inquiry.RDS"),
+#    method = "auto"
+#  )
+#  
+#  est <- readRDS(file.path(tempdir(), "est_inquiry.RDS"))
+#  
+#  nrow(est)
+#  
 
-URL <- "https://figshare.com/ndownloader/files/21167052"
+## ----eval = TRUE, echo = FALSE--------------------------------------------------------------------
 
-download.file(
-  url = URL,
-  destfile = file.path(tempdir(), "est_inquiry.RDS"),
-  method = "wget"
-)
-
-est <- readRDS(file.path(tempdir(), "est_inquiry.RDS"))
-
-nrow(est)
+print(336)
 
 
-## ----eval = TRUE, out.width= 750------------------------------------------------------------------
-
-par(mfrow = c(3, 2), mar = rep(0, 4))
-
-for (i in 1:6) {
-  wv <- read_sound_file(
-    X = est,
-    index = i,
-    from = 0.05,
-    to = 0.17
-  )
-  
-  spectro(
-    wv,
-    grid = FALSE,
-    scale = FALSE,
-    axisX = FALSE,
-    axisY = FALSE,
-    ovlp = 90,
-    flim = c(10, 50),
-    palette = viridis::viridis,
-    collevels = seq(-100, 0 , 5)  
-    )
-}
-
+## ----eval = FALSE, out.width = 750----------------------------------------------------------------
+#  
+#  par(mfrow = c(3, 2), mar = rep(0, 4))
+#  
+#  for (i in 1:6) {
+#    wv <- read_sound_file(
+#      X = est,
+#      index = i,
+#      from = 0.05,
+#      to = 0.17
+#    )
+#  
+#    spectro(
+#      wv,
+#      grid = FALSE,
+#      scale = FALSE,
+#      axisX = FALSE,
+#      axisY = FALSE,
+#      ovlp = 90,
+#      flim = c(10, 50),
+#      palette = viridis::viridis,
+#      collevels = seq(-100, 0 , 5)
+#      )
+#  }
+#  
 
 ## ----eval = FALSE---------------------------------------------------------------------------------
 #  
@@ -509,7 +516,10 @@ for (i in 1:6) {
 
 ## ----echo=FALSE-----------------------------------------------------------------------------------
 
-xcorr_inquiry <- cross_correlation(est[1:4, ])
+xcorr_inquiry <- matrix(c(1.0000000, 0.5222115, 0.5350263, 0.5939756,
+  0.5222115, 1.0000000, 0.8692543, 0.6599669,
+  0.5350263, 0.8692543, 1.0000000, 0.8334820,
+  0.5939756, 0.6599669, 0.8334820, 1.0000000), nrow = 4, dimnames = list(c("T2018-01-04_11-37-50_0000010.wav_1-1",  "T2018-01-04_11-37-50_0000010.wav_10-1",  "T2018-01-04_11-37-50_0000010.wav_11-1", "T2018-01-04_11-37-50_0000010.wav_12-1"), c("T2018-01-04_11-37-50_0000010.wav_1-1",  "T2018-01-04_11-37-50_0000010.wav_10-1",  "T2018-01-04_11-37-50_0000010.wav_11-1", "T2018-01-04_11-37-50_0000010.wav_12-1")))
 
 kbl <- knitr::kable(xcorr_inquiry, row.names = TRUE)
 

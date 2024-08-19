@@ -297,18 +297,6 @@ remove_silence <-
         }
       }
 
-    if (pb) {
-      message2("searching for silence segments in wave files:")
-    }
-    
-    ## update progress message
-    if (pb) {
-      reset_onexit <- .update_progress("removing silence", total = 1)
-      
-        on.exit(expr = eval(parse(text = reset_onexit)), add = TRUE)
-    }
-    
-
     # set clusters for windows OS
     if (Sys.info()[1] == "Windows" & parallel > 1) {
       cl <-
@@ -319,10 +307,12 @@ remove_silence <-
 
     # run loop apply function
     out <-
-      pblapply_wrblr_int(
+      .pblapply(
         pbar = pb,
         X = wavs,
         cl = cl,
+        message = "removing silence", 
+        total = 1,
         FUN = function(i) {
           rm.sil.FUN(
             fl = i,

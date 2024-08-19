@@ -565,14 +565,6 @@ spectrograms <-
         dev.off()
       }
 
-    ## update progress message
-    if (pb) {
-      reset_onexit <- .update_progress("creating spectrogram image files")
-      
-        on.exit(expr = eval(parse(text = reset_onexit)), add = TRUE)
-    }
-    
-
 
     # set clusters for windows OS
     if (Sys.info()[1] == "Windows" & parallel > 1) {
@@ -583,10 +575,12 @@ spectrograms <-
 
     # run loop apply function
     out <-
-      pblapply_wrblr_int(
+      .pblapply(
         pbar = pb,
         X = 1:nrow(X),
-        cl = cl,
+        cl = cl, 
+        message = "creating spectrogram image files", 
+        total = 1,
         FUN = function(i) {
           specreFUN(
             X,

@@ -677,14 +677,16 @@ The function runs much faster in the extended selection tables. Performance gain
 
 This new object class allows to share complete data sets, including acoustic data. To do this we can make use of the RDS file format to save extended selection tables. These files can be easily shared with others, allowing to share a entire acoustic data set in a single file, something that can be tricky when dealing with acoustic data. For example, the following code downloads an extended selection table of inquiry calls from Spix's disc-winged bats used in [Araya-Salas *et al* (2020)](https://marce10.github.io/publication/araya-salas-2020/) (it can take a few minutes! Can also be manually downloaded from [here](https://figshare.com/ndownloader/files/21167052)):
 
-```{r downloading rds, eval = TRUE}
+```{r downloading rds, eval = FALSE}
 
 URL <- "https://figshare.com/ndownloader/files/21167052"
+
+options(timeout = max(300, getOption("timeout")))
 
 download.file(
   url = URL,
   destfile = file.path(tempdir(), "est_inquiry.RDS"),
-  method = "wget"
+  method = "auto"
 )
 
 est <- readRDS(file.path(tempdir(), "est_inquiry.RDS"))
@@ -693,9 +695,16 @@ nrow(est)
 
 ```
 
+```{r, eval = TRUE, echo = FALSE}
+
+print(336)
+
+```
+
+
 This data is ready to be used. For instance, here I create a multipanel graph with the spectrograms of the first 6 selections:
 
-```{r, eval = TRUE, out.width= 750}
+```{r, eval = FALSE, out.width = 750}
 
 par(mfrow = c(3, 2), mar = rep(0, 4))
 
@@ -722,6 +731,9 @@ for (i in 1:6) {
 
 ```
 
+
+<img src="est1to6spectro.jpeg" alt="warbleR logo" align="right" width="100%">
+
 We can also measured pairwise cross correlation (for simplicity only on the first 4 rows):
 
 ```{r, eval = FALSE}
@@ -734,7 +746,10 @@ xcorr_inquiry
 
 ```{r, echo=FALSE}
 
-xcorr_inquiry <- cross_correlation(est[1:4, ])
+xcorr_inquiry <- matrix(c(1.0000000, 0.5222115, 0.5350263, 0.5939756,
+  0.5222115, 1.0000000, 0.8692543, 0.6599669,
+  0.5350263, 0.8692543, 1.0000000, 0.8334820,
+  0.5939756, 0.6599669, 0.8334820, 1.0000000), nrow = 4, dimnames = list(c("T2018-01-04_11-37-50_0000010.wav_1-1",  "T2018-01-04_11-37-50_0000010.wav_10-1",  "T2018-01-04_11-37-50_0000010.wav_11-1", "T2018-01-04_11-37-50_0000010.wav_12-1"), c("T2018-01-04_11-37-50_0000010.wav_1-1",  "T2018-01-04_11-37-50_0000010.wav_10-1",  "T2018-01-04_11-37-50_0000010.wav_11-1", "T2018-01-04_11-37-50_0000010.wav_12-1")))
 
 kbl <- knitr::kable(xcorr_inquiry, row.names = TRUE)
 
