@@ -4,17 +4,11 @@ pagetitle: Visual inspection and signal classification
 author: 
 - <a href="https://marce10.github.io">Marcelo Araya-Salas, PhD</a> & <a href="https://smith-vidaurre.com/">Grace Smith-Vidaurre</a>
 date: "`r Sys.Date()`"
-output:
-  rmarkdown::html_document:
-    self_contained: yes
-    toc: true
-    toc_depth: 3
-    toc_float:
-      collapsed: false
-      smooth_scroll: true
+output: 
+  rmarkdown::html_vignette
 vignette: >
   \usepackage[utf8]{inputenc}
-  %\VignetteIndexEntry{4. Visual inspection and signal classification}
+  %\VignetteIndexEntry{3. Visual inspection and signal classification}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
   chunk_output_type: console

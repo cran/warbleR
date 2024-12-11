@@ -4,17 +4,11 @@ pagetitle: Introduction to warbleR
 author: 
 - <a href="https://marce10.github.io">Marcelo Araya-Salas, PhD</a> & <a href="https://smith-vidaurre.com/">Grace Smith-Vidaurre</a> 
 date:  "`r Sys.Date()`"
-output:
-  rmarkdown::html_document:
-    self_contained: yes
-    toc: true
-    toc_depth: 3
-    toc_float:
-      collapsed: false
-      smooth_scroll: true
+output: 
+  rmarkdown::html_vignette
 vignette: >
-   %\VignetteIndexEntry{1. Introduction to warbleR}
    %\usepackage[utf8]{inputenc}
+   %\VignetteIndexEntry{1. Introduction to warbleR}
    %\VignetteEncoding{UTF-8}
    %\VignetteEngine{knitr::rmarkdown}
 editor_options: 

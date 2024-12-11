@@ -41,6 +41,7 @@ print_st_no_color <- function(x, ...) if (is(x, "selection_table")) warbleR:::pr
   warbleR:::print.extended_selection_table(x, no.color = TRUE, ...)
 
 
+warbleR_options(pb = FALSE)
 
 ## ----echo = FALSE---------------------------------------------------------------------------------
 
@@ -94,13 +95,13 @@ kbl
 
 
 ## ----annotations_4.1, eval=FALSE------------------------------------------------------------------
-#  
-#  library(warbleR)
-#  
-#  data("lbh_selec_table")
-#  
-#  
-#  knitr::kable(lbh_selec_table)
+# 
+# library(warbleR)
+# 
+# data("lbh_selec_table")
+# 
+# 
+# knitr::kable(lbh_selec_table)
 
 ## ----annotations_4.2, echo=FALSE------------------------------------------------------------------
 
@@ -118,17 +119,17 @@ kbl <-
 kbl
 
 ## ----annotations_4.32, eval = FALSE---------------------------------------------------------------
-#  
-#  # write example sound files in temporary directory
-#  writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
-#  writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
-#  writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
-#  writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
-#  
-#  st <-
-#    selection_table(X = lbh_selec_table, path = tempdir())
-#  
-#  knitr::kable(st)
+# 
+# # write example sound files in temporary directory
+# writeWave(Phae.long1, file.path(tempdir(), "Phae.long1.wav"))
+# writeWave(Phae.long2, file.path(tempdir(), "Phae.long2.wav"))
+# writeWave(Phae.long3, file.path(tempdir(), "Phae.long3.wav"))
+# writeWave(Phae.long4, file.path(tempdir(), "Phae.long4.wav"))
+# 
+# st <-
+#   selection_table(X = lbh_selec_table, path = tempdir())
+# 
+# knitr::kable(st)
 
 ## ----eval = TRUE, echo = FALSE--------------------------------------------------------------------
 
@@ -156,9 +157,9 @@ class(st)
 
 
 ## ----eval = FALSE---------------------------------------------------------------------------------
-#  
-#  st
-#  
+# 
+# st
+# 
 
 ## ----eval = TRUE, echo = FALSE, collapse = TRUE---------------------------------------------------
 
@@ -166,14 +167,14 @@ print_st_no_color(st)
 
 
 ## ----annotations_4.3, eval = FALSE----------------------------------------------------------------
-#  
-#  est <- selection_table(
-#    X = lbh_selec_table,
-#    pb = FALSE,
-#    extended = TRUE,
-#    path = tempdir()
-#  )
-#  
+# 
+# est <- selection_table(
+#   X = lbh_selec_table,
+#   pb = FALSE,
+#   extended = TRUE,
+#   path = tempdir()
+# )
+# 
 
 ## ----annotations_4.33, eval = TRUE, echo = FALSE--------------------------------------------------
 
@@ -191,9 +192,9 @@ class(est)
 
 
 ## ----eval = FALSE---------------------------------------------------------------------------------
-#  
-#  est
-#  
+# 
+# est
+# 
 
 ## ----eval = TRUE, echo = FALSE, collapse = TRUE---------------------------------------------------
 
@@ -211,35 +212,26 @@ est2 <- est[1:2, ]
 is_extended_selection_table(est2)
 
 ## ----annotations_7, eval = FALSE------------------------------------------------------------------
-#  
-#  ## print
-#  print(est)
-#  
+# 
+# ## print (equivalent to `print(est)`)
+# est
+# 
 
 ## ----annotations_7.05, eval = TRUE, echo = FALSE, collapse = TRUE---------------------------------
 
 print_st_no_color(est)
 
 
-## ----annotations_7.1, eval=FALSE------------------------------------------------------------------
-#  
-#  est
-
-## ----eval = TRUE, echo = FALSE, collapse = TRUE---------------------------------------------------
-
-print_st_no_color(est)
-
-
 ## ----annotations_8, eval = FALSE------------------------------------------------------------------
-#  
-#  est3 <- est[1:5, ]
-#  
-#  est4 <- est[6:11, ]
-#  
-#  est5 <- rbind(est3, est4)
-#  
-#  # print
-#  est5
+# 
+# est3 <- est[1:5, ]
+# 
+# est4 <- est[6:11, ]
+# 
+# est5 <- rbind(est3, est4)
+# 
+# # print
+# est5
 
 ## ----annotations_8.1, echo=FALSE, collapse = TRUE-------------------------------------------------
 
@@ -331,16 +323,16 @@ mrg_est <- fix_extended_selection_table(X = mrg_est, Y = est)
 is_extended_selection_table(mrg_est)
 
 ## ----annotations_12.1, eval=FALSE-----------------------------------------------------------------
-#  
-#  #  parametros espectrales
-#  sp <- spectro_analysis(est)
-#  
-#  # check first 10 columns
-#  sp[, 1:10]
+# 
+# #  parametros espectrales
+# sp <- spectro_analysis(est)
+# 
+# # check first 10 columns
+# sp[, 1:10]
 
-## ----eval = TRUE, echo = FALSE--------------------------------------------------------------------
+## ----eval = TRUE, echo = FALSE, message=FALSE-----------------------------------------------------
 
-sp <- spectro_analysis(est)
+sp <- spectro_analysis(est, pb = FALSE)
 
 kbl <- knitr::kable(sp[, 1:10])
 
@@ -354,7 +346,7 @@ kbl
 length(attr(est, "wave.objects")) == length(unique(paste(est$sound.files)))
 
 
-## ----songs 3, echo = FALSE, fig.align= "right", out.width="100%", fig.cap="Annotated spectrogram of Scale-throated Hermit songs. Vertical orange lines highlight songs while skyblue boxes show the frequency-time position of individual elements. The sound file can be found at https://xeno-canto.org/15607."----
+## ----songs 3, echo = FALSE, fig.align= "left", out.width="100%"-----------------------------------
 
 knitr::include_graphics("Phaethornis-eurynome-15607-labeled.jpeg")
 
@@ -374,14 +366,16 @@ out <-
 list.files(path = tempdir(), "mp3")
 
 ## -------------------------------------------------------------------------------------------------
+
 # load  Scale-throated Hermit example annotations
 data("sth_annotations")
 
 
 ## ----eval = FALSE---------------------------------------------------------------------------------
-#  # print into the console
-#  knitr::kable(head(sth_annotations))
-#  
+# 
+# # print into the console
+# head(sth_annotations)
+# 
 
 ## ----echo=FALSE-----------------------------------------------------------------------------------
 
@@ -431,51 +425,51 @@ seewave::spectro(
 
 
 ## ----annotations_13, eval = FALSE-----------------------------------------------------------------
-#  
-#  # create long selection table
-#  lng.selec.table <- do.call(rbind, replicate(10, lbh_selec_table,
-#                                              simplify = FALSE))
-#  
-#  # relabels selec
-#  lng.selec.table$selec <- 1:nrow(lng.selec.table)
-#  
-#  # create extended selection table
-#  lng_est <- selection_table(X = lng.selec.table,
-#                             pb = FALSE,
-#                             extended = TRUE)
-#  
-#  
-#  # load packages
-#  library(microbenchmark)
-#  library(ggplot2)
-#  
-#  # check performance
-#  mbmrk.snr <- microbenchmark(
-#    extended = sig2noise(lng_est,
-#                         mar = 0.05),
-#    regular = sig2noise(lng.selec.table,
+# 
+# # create long selection table
+# lng.selec.table <- do.call(rbind, replicate(10, lbh_selec_table,
+#                                             simplify = FALSE))
+# 
+# # relabels selec
+# lng.selec.table$selec <- 1:nrow(lng.selec.table)
+# 
+# # create extended selection table
+# lng_est <- selection_table(X = lng.selec.table,
+#                            pb = FALSE,
+#                            extended = TRUE)
+# 
+# 
+# # load packages
+# library(microbenchmark)
+# library(ggplot2)
+# 
+# # check performance
+# mbmrk.snr <- microbenchmark(
+#   extended = sig2noise(lng_est,
 #                        mar = 0.05),
-#    times = 50
-#  )
-#  
-#  autoplot(mbmrk.snr) + ggtitle("sig2noise")
+#   regular = sig2noise(lng.selec.table,
+#                       mar = 0.05),
+#   times = 50
+# )
+# 
+# autoplot(mbmrk.snr) + ggtitle("sig2noise")
 
 ## ----downloading rds, eval = FALSE----------------------------------------------------------------
-#  
-#  URL <- "https://figshare.com/ndownloader/files/21167052"
-#  
-#  options(timeout = max(300, getOption("timeout")))
-#  
-#  download.file(
-#    url = URL,
-#    destfile = file.path(tempdir(), "est_inquiry.RDS"),
-#    method = "auto"
-#  )
-#  
-#  est <- readRDS(file.path(tempdir(), "est_inquiry.RDS"))
-#  
-#  nrow(est)
-#  
+# 
+# URL <- "https://figshare.com/ndownloader/files/21167052"
+# 
+# options(timeout = max(300, getOption("timeout")))
+# 
+# download.file(
+#   url = URL,
+#   destfile = file.path(tempdir(), "est_inquiry.RDS"),
+#   method = "auto"
+# )
+# 
+# est <- readRDS(file.path(tempdir(), "est_inquiry.RDS"))
+# 
+# nrow(est)
+# 
 
 ## ----eval = TRUE, echo = FALSE--------------------------------------------------------------------
 
@@ -483,36 +477,36 @@ print(336)
 
 
 ## ----eval = FALSE, out.width = 750----------------------------------------------------------------
-#  
-#  par(mfrow = c(3, 2), mar = rep(0, 4))
-#  
-#  for (i in 1:6) {
-#    wv <- read_sound_file(
-#      X = est,
-#      index = i,
-#      from = 0.05,
-#      to = 0.17
-#    )
-#  
-#    spectro(
-#      wv,
-#      grid = FALSE,
-#      scale = FALSE,
-#      axisX = FALSE,
-#      axisY = FALSE,
-#      ovlp = 90,
-#      flim = c(10, 50),
-#      palette = viridis::viridis,
-#      collevels = seq(-100, 0 , 5)
-#      )
-#  }
-#  
+# 
+# par(mfrow = c(3, 2), mar = rep(0, 4))
+# 
+# for (i in 1:6) {
+#   wv <- read_sound_file(
+#     X = est,
+#     index = i,
+#     from = 0.05,
+#     to = 0.17
+#   )
+# 
+#   spectro(
+#     wv,
+#     grid = FALSE,
+#     scale = FALSE,
+#     axisX = FALSE,
+#     axisY = FALSE,
+#     ovlp = 90,
+#     flim = c(10, 50),
+#     palette = viridis::viridis,
+#     collevels = seq(-100, 0 , 5)
+#     )
+# }
+# 
 
 ## ----eval = FALSE---------------------------------------------------------------------------------
-#  
-#  xcorr_inquiry <- cross_correlation(est[1:4, ])
-#  
-#  xcorr_inquiry
+# 
+# xcorr_inquiry <- cross_correlation(est[1:4, ])
+# 
+# xcorr_inquiry
 
 ## ----echo=FALSE-----------------------------------------------------------------------------------
 

@@ -4,17 +4,11 @@ pagetitle: Annotation data format
 author: 
 - <a href="https://marce10.github.io">Marcelo Araya-Salas, PhD</a> 
 date:  "`r Sys.Date()`"
-output:
-  rmarkdown::html_document:
-    self_contained: yes
-    toc: true
-    toc_depth: 3
-    toc_float:
-      collapsed: false
-      smooth_scroll: true
+output: 
+  rmarkdown::html_vignette
 vignette: >
-   %\VignetteIndexEntry{2. Annotation data format}
    %\usepackage[utf8]{inputenc}
+   %\VignetteIndexEntry{2. Annotation data format}
    %\VignetteEncoding{UTF-8}
    %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -71,6 +65,7 @@ print_st_no_color <- function(x, ...) if (is(x, "selection_table")) warbleR:::pr
   warbleR:::print.extended_selection_table(x, no.color = TRUE, ...)
 
 
+warbleR_options(pb = FALSE)
 ```
 
 <img src="warbleR_sticker.png" alt="warbleR logo" align="right" width="25%" height="25%">
@@ -234,7 +229,7 @@ kbl
 
 ```
 
-Selection table is an especific object class: 
+Selection table is an specific object class: 
 ```{r}
 
 class(st)
@@ -256,7 +251,7 @@ print_st_no_color(st)
 
 
 
-Note that the path to the sound files must be provided. This is necessary in order to verify that the data provided conforms to the characteristics of the audio files.
+Note that the path to the sound files must be provided. This is necessary in order to verify that the data supplied conforms to the characteristics of the audio files.
 
 <!-- light brown box -->
 <div class="alert alert-warning">
@@ -268,7 +263,7 @@ Selection table also refer to sound files. Therefore, users **must always indica
 
 ## Extended selection tables
 
-Extended selection tables are annotations that include both the acoustic and annotation data. This an specific object class, *extended_selection_table*, that include a list of 'wave' objects corresponding to each of the selections in the data. Therefore, the function **transforms the selection table into self-contained objects** since the original sound files are no longer needed to perform most of the acoustic analysis in **warbleR**. This can facilitate the storage and exchange of (bio)acoustic data. This format can also speed up analyses, since it is not necessary to read the sound files every time the data is analyzed.
+Extended selection tables are annotations that include both the acoustic and annotation data. This is an specific object class, *extended_selection_table*, that includes a list of 'wave' objects corresponding to each of the selections in the data. Therefore, the function **transforms the selection table into self-contained objects** since the original sound files are no longer needed to perform most of the acoustic analysis in **warbleR**. This can facilitate the storage and exchange of (bio)acoustic data. This format can also speed up analyses, since it is not necessary to read the sound files every time the data is analyzed.
 
 The `selection_table()` function also creates extended selection tables. To do this, users must set the argument `extended = TRUE` (otherwise, the class would be a selection table). The following code converts the example 'lbh_selec_table' data into an extended selection table:
 
@@ -340,8 +335,8 @@ As shown above, there is also a generic version of `print()` for this class of o
 
 ```{r annotations_7, eval = FALSE}
 
-## print
-print(est)
+## print (equivalent to `print(est)`)
+est
 
 ```
 
@@ -352,20 +347,8 @@ print_st_no_color(est)
 
 ```
 
-... which is equivalent to:
 
-```{r annotations_7.1, eval=FALSE}
-
-est
-```
-
-```{r, eval = TRUE, echo = FALSE, collapse = TRUE}
-
-print_st_no_color(est)
-
-```
-
-You can also split them and/or combine them by rows. Here the original *extended_selection_table* is divided into 2 and bound again using `rbind()`:
+You can also split them and/or combine them by rows. Here the original *extended_selection_table* is divided using indexing into two objects and combine the two back into a single object using `rbind()`:
 
 ```{r annotations_8, eval = FALSE}
 
@@ -508,9 +491,9 @@ sp[, 1:10]
 ```
 
 
-```{r, eval = TRUE, echo = FALSE}
+```{r, eval = TRUE, echo = FALSE, message=FALSE}
 
-sp <- spectro_analysis(est)
+sp <- spectro_analysis(est, pb = FALSE)
 
 kbl <- knitr::kable(sp[, 1:10])
 
@@ -531,15 +514,17 @@ length(attr(est, "wave.objects")) == length(unique(paste(est$sound.files)))
 
 ```
 
-This default behavior generates a 'by element' extended selection table, as each resulting wave object contains a single element (usually defined as continuous traces of power spectral entropy in the spectrograms). Acoustic signals can have structure above this basic signal units (elements), like in long repertoire songs or multi-syllable calls, in which elements are always broadcast as a sequences, often with consistent order and timing. It is then desirable to keep information about the relative position of elements in these sequences. However,'by element' extended selection tables discards some element sequence information. This can be overwritten using the argument `by.song`, which allows to keep in a single wave object all the elements belonging to the same 'song'. In this case song refers to any grouping of sounds above the 'element' level.   
+This default behavior generates a 'by element' extended selection table, as each resulting wave object contains a single element (usually defined as continuous traces of power spectral entropy in the spectrograms). Acoustic signals can have structure above the basic signal units (elements), like in long repertoire songs or multi-syllable calls, in which elements are always broadcast as a sequences, often with consistent order and timing. It is then desirable to keep information about the relative position of elements in these sequences. However,'by element' extended selection tables discards some element sequence information. This can be overwritten using the argument `by.song`, which allows to keep in a single wave object all the elements belonging to the same 'song'. In this case song refers to any grouping of sounds above the 'element' level.   
 
 The song of the Scale-throated Hermit (*Phaethornis eurynome*) will be used to show how this can be done. This song consists of a sequence of two elements, which are separated by short gaps:
 
-```{r songs 3, echo = FALSE, fig.align= "right", out.width="100%", fig.cap="Annotated spectrogram of Scale-throated Hermit songs. Vertical orange lines highlight songs while skyblue boxes show the frequency-time position of individual elements. The sound file can be found at https://xeno-canto.org/15607."}
+```{r songs 3, echo = FALSE, fig.align= "left", out.width="100%"}
 
 knitr::include_graphics("Phaethornis-eurynome-15607-labeled.jpeg")
 
 ```
+
+*Annotated spectrogram of Scale-throated Hermit songs. Vertical orange lines highlight songs while skyblue boxes show the frequency-time position of individual elements. The sound file can be found at https://xeno-canto.org/15607.*
 
 An example sound file with this species' song can be downloaded as follows (the sound file can also be downloaded manually from [this link](https://xeno-canto.org/15607/download)):
 ```{r, warning=FALSE, message=FALSE}
@@ -560,6 +545,7 @@ list.files(path = tempdir(), "mp3")
 **warbleR** comes with an example data set containing annotations on this sound file, which can be loaded like this:
 
 ```{r}
+
 # load  Scale-throated Hermit example annotations
 data("sth_annotations")
 
@@ -568,8 +554,9 @@ data("sth_annotations")
 Note that these annotations contain an additional column called 'song', with the song ID labels for elements (rows) belonging to the same song:
 
 ```{r, eval = FALSE}
+
 # print into the console
-knitr::kable(head(sth_annotations))
+head(sth_annotations)
 
 ```
 
@@ -758,6 +745,33 @@ kbl <-  kableExtra::kable_styling(kbl, bootstrap_options = "striped", font_size 
 kbl
 
 ```
+
+
+## **Next vignette: Visual inspection and signal classification**
+
+Here we have given examples of how to begin the `warbleR` workflow. Note that there are many different ways to begin the workflow, depending on your question and source of data. After running the code in this first vignette, you should now have an idea of:
+
+  * the type of data used in _warbleR_ (sound files and selections)
+  * how to import _Raven_ selection tables for your own sound files
+  * how to obtain open-access _xeno-canto_ sound files
+  * how to create long spectrograms of recordings for visual inspection
+  * how to select signals within sound files in `warbleR`
+      - automatic selection
+      - filtering automatically selected signals using SNR
+      - manual selection
+
+The next vignette will cover the second phase of the _warbleR_ workflow, which includes methods to visualize signals for quality control and classification. 
+
+
+## **Citation**
+
+Please cite `warbleR` when you use the package: 
+
+Araya-Salas, M. and Smith-Vidaurre, G. (2017), warbleR: an R package to streamline analysis of animal acoustic signals. Methods Ecol Evol. 8, 184-191.
+
+## **Reporting bugs**
+Please report any bugs [here](https://github.com/maRce10/warbleR/issues). 
+&nbsp; 
 
 ---
 
