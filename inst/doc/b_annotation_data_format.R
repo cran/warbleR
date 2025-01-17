@@ -365,6 +365,7 @@ out <-
 # check file is found in temporary directory
 list.files(path = tempdir(), "mp3")
 
+
 ## -------------------------------------------------------------------------------------------------
 
 # load  Scale-throated Hermit example annotations
@@ -386,42 +387,52 @@ kbl <-  kableExtra::kable_styling(kbl, bootstrap_options = "striped", font_size 
 kbl
 
 
-## -------------------------------------------------------------------------------------------------
+## ----eval = FALSE---------------------------------------------------------------------------------
+# 
+# # create by song extended selection table
+# bs_est <-
+#   selection_table(X = sth_annotations,
+#                   extended = TRUE,
+#                   by.song = "song",
+#                   path = tempdir())
+# 
 
-# create by song extended selection table
-bs_est <-
-  selection_table(X = sth_annotations,
-                  extended = TRUE,
-                  by.song = "song", 
-                  path = tempdir())
+## ----eval = FALSE---------------------------------------------------------------------------------
+# 
+# length(attr(bs_est, "wave.objects")) == length(unique(paste(bs_est$sound.files, bs_est$song)))
+# 
+
+## ----echo = FALSE---------------------------------------------------------------------------------
+
+print(TRUE)
 
 
-## -------------------------------------------------------------------------------------------------
+## ----eval = FALSE---------------------------------------------------------------------------------
+# # extract wave object
+# wave_song1 <-
+#   read_sound_file(
+#     X = bs_est,
+#     index = 1,
+#     from = 0,
+#     to = Inf
+#   )
+# 
+# # plot spectro
+# seewave::spectro(
+#   wave_song1,
+#   wl = 150,
+#   grid = FALSE,
+#   scale = FALSE,
+#   ovlp = 90,
+#   palette = viridis::viridis,
+#   collevels = seq(-100, 0 , 5),
+#   flim = c(1, 12)
+# )
+# 
 
-length(attr(bs_est, "wave.objects")) == length(unique(paste(bs_est$sound.files, bs_est$song)))
+## ----by song est spectro, echo = FALSE, fig.align= "left", out.width="100%"-----------------------
 
-
-## -------------------------------------------------------------------------------------------------
-# extract wave object
-wave_song1 <-
-  read_sound_file(
-    X = bs_est,
-    index = 1,
-    from = 0,
-    to = Inf
-  )
-
-# plot spectro
-seewave::spectro(
-  wave_song1,
-  wl = 150,
-  grid = FALSE,
-  scale = FALSE,
-  ovlp = 90,
-  palette = viridis::viridis,
-  collevels = seq(-100, 0 , 5),
-  flim = c(1, 12)
-)
+knitr::include_graphics("by_song.png")
 
 
 ## ----annotations_13, eval = FALSE-----------------------------------------------------------------

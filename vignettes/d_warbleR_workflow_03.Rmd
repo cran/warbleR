@@ -5,8 +5,14 @@ author:
 - <a href="https://marce10.github.io">Marcelo Araya-Salas, PhD</a> 
 - <a href="https://smith-vidaurre.com/">Grace Smith-Vidaurre</a> 
 date:  "`r Sys.Date()`"
-output: 
-  rmarkdown::html_vignette
+output:
+  rmarkdown::html_document:
+    self_contained: yes
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
 vignette: >
   \usepackage[utf8]{inputenc}
   %\VignetteIndexEntry{4. Acoustic (dis)similarity, coordinated singing and simulating songs}
