@@ -7,7 +7,7 @@
 #' @param wl A numeric vector of length 1 specifying the window length of the spectrogram, default
 #' is 512.
 #' @param bp A numeric vector of length 2 for the lower and upper limits of a
-#'   frequency bandpass filter (in kHz). If columns for bottom and top frequency ('bottom.freq' and 'top.freq') are supplied "pairwise.freq.range" ca be used (default). If so, the lowest values in 'bottom.freq'
+#'   frequency bandpass filter (in kHz). If columns for bottom and top frequency ('bottom.freq' and 'top.freq') are supplied "pairwise.freq.range" can be used (default). If so, the lowest values in 'bottom.freq'
 #'   and the highest values in 'top.freq' for the selections involved in a pairwise comparison will be used as bandpass limits.
 #' @param ovlp Numeric vector of length 1 specifying \% of overlap between two
 #' consecutive windows, as in \code{\link[seewave]{spectro}}. Default is 70. High values of ovlp
@@ -79,14 +79,12 @@
 #' @seealso \code{\link{mfcc_stats}}, \code{\link{spectro_analysis}}, \code{\link{freq_DTW}}
 #' @author Marcelo Araya-Salas \email{marcelo.araya@@ucr.ac.cr})
 #'
-#' @references {
+#' @references 
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #'
 #' H. Khanna, S.L.L. Gaunt & D.A. McCallum (1997). Digital spectrographic cross-correlation: tests of sensitivity. Bioacoustics 7(3): 209-234
 #'
 #' Lyon, R. H., & Ordubadi, A. (1982). Use of cepstra in acoustical signal analysis. Journal of Mechanical Design, 104(2), 303-306.
-#' }
-# last modification on jan-03-2020 (MAS)
 
 cross_correlation <-
   function(X = NULL,
@@ -320,6 +318,7 @@ cross_correlation <-
 
   # function to get spectrogram matrices
   spc_FUN <- function(j, pth, W, wlg, ovl, w, nbnds) {
+    
     clp <- warbleR::read_sound_file(X = W, index = j, path = pth)
 
     if (type == "fourier" | type == "spectrogram") {
@@ -398,6 +397,7 @@ sapply(stps, function(x, cor.method = cm) {
   }
 
   # shuffle spectrograms index so are not compared in sequence, which makes progress bar more precise when some selections are much longer than others
+  set.seed(123)
   ord.shuf <- sample(1:nrow(spc.cmbs))
 
   spc.cmbs <- spc.cmbs[ord.shuf, , drop = FALSE]

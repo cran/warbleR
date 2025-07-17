@@ -3,7 +3,7 @@
 #' \code{by_element_est} converts a by-song extended selection table to by-element.
 #' @param X object of class 'extended_selection_table' (see \code{\link{selection_table}}).
 #' @param mar Numeric vector of length 1 specifying the margins (in seconds)
-#' adjacent to the start and end points of the selections when creating the ''by element' extended
+#' adjacent to the start and end points of the annotations when creating the ''by element' extended
 #' selection table. Default is 0.1.
 #' @param pb Logical argument to control progress bar. Default is \code{FALSE}.
 #' @param parallel Numeric. Controls whether parallel computing is applied.
@@ -31,9 +31,9 @@
 #' }
 #' @family extended selection table manipulation
 #' @seealso \code{\link{mp32wav}}, \code{\link{fix_wavs}}
-#' @references {
+#' @references 
 #' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
-#' }
+#' 
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr})
 #' #last modification on nov-9-2022 (MAS)
 

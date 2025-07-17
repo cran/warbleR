@@ -4,7 +4,13 @@
 \alias{check_sound_files}
 \title{Check sound files}
 \usage{
-check_sound_files(X = NULL, path = NULL)
+check_sound_files(
+  X = NULL,
+  parallel = 1,
+  path = NULL,
+  check.header = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{X}{Optional. 'selection_table' object or data frame with the following columns: 1) "sound.files": name of the sound
@@ -14,8 +20,16 @@ smallest number of samples from the listed selections, which limits the minimum 
 length (wl argument in other functions) that can be used in batch analyses.
 This could be useful for avoiding errors in downstream functions (e.g. \code{\link{spectro_analysis}}).}
 
+\item{parallel}{Numeric. Controls whether parallel computing is applied.
+It specifies the number of cores to be used. Default is 1 (i.e. no parallel computing).}
+
 \item{path}{Character string containing the directory path where the sound files are located.
 If \code{NULL} (default) then the current working directory is used.}
+
+\item{check.header}{Logical. Checks whether number of samples in the file header matches that in the actual file (i.e. if the header is corrupted). This could significantly affect the performance of the function (much slower) particularly
+with long sound files.}
+
+\item{verbose}{Logical to control whether the summary messages are printed to the console. Defaut is \code{TRUE}.}
 }
 \value{
 If all sound files are ok, returns message "All files can be read".
@@ -50,7 +64,7 @@ check_sound_files(X = lbh_selec_table, path = tempdir())
 }
 }
 \references{
-{Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.}
+Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 }
 \seealso{
 \code{\link{check_sels}} \code{\link{tailor_sels}}

@@ -43,10 +43,10 @@
 #' }
 #'
 #' @author Marcelo Araya-Salas (\email{marcelo.araya@@ucr.ac.cr}) and Grace Smith Vidaurre
-#' @references {Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
+#' @references 
+#' Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 #' \href{https://en.wikipedia.org/wiki/Sound_pressure}{Wikipedia: Sound pressure level}
-#' }
-# last modification on aug-8-2022 (MAS)
+#'
 
 sound_pressure_level <- function(X, reference = 20, parallel = 1, path = NULL, pb = TRUE, type = "single", wl = 100, bp = NULL, remove.bgn = FALSE, mar = NULL, envelope = "abs") {
   #### set arguments from options
@@ -145,7 +145,7 @@ sound_pressure_level <- function(X, reference = 20, parallel = 1, path = NULL, p
     # add band-pass frequency filter
     if (!is.null(bp)) {
       # filter to bottom and top freq range
-      if (bp == "freq.range") {
+      if (bp[1] == "freq.range") {
         bp <- c(X$bottom.freq[i], X$top.freq[i])
       }
 

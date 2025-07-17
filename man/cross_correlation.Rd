@@ -33,7 +33,7 @@ All selections must have the same sampling rate.}
 is 512.}
 
 \item{bp}{A numeric vector of length 2 for the lower and upper limits of a
-frequency bandpass filter (in kHz). If columns for bottom and top frequency ('bottom.freq' and 'top.freq') are supplied "pairwise.freq.range" ca be used (default). If so, the lowest values in 'bottom.freq'
+frequency bandpass filter (in kHz). If columns for bottom and top frequency ('bottom.freq' and 'top.freq') are supplied "pairwise.freq.range" can be used (default). If so, the lowest values in 'bottom.freq'
 and the highest values in 'top.freq' for the selections involved in a pairwise comparison will be used as bandpass limits.}
 
 \item{ovlp}{Numeric vector of length 1 specifying \% of overlap between two
@@ -123,13 +123,11 @@ The correlation matrix could have NA's if some of the pairwise correlation did n
 }
 }
 \references{
-{
 Araya-Salas, M., & Smith-Vidaurre, G. (2017). warbleR: An R package to streamline analysis of animal acoustic signals. Methods in Ecology and Evolution, 8(2), 184-191.
 
 H. Khanna, S.L.L. Gaunt & D.A. McCallum (1997). Digital spectrographic cross-correlation: tests of sensitivity. Bioacoustics 7(3): 209-234
 
 Lyon, R. H., & Ordubadi, A. (1982). Use of cepstra in acoustical signal analysis. Journal of Mechanical Design, 104(2), 303-306.
-}
 }
 \seealso{
 \code{\link{mfcc_stats}}, \code{\link{spectro_analysis}}, \code{\link{freq_DTW}}

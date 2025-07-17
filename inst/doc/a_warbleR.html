@@ -11,9 +11,9 @@
 
 <meta name="author" content="Marcelo Araya-Salas, PhD &amp; Grace Smith-Vidaurre" />
 
-<meta name="date" content="2025-01-16" />
+<meta name="date" content="2025-07-16" />
 
-<title>Introduction to warbleR</title>
+<title>Package overview</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1709,12 +1709,11 @@ font-size: 0.95em;
 
 
 
-<h1 class="title toc-ignore"><font size="7"><b>Introduction to
-warbleR</b></font></h1>
+<h1 class="title toc-ignore">Package overview</h1>
 <h4 class="author"><a href="https://marce10.github.io">Marcelo
 Araya-Salas, PhD</a> &amp; <a href="https://smith-vidaurre.com/">Grace
 Smith-Vidaurre</a></h4>
-<h4 class="date">2025-01-16</h4>
+<h4 class="date">2025-07-16</h4>
 
 </div>
 
@@ -2764,8 +2763,8 @@ images
 </table>
 <p> </p>
 </div>
-<div id="visually-inspection-of-annotations-and-measurements" class="section level3">
-<h3>Visually inspection of annotations and measurements</h3>
+<div id="visual-inspection-of-annotations-and-measurements" class="section level3">
+<h3>Visual inspection of annotations and measurements</h3>
 <table class="table table-striped" style="font-size: 14px; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -3106,19 +3105,19 @@ streamline analysis of animal acoustic signals. Methods Ecol Evol
 <p> </p>
 <hr />
 <p><font size="4">Session information</font></p>
-<pre><code>R version 4.4.2 (2024-10-31)
-Platform: x86_64-pc-linux-gnu
-Running under: Ubuntu 22.04.5 LTS
+<pre><code>R version 4.3.2 (2023-10-31)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 22.04.2 LTS
 
 Matrix products: default
 BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.10.0 
 LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.10.0
 
 locale:
- [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=es_CR.UTF-8       
- [4] LC_COLLATE=C               LC_MONETARY=es_CR.UTF-8    LC_MESSAGES=en_US.UTF-8   
- [7] LC_PAPER=es_CR.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
-[10] LC_TELEPHONE=C             LC_MEASUREMENT=es_CR.UTF-8 LC_IDENTIFICATION=C       
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8       
+ [4] LC_COLLATE=en_US.UTF-8     LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
+[10] LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
 
 time zone: America/Costa_Rica
 tzcode source: system (glibc)
@@ -3127,19 +3126,19 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] kableExtra_1.4.0   warbleR_1.1.34     NatureSounds_1.0.4 knitr_1.49         seewave_2.2.3     
+[1] kableExtra_1.4.0   warbleR_1.1.35     NatureSounds_1.0.5 knitr_1.50         seewave_2.2.3     
 [6] tuneR_1.4.7       
 
 loaded via a namespace (and not attached):
- [1] jsonlite_1.8.9    compiler_4.4.2    rjson_0.2.23      brio_1.1.5        Rcpp_1.0.13-1    
- [6] xml2_1.3.6        stringr_1.5.1     bitops_1.0-9      parallel_4.4.2    signal_1.8-1     
+ [1] jsonlite_2.0.0    compiler_4.3.2    rjson_0.2.23      brio_1.1.5        Rcpp_1.0.14      
+ [6] xml2_1.3.6        stringr_1.5.1     bitops_1.0-9      parallel_4.3.2    signal_1.8-1     
 [11] jquerylib_0.1.4   systemfonts_1.1.0 scales_1.3.0      yaml_2.3.10       fastmap_1.2.0    
-[16] R6_2.5.1          dtw_1.23-1        curl_6.1.0        MASS_7.3-61       munsell_0.5.1    
-[21] svglite_2.1.3     bslib_0.8.0       rlang_1.1.4       testthat_3.2.2    stringi_1.8.4    
-[26] cachem_1.1.0      xfun_0.50         sass_0.4.9        fftw_1.0-9        viridisLite_0.4.2
-[31] cli_3.6.3         magrittr_2.0.3    digest_0.6.37     rstudioapi_0.16.0 pbapply_1.7-2    
-[36] lifecycle_1.0.4   vctrs_0.6.5       proxy_0.4-27      evaluate_1.0.1    glue_1.8.0       
-[41] RCurl_1.98-1.16   colorspace_2.1-1  rmarkdown_2.28    httr_1.4.7        tools_4.4.2      
+[16] R6_2.6.1          dtw_1.23-1        curl_6.2.2        MASS_7.3-55       munsell_0.5.1    
+[21] svglite_2.1.3     bslib_0.8.0       rlang_1.1.5       testthat_3.2.3    stringi_1.8.7    
+[26] cachem_1.1.0      xfun_0.51         sass_0.4.9        fftw_1.0-9        viridisLite_0.4.2
+[31] cli_3.6.4         magrittr_2.0.3    digest_0.6.37     rstudioapi_0.16.0 pbapply_1.7-2    
+[36] lifecycle_1.0.4   vctrs_0.6.5       proxy_0.4-27      evaluate_1.0.3    glue_1.8.0       
+[41] RCurl_1.98-1.17   colorspace_2.1-1  rmarkdown_2.28    httr_1.4.7        tools_4.3.2      
 [46] htmltools_0.5.8.1</code></pre>
 </div>
 
