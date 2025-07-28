@@ -1,7 +1,7 @@
 Package: warbleR
 Type: Package
 Title: Streamline Bioacoustic Analysis
-Version: 1.1.35
+Version: 1.1.36
 Description: Functions aiming to facilitate the analysis of the structure of animal acoustic signals in 'R'. 'warbleR' makes use of the basic sound analysis tools from the packages 'tuneR' and 'seewave', and offers new tools for exploring and quantifying acoustic signal structure. The package allows to organize and manipulate multiple sound files, create spectrograms of complete recordings or individual signals in different formats, run several measures of acoustic structure, and characterize different structural levels in acoustic signals (Araya-Salas et al 2016 <doi:10.1111/2041-210X.12624>).
 License: GPL (>= 2)
 Imports: dtw, fftw, graphics, grDevices, monitoR, parallel, pbapply,
@@ -20,11 +20,11 @@ Suggests: ggplot2, rmarkdown, jpeg, ape, soundgen, wavethresh, png,
 VignetteBuilder: knitr, rmarkdown
 RoxygenNote: 7.3.2
 Encoding: UTF-8
-Packaged: 2025-07-16 23:51:42 UTC; marce
+Packaged: 2025-07-28 14:33:26 UTC; m
 Repository: CRAN
 Language: en-US
 Authors@R: c(person("Marcelo", "Araya-Salas", role = c("aut", "cre"), email = "marcelo.araya@ucr.ac.cr", comment = c(ORCID = "0000-0003-3594-619X")), person("Grace", "Smith-Vidaurre", role = c("aut"), email = "gsmithvi@gmail.com"))
-Date/Publication: 2025-07-17 08:50:02 UTC
+Date/Publication: 2025-07-28 15:50:02 UTC
 Config/testthat/edition: 3
 Author: Marcelo Araya-Salas [aut, cre] (ORCID:
     <https://orcid.org/0000-0003-3594-619X>),
