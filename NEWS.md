@@ -1,8 +1,14 @@
+# *warbleR 1.1.37*
+
+## Changes and additions:
+
+- `query_xc()` and `xc_maps()` have been deprecated
+
 # *warbleR 1.1.36*
 
 ## Changes and additions:
 
-* New function `vocal_activity()` estimates vocal activity across sound files based on selections.
+* New function `acoustic_activity()` estimates vocal activity across sound files based on selections.
 
 * Function `query_xc()` now fails gracefully when the Xeno-Canto API is not available.
 
