@@ -356,11 +356,12 @@ knitr::include_graphics("Phaethornis-eurynome-15607-labeled.jpeg")
 # load data
 data("sth_annotations")
 
-# download sound file from Xeno-Canto using catalog id
-out <-
-  query_xc(qword = "nr:15607",
-           download = TRUE,
-           path = tempdir())
+# download sound file from Xeno-Canto using its catalog id
+download.file(
+  url = "https://xeno-canto.org/15607/download",
+  destfile = file.path(tempdir(), "Phaethornis-eurynome-15607.mp3"),
+  mode = "wb"
+)
 
 # check file is found in temporary directory
 list.files(path = tempdir(), "mp3")

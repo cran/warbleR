@@ -59,14 +59,7 @@ knitr::opts_chunk$set(eval = !is_check, comment = "")
 
 ## ----eval=FALSE, echo=TRUE--------------------------------------------------------------------------------------------------------------------------
 # 
-# tin <- query_xc(qword = "Tinamus", download = FALSE)
-# 
-# # select a single recording
-# tin <- tin[tin$Recordist == "Marcelo Araya-Salas", ]
-# 
-# # download this recording
-# query_xc(X = tin, download = TRUE)
-# 
+# # convert the downloaded mp3 file to wav format
 # mp32wav()
 
 ## ----eval=FALSE, echo=FALSE-------------------------------------------------------------------------------------------------------------------------
